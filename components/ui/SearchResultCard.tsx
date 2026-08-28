@@ -8,6 +8,7 @@ import { formatIndianPrice } from '@/lib/utils/format'
 import { useCompareOptional } from '@/components/providers/CompareProvider'
 import { SaveButton } from '@/components/ui/SaveButton'
 import { ProductQuickView } from '@/components/ui/ProductQuickView'
+import { Badge } from '@/components/ui/Badge'
 import type { RichSearchResult } from '@/lib/data/search'
 import type { ProductSummary } from '@/types'
 
@@ -100,15 +101,15 @@ export function SearchResultCard({ result, query }: SearchResultCardProps) {
         </div>
 
         {result.has_active_deal && result.deal_savings_percent != null ? (
-          <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-white">
+          <Badge variant="deal" size="sm" className="absolute left-2.5 top-2.5 z-10">
             <Zap size={9} />
             {result.deal_savings_percent}% OFF
-          </div>
+          </Badge>
         ) : discount != null ? (
-          <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1 rounded-full bg-green-600 px-2 py-0.5 text-[10px] font-bold text-white">
+          <Badge variant="success" size="sm" className="absolute left-2.5 top-2.5 z-10">
             <TrendingDown size={9} />
             {discount}% off
-          </div>
+          </Badge>
         ) : null}
 
         <Link href={`/${result.category_slug}/${result.slug}`} className="block">
@@ -132,9 +133,9 @@ export function SearchResultCard({ result, query }: SearchResultCardProps) {
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">
               {result.brand_name}
             </span>
-            <span className="rounded-full bg-surface-alt px-2 py-0.5 text-[10px] text-muted capitalize">
+            <Badge variant="category" category={result.category_slug} size="sm" className="capitalize">
               {result.category_slug}
-            </span>
+            </Badge>
           </div>
 
           <Link href={`/${result.category_slug}/${result.slug}`}>

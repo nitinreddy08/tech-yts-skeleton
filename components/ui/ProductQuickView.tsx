@@ -9,6 +9,8 @@ import { useCompareOptional } from '@/components/providers/CompareProvider'
 import type { ProductSummary } from '@/types'
 import type { ProductDealBadge } from '@/lib/data/product-deals'
 import { DealRibbon } from '@/components/ui/ActiveDealBanner'
+import { Badge } from '@/components/ui/Badge'
+import { buttonVariants } from '@/components/ui/Button'
 
 interface ProductQuickViewProps {
   product: ProductSummary
@@ -72,9 +74,9 @@ export function ProductQuickView({ product, activeDeal, onClose }: ProductQuickV
           {product.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-4">
               {product.tags.slice(0, 4).map((tag) => (
-                <span key={tag} className="rounded-full bg-surface-alt border border-border px-2 py-0.5 text-[10px] text-muted">
+                <Badge key={tag} variant="neutral" size="sm">
                   #{tag}
-                </span>
+                </Badge>
               ))}
             </div>
           )}
@@ -82,7 +84,7 @@ export function ProductQuickView({ product, activeDeal, onClose }: ProductQuickV
           <div className="flex gap-2 mt-5">
             <Link
               href={`/${product.category_slug}/${product.slug}`}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-white hover:bg-accent/90"
+              className={buttonVariants({ variant: 'primary', className: 'flex-1' })}
             >
               Full Review <ArrowRight size={14} />
             </Link>

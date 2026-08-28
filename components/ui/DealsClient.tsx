@@ -16,6 +16,8 @@ import {
 import { DealCountdown } from '@/components/ui/DealCountdown'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
+import { Badge } from '@/components/ui/Badge'
+import { buttonVariants } from '@/components/ui/Button'
 import { formatIndianPrice } from '@/lib/utils/format'
 import type { Deal } from '@/types'
 
@@ -140,9 +142,9 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
                   className="object-contain p-4"
                 />
               )}
-              <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-bold text-white">
+              <Badge variant="deal" className="absolute top-3 left-3">
                 <Zap size={12} /> Deal of the Day
-              </span>
+              </Badge>
             </div>
             <div className="flex-1 text-center md:text-left">
               {dealOfDay.headline && (
@@ -165,10 +167,10 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
               </div>
               {dealOfDay.original_price_inr != null && dealOfDay.deal_price_inr != null && (
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-800 px-3 py-1 text-sm font-semibold">
+                  <Badge variant="success">
                     <Percent size={14} />
                     {discountPercent(dealOfDay.original_price_inr, dealOfDay.deal_price_inr)}% off
-                  </span>
+                  </Badge>
                   <span className="text-sm font-medium text-green-700">
                     You save {formatIndianPrice(savingsAmount(dealOfDay.original_price_inr, dealOfDay.deal_price_inr))}
                   </span>
@@ -186,7 +188,7 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
                   storeName={dealOfDay.store_name}
                   productName={dealOfDay.product.name}
                   priceInr={dealOfDay.deal_price_inr}
-                  className="inline-flex items-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white hover:bg-accent/90 transition-colors"
+                  className={buttonVariants({ variant: 'deal', size: 'md', className: 'rounded-xl' })}
                 >
                   <ShoppingCart size={16} />
                   Buy on {dealOfDay.store_name}
@@ -368,7 +370,7 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
                         storeName={deal.store_name}
                         productName={deal.product.name}
                         priceInr={deal.deal_price_inr}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white hover:bg-accent/90"
+                        className={buttonVariants({ variant: 'deal', size: 'sm' })}
                       >
                         <ShoppingCart size={12} />
                         Buy Now

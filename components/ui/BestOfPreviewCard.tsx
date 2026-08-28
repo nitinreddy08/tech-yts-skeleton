@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Trophy, ArrowRight } from 'lucide-react'
 import { formatIndianPrice } from '@/lib/utils/format'
+import { Badge } from '@/components/ui/Badge'
 import type { BestOfList } from '@/types'
 
 interface BestOfPreviewCardProps {
@@ -35,9 +36,9 @@ export function BestOfPreviewCard({ list }: BestOfPreviewCardProps) {
         ) : (
           <Trophy size={40} className="text-accent/40" />
         )}
-        <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[10px] font-bold text-white uppercase tracking-wide">
+        <Badge variant="accent" size="sm" className="absolute top-3 left-3 uppercase tracking-wide">
           <Trophy size={10} /> Top 10
-        </span>
+        </Badge>
       </div>
       <div className="flex flex-col gap-2 p-4 flex-1">
         <h3 className="font-semibold text-primary group-hover:text-accent transition-colors line-clamp-2">

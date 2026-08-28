@@ -14,9 +14,9 @@ export function ExpiringSoonStrip({ deals }: ExpiringSoonStripProps) {
   if (deals.length === 0) return null
 
   return (
-    <section className="mb-8 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-surface p-5">
+    <section className="mb-8 rounded-xl border border-secondary/40 bg-gradient-to-r from-secondary/10 to-surface p-5">
       <div className="flex items-center gap-2 mb-4">
-        <Clock size={18} className="text-amber-600" />
+        <Clock size={18} className="text-secondary-700" />
         <h2 className="font-heading text-sm font-bold text-primary">Ending Soon</h2>
         <span className="text-xs text-muted">Don&apos;t miss these — expiring in 48 hours</span>
       </div>
@@ -48,7 +48,7 @@ export function ExpiringSoonStrip({ deals }: ExpiringSoonStripProps) {
                 storeName={deal.store_name}
                 productName={deal.product.name}
                 priceInr={deal.deal_price_inr}
-                className="mt-auto text-center rounded-lg bg-accent py-1.5 text-xs font-semibold text-white hover:bg-accent/90"
+                className="mt-auto text-center rounded-md bg-secondary py-1.5 text-xs font-semibold text-primary hover:bg-secondary-600 transition-colors"
               >
                 Grab deal
               </AffiliateOutboundLink>

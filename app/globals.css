@@ -57,13 +57,13 @@
   --success-50: #EDFCF5; --success-100: #D4F7E7; --success-500: #33CC85; --success-700: #2B825A;
   --info-50:    #F0F3FE; --info-100: #D9DEFC; --info-500: #5168EC; --info-700: #273DB9;
 
-  /* ---------- Category accents ---------- */
-  --category-smartphones: #723EEA;
-  --category-laptops:     #30A69E;
-  --category-audio:       #DA4E99;
-  --category-tablets:     #30AEE8;
-  --category-wearables:   #EE7C2B;
-  --category-gaming:      #E24236;
+  /* ---------- Category accents (keyed to this app's real category slugs) ---------- */
+  --category-smartphones:      #723EEA; --category-smartphones-tint: #E7DFFB;
+  --category-laptops:          #30A69E; --category-laptops-tint:     #D3F1EE;
+  --category-headphones:       #DA4E99; --category-headphones-tint:  #FBDCEC;
+  --category-tablets:          #30AEE8; --category-tablets-tint:     #D2EFFB;
+  --category-wearables:        #EE7C2B; --category-wearables-tint:   #FDE6D2;
+  --category-gaming:           #E24236; --category-gaming-tint:      #FBDAD7;
 
   /* ---------- App semantic tokens (existing names, remapped) ----------
      --color-accent intentionally sits one step darker than the brand
@@ -134,12 +134,18 @@
   --color-info-50: var(--info-50); --color-info-100: var(--info-100);
   --color-info-500: var(--info-500); --color-info-700: var(--info-700);
 
-  --color-category-smartphones: var(--category-smartphones);
-  --color-category-laptops:     var(--category-laptops);
-  --color-category-audio:       var(--category-audio);
-  --color-category-tablets:     var(--category-tablets);
-  --color-category-wearables:   var(--category-wearables);
-  --color-category-gaming:      var(--category-gaming);
+  --color-category-smartphones:      var(--category-smartphones);
+  --color-category-smartphones-tint: var(--category-smartphones-tint);
+  --color-category-laptops:          var(--category-laptops);
+  --color-category-laptops-tint:     var(--category-laptops-tint);
+  --color-category-headphones:       var(--category-headphones);
+  --color-category-headphones-tint:  var(--category-headphones-tint);
+  --color-category-tablets:          var(--category-tablets);
+  --color-category-tablets-tint:     var(--category-tablets-tint);
+  --color-category-wearables:        var(--category-wearables);
+  --color-category-wearables-tint:   var(--category-wearables-tint);
+  --color-category-gaming:           var(--category-gaming);
+  --color-category-gaming-tint:      var(--category-gaming-tint);
 
   /* Override Tailwind's built-in radius scale so existing rounded-xl /
      rounded-2xl / rounded-3xl usage across the app (product cards, hero
