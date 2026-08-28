@@ -1,4 +1,4 @@
-import { db } from '@/lib/mock/db'
+import { productRepository } from '@/lib/repositories'
 import { hasStalePrices } from '@/lib/utils/price-trust'
 
 const STALE_MS = 14 * 86400000
@@ -13,12 +13,11 @@ export interface PriceHealthRow {
   lastUpdated?: string
 }
 
-export function getPriceHealthQueue(): PriceHealthRow[] {
+export async function getPriceHealthQueue(): Promise<PriceHealthRow[]> {
   const rows: PriceHealthRow[] = []
+  const products = await productRepository.listDetailed()
 
-  for (const p of db.products) {
-    if (!p.is_published) continue
-
+  for (const p of products) {
     if (p.affiliate_links.length === 0) {
       rows.push({
         productId: p.id,

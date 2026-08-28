@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { db } from '@/lib/mock/db'
+import { bestOfListRepository } from '@/lib/repositories'
 import { BestOfListRowActions } from '@/components/admin/BestOfListRowActions'
 import { AdminBestOfFilter } from '@/components/admin/AdminBestOfFilter'
 
@@ -13,7 +13,7 @@ export default async function AdminBestOfListsPage({
   const q = ((sp.q as string) ?? '').trim().toLowerCase()
   const status = (sp.status as string) ?? ''
 
-  let lists = [...db.bestOfLists].sort((a, b) => a.display_order - b.display_order)
+  let lists = await bestOfListRepository.list({ publishedOnly: false })
 
   if (q) {
     lists = lists.filter(

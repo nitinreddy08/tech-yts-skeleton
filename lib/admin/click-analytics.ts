@@ -1,4 +1,4 @@
-import type { MockClickLog } from '@/lib/mock/db'
+import type { ClickLog } from '@/types'
 
 export interface StoreClickStat {
   store: string
@@ -12,7 +12,7 @@ export interface DailyClickStat {
   count: number
 }
 
-export function aggregateClicksByStore(clicks: MockClickLog[]): StoreClickStat[] {
+export function aggregateClicksByStore(clicks: ClickLog[]): StoreClickStat[] {
   const counts = new Map<string, number>()
   for (const log of clicks) {
     counts.set(log.store_name, (counts.get(log.store_name) ?? 0) + 1)
@@ -23,7 +23,7 @@ export function aggregateClicksByStore(clicks: MockClickLog[]): StoreClickStat[]
     .sort((a, b) => b.count - a.count)
 }
 
-export function aggregateClicksByDay(clicks: MockClickLog[], days = 7): DailyClickStat[] {
+export function aggregateClicksByDay(clicks: ClickLog[], days = 7): DailyClickStat[] {
   const result: DailyClickStat[] = []
   const now = new Date()
 

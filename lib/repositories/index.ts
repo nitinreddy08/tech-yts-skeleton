@@ -12,14 +12,22 @@
  */
 import { createInMemoryProductRepository } from './in-memory/product-repository'
 import { createInMemoryDealRepository } from './in-memory/deal-repository'
+import { createInMemoryBestOfListRepository } from './in-memory/best-of-list-repository'
+import { createInMemoryClickLogRepository } from './in-memory/click-log-repository'
 import type { ProductRepository } from './product-repository'
 import type { DealRepository } from './deal-repository'
+import type { BestOfListRepository } from './best-of-list-repository'
+import type { ClickLogRepository } from './click-log-repository'
 
 export const productRepository: ProductRepository = createInMemoryProductRepository()
 export const dealRepository: DealRepository = createInMemoryDealRepository()
+export const bestOfListRepository: BestOfListRepository = createInMemoryBestOfListRepository()
+export const clickLogRepository: ClickLogRepository = createInMemoryClickLogRepository()
 
 export type { ProductRepository } from './product-repository'
 export type { DealRepository, DealView } from './deal-repository'
+export type { BestOfListRepository, BestOfListQuery } from './best-of-list-repository'
+export type { ClickLogRepository, ClickLogQuery } from './click-log-repository'
 export type { ProductQuery, ProductSort } from './product-repository'
 export type { DealQuery } from './deal-repository'
 export * from './errors'

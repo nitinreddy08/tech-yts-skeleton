@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { db } from '@/lib/mock/db'
-import { productRepository, dealRepository } from '@/lib/repositories'
+import { productRepository, dealRepository, bestOfListRepository, clickLogRepository } from '@/lib/repositories'
 import { canPublish } from '@/lib/schemas'
 import { newsletterSubscribers } from '@/lib/mock/newsletter'
 import {
@@ -31,15 +30,15 @@ function formatClickTime(iso: string): string {
 }
 
 export default async function AdminDashboard() {
-  const [products, activeDeals, expiringDeals] = await Promise.all([
+  const [products, activeDeals, expiringDeals, publishedLists, clicks] = await Promise.all([
     productRepository.listDetailed({ includeUnpublished: true }),
     dealRepository.list({ liveOnly: true }),
     dealRepository.list({ expiringWithinHours: 7 * 24 }),
+    bestOfListRepository.list(),
+    clickLogRepository.list(),
   ])
   const published = products.filter((p) => p.is_published)
   const drafts = products.filter((p) => !p.is_published)
-  const publishedLists = db.bestOfLists.filter((l) => l.is_published)
-  const clicks = db.clickLogs
 
   const last24h = clicks.filter(
     (c) => Date.now() - new Date(c.clicked_at).getTime() < 86400000

@@ -113,7 +113,7 @@ export default async function ProductPage({
     : p.youtube_short_url
       ? generateVideoObjectJsonLd(p, p.youtube_short_url)
       : null
-  const relatedGuides = getRelatedGuidesForProduct(p.id)
+  const relatedGuides = await getRelatedGuidesForProduct(p.id)
   const cheaperAlternatives = getCheaperAlternatives(p.id, p.category_slug, bestPrice)
   const priceHistory = generatePriceHistory({
     launchPrice: p.launch_price_inr,

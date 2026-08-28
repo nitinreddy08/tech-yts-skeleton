@@ -18,7 +18,9 @@ import type {
   BestOfListItem,
   AffiliateLink,
   FAQ,
+  ClickLog,
 } from '@/types'
+import { isDealLive } from '@/lib/schemas'
 
 // ─── Categories ──────────────────────────────────────────────────────────────
 
@@ -788,18 +790,7 @@ export const bestOfLists: BestOfList[] = [
 
 // ─── Click logs (append-only) ─────────────────────────────────────────────────
 
-export interface MockClickLog {
-  id: string
-  affiliate_link_id: string
-  product_id: string
-  store_name: string
-  clicked_at: string
-  user_agent: string | null
-  referrer: string | null
-  ip_hash: string | null
-}
-
-export const clickLogs: MockClickLog[] = [
+export const clickLogs: ClickLog[] = [
   { id: 'cl-seed-1', affiliate_link_id: 'al-s25-amazon', product_id: 'prod-samsung-s25', store_name: 'Amazon', clicked_at: '2026-08-22T14:00:00Z', user_agent: null, referrer: null, ip_hash: null },
   { id: 'cl-seed-2', affiliate_link_id: 'al-s25-amazon', product_id: 'prod-samsung-s25', store_name: 'Amazon', clicked_at: '2026-08-22T16:30:00Z', user_agent: null, referrer: null, ip_hash: null },
   { id: 'cl-seed-3', affiliate_link_id: 'al-s25-amazon', product_id: 'prod-samsung-s25', store_name: 'Amazon', clicked_at: '2026-08-23T09:00:00Z', user_agent: null, referrer: null, ip_hash: null },
@@ -835,9 +826,15 @@ export function findAffiliateLinkById(id: string): AffiliateLink | undefined {
   return db.affiliateLinks.find(l => l.id === id)
 }
 
-/** Look up deal by id */
+/**
+ * Look up a deal by id, but only if it's currently live. Uses the same
+ * derived-status predicate the rest of the app uses for "is this deal
+ * active" (is_active AND within its starts_at/expires_at window) — not just
+ * the raw is_active flag, which stays true for a deal that has already
+ * expired (nothing flips it off automatically).
+ */
 export function findDealById(id: string): Deal | undefined {
-  return db.deals.find(d => d.id === id && d.is_active)
+  return db.deals.find(d => d.id === id && isDealLive(d))
 }
 
 /** Look up product by slug + optional category slug */

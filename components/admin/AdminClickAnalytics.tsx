@@ -1,5 +1,5 @@
 import { BarChart3 } from 'lucide-react'
-import type { MockClickLog } from '@/lib/mock/db'
+import type { ClickLog } from '@/types'
 import { aggregateClicksByDay, aggregateClicksByStore } from '@/lib/admin/click-analytics'
 
 const STORE_COLORS: Record<string, string> = {
@@ -9,7 +9,7 @@ const STORE_COLORS: Record<string, string> = {
 }
 
 interface AdminClickAnalyticsProps {
-  clicks: MockClickLog[]
+  clicks: ClickLog[]
 }
 
 export function AdminClickAnalytics({ clicks }: AdminClickAnalyticsProps) {

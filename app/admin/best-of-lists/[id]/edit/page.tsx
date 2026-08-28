@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { db } from '@/lib/mock/db'
+import { bestOfListRepository, productRepository } from '@/lib/repositories'
 import { BestOfListForm } from '@/components/admin/BestOfListForm'
 
 export default async function EditBestOfListPage({
@@ -10,18 +10,11 @@ export default async function EditBestOfListPage({
 }) {
   const { id } = await params
 
-  const list = db.bestOfLists.find(l => l.id === id)
+  const [list, products] = await Promise.all([
+    bestOfListRepository.findById(id),
+    productRepository.publishedOptions(),
+  ])
   if (!list) notFound()
-
-  const products = db.products
-    .filter(p => p.is_published)
-    .map(p => ({ id: p.id, name: p.name }))
-    .sort((a, b) => a.name.localeCompare(b.name))
-
-  const listWithItems = {
-    ...list,
-    items: [...list.items].sort((a, b) => a.rank - b.rank),
-  }
 
   return (
     <div className="mx-auto max-w-3xl p-8">
@@ -33,7 +26,7 @@ export default async function EditBestOfListPage({
         <h1 className="text-xl font-bold text-white">Edit List</h1>
       </div>
 
-      <BestOfListForm list={listWithItems as any} products={products} />
+      <BestOfListForm list={list} products={products} />
     </div>
   )
 }

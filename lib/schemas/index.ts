@@ -8,3 +8,5 @@
 export * from './common'
 export * from './product'
 export * from './deal'
+export * from './best-of-list'
+export * from './click-log'

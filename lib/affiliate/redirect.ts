@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server'
-import { db, newId, findAffiliateLinkById, findDealById } from '@/lib/mock/db'
+import { findAffiliateLinkById, findDealById } from '@/lib/mock/db'
+import { clickLogRepository } from '@/lib/repositories'
 
 async function hashIp(ip: string): Promise<string> {
   const encoder = new TextEncoder()
@@ -17,6 +18,10 @@ function getClientIp(request: NextRequest): string {
   )
 }
 
+/**
+ * Fire-and-forget by design (Requirement 4.6): the caller doesn't await this,
+ * so the click write never adds latency to the redirect response.
+ */
 function logClick(
   request: NextRequest,
   entry: {
@@ -29,18 +34,20 @@ function logClick(
   const referrer = request.headers.get('referer') ?? null
   const rawIp = getClientIp(request)
 
-  hashIp(rawIp).then(ipHash => {
-    db.clickLogs.push({
-      id: newId(),
-      affiliate_link_id: entry.affiliate_link_id,
-      product_id: entry.product_id,
-      store_name: entry.store_name,
-      clicked_at: new Date().toISOString(),
-      user_agent: userAgent,
-      referrer,
-      ip_hash: ipHash,
-    })
-  })
+  hashIp(rawIp)
+    .then(ipHash =>
+      clickLogRepository.record({
+        affiliate_link_id: entry.affiliate_link_id,
+        product_id: entry.product_id,
+        store_name: entry.store_name,
+        user_agent: userAgent,
+        referrer,
+        ip_hash: ipHash,
+      })
+    )
+    // Fire-and-forget: a failed click log must never surface as an unhandled
+    // rejection or affect the redirect the visitor already received.
+    .catch(err => console.error('[click-log] failed to record click', err))
 }
 
 export async function handleAffiliateRedirect(

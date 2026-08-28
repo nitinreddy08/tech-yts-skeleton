@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { db } from '@/lib/mock/db'
+import { bestOfListRepository } from '@/lib/repositories'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://example.com'
 
@@ -35,14 +36,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }))
 
-  const bestOfEntries: MetadataRoute.Sitemap = db.bestOfLists
-    .filter((l) => l.is_published)
-    .map((list) => ({
-      url: `${SITE_URL}/best-of/${list.slug}`,
-      lastModified: list.updated_at ? new Date(list.updated_at) : new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.75,
-    }))
+  const bestOfEntries: MetadataRoute.Sitemap = (await bestOfListRepository.list()).map((list) => ({
+    url: `${SITE_URL}/best-of/${list.slug}`,
+    lastModified: list.updated_at ? new Date(list.updated_at) : new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.75,
+  }))
 
   const brandEntries: MetadataRoute.Sitemap = db.brands.map((brand) => ({
     url: `${SITE_URL}/brand/${brand.slug}`,

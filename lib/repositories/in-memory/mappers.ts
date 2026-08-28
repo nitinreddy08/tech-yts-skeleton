@@ -7,9 +7,23 @@
  * definition, mirroring how a backend would expose a `product_summary` view.
  */
 import type { db as Db } from '@/lib/mock/db'
-import type { ProductDetail, ProductSummary } from '@/lib/schemas'
+import type { ProductDetail, ProductSummary, BestOfList, BestOfListItem } from '@/lib/schemas'
 
 type Store = typeof Db
+
+/**
+ * Click count per product_id, computed from the raw click log. Shared by the
+ * click-log repository, the product repository's "popular" sort, and
+ * lib/data/trending.ts — previously three separate copies of the same
+ * `reduce` over `db.clickLogs`.
+ */
+export function clickCountsByProduct(store: Store): Record<string, number> {
+  const counts: Record<string, number> = {}
+  for (const log of store.clickLogs) {
+    counts[log.product_id] = (counts[log.product_id] ?? 0) + 1
+  }
+  return counts
+}
 
 export function toProductSummary(p: ProductDetail): ProductSummary {
   return {
@@ -65,4 +79,25 @@ export function assembleProductDetail(store: Store, row: ProductDetail): Product
     affiliate_links,
     faqs,
   }
+}
+
+/**
+ * Re-join a best-of list's items with each product's *current* summary.
+ *
+ * An item whose product has since been deleted is dropped rather than kept
+ * with a null `product` — `BestOfListItem.product` is non-optional in the
+ * schema (every UI consumer assumes it's there), and a best-of entry pointing
+ * at nothing is exactly the kind of dangling foreign key a real database's
+ * `ON DELETE CASCADE` would already have cleaned up.
+ */
+export function assembleBestOfList(store: Store, row: BestOfList): BestOfList {
+  const items: BestOfListItem[] = row.items
+    .map((item) => {
+      const product = store.products.find((p) => p.id === item.product_id)
+      return product ? { ...item, product: toProductSummary(product) } : null
+    })
+    .filter((item): item is BestOfListItem => item !== null)
+    .sort((a, b) => a.rank - b.rank)
+
+  return { ...row, items }
 }

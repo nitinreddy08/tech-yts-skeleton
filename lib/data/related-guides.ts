@@ -1,4 +1,4 @@
-import { db } from '@/lib/mock/db'
+import { bestOfListRepository } from '@/lib/repositories'
 
 export interface RelatedGuide {
   slug: string
@@ -8,9 +8,9 @@ export interface RelatedGuide {
   totalPicks: number
 }
 
-export function getRelatedGuidesForProduct(productId: string): RelatedGuide[] {
-  return db.bestOfLists
-    .filter((l) => l.is_published)
+export async function getRelatedGuidesForProduct(productId: string): Promise<RelatedGuide[]> {
+  const lists = await bestOfListRepository.list()
+  return lists
     .flatMap((list) => {
       const item = list.items.find((i) => i.product_id === productId)
       if (!item) return []

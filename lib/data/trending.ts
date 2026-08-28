@@ -1,5 +1,6 @@
 import { unstable_cache } from 'next/cache'
 import { db } from '@/lib/mock/db'
+import { clickCountsByProduct } from '@/lib/repositories/in-memory/mappers'
 import type { ProductSummary } from '@/types'
 
 function toSummary(p: (typeof db.products)[0]): ProductSummary {
@@ -25,10 +26,7 @@ function toSummary(p: (typeof db.products)[0]): ProductSummary {
 }
 
 export function getProductClickCounts(): Record<string, number> {
-  return db.clickLogs.reduce<Record<string, number>>((acc, log) => {
-    acc[log.product_id] = (acc[log.product_id] ?? 0) + 1
-    return acc
-  }, {})
+  return clickCountsByProduct(db)
 }
 
 export const fetchTrendingProducts = unstable_cache(

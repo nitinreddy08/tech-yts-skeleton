@@ -30,46 +30,18 @@ export type {
   Deal,
   DealInput,
   DealUpdate,
+  BestOfListItem,
+  BestOfList,
+  BestOfListItemInput,
+  BestOfListCreate,
+  BestOfListUpdate,
+  ClickLog,
+  ClickLogInput,
 } from '@/lib/schemas'
 
-import type { ProductSummary, ProductDetail, AffiliateLink, FAQ } from '@/lib/schemas'
+import type { ProductDetail, AffiliateLink, FAQ } from '@/lib/schemas'
 
-// ─── BestOfList (schema migration pending — Cycle 3) ─────────────────────────
-export interface BestOfListItem {
-  id: string
-  list_id: string
-  product_id: string
-  product: ProductSummary
-  rank: number
-  pick_reason: string | null
-}
-
-export interface BestOfList {
-  id: string
-  title: string
-  slug: string
-  description: string
-  cover_image_url: string | null
-  is_published: boolean
-  display_order: number
-  created_at: string
-  updated_at: string
-  items: BestOfListItem[]
-}
-
-// ─── ClickLog (schema migration pending — Cycle 3) ───────────────────────────
-export interface ClickLog {
-  id: string
-  affiliate_link_id: string
-  product_id: string
-  store_name: string
-  clicked_at: string
-  user_agent: string | null
-  referrer: string | null
-  ip_hash: string | null
-}
-
-// ─── Search (schema migration pending — Cycle 2) ─────────────────────────────
+// ─── Search (a request/response view model, not a stored entity — no schema) ─
 export interface SearchResult {
   id: string
   name: string

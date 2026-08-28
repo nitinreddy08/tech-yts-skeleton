@@ -13,13 +13,9 @@
  */
 
 import { http, HttpResponse } from 'msw'
-import {
-  db,
-  newId,
-} from './db'
-import { productRepository, dealRepository } from '@/lib/repositories'
+import { db } from './db'
+import { productRepository, dealRepository, bestOfListRepository, clickLogRepository } from '@/lib/repositories'
 import { repositoryErrorResponse } from './http-error'
-import { toProductSummary as productSummaryFromDetail } from '@/lib/repositories/in-memory/mappers'
 import type { DealType } from '@/lib/schemas'
 
 const BASE = '/api/mock'
@@ -241,103 +237,56 @@ export const dealHandlers = [
 
 export const bestOfListHandlers = [
   // GET /api/mock/best-of-lists
-  http.get(`${BASE}/best-of-lists`, ({ request }) => {
+  http.get(`${BASE}/best-of-lists`, async ({ request }) => {
     const url = new URL(request.url)
     const publishedOnly = url.searchParams.get('published') !== 'false'
-    let list = [...db.bestOfLists]
-    if (publishedOnly) list = list.filter(l => l.is_published)
-    list.sort((a, b) => a.display_order - b.display_order)
-    return HttpResponse.json(list)
+    return HttpResponse.json(await bestOfListRepository.list({ publishedOnly }))
   }),
 
   // GET /api/mock/best-of-lists/by-slug/:slug
-  http.get(`${BASE}/best-of-lists/by-slug/:slug`, ({ params }) => {
-    const list = db.bestOfLists.find(l => l.slug === params.slug && l.is_published)
+  http.get(`${BASE}/best-of-lists/by-slug/:slug`, async ({ params }) => {
+    const list = await bestOfListRepository.findBySlug(params.slug as string)
     if (!list) return new HttpResponse(null, { status: 404 })
     return HttpResponse.json(list)
   }),
 
   // GET /api/mock/best-of-lists/:id
-  http.get(`${BASE}/best-of-lists/:id`, ({ params }) => {
-    const list = db.bestOfLists.find(l => l.id === params.id)
+  http.get(`${BASE}/best-of-lists/:id`, async ({ params }) => {
+    const list = await bestOfListRepository.findById(params.id as string)
     if (!list) return new HttpResponse(null, { status: 404 })
     return HttpResponse.json(list)
   }),
 
   // POST /api/mock/best-of-lists
   http.post(`${BASE}/best-of-lists`, async ({ request }) => {
-    const body = (await request.json()) as any
-    const id = newId()
-    const now = new Date().toISOString()
-
-    const existing = db.bestOfLists.find(l => l.slug === body.slug)
-    if (existing) {
-      return HttpResponse.json({ error: 'Slug already exists', code: '23505' }, { status: 409 })
+    const body = await request.json()
+    try {
+      const list = await bestOfListRepository.create(body)
+      return HttpResponse.json(list, { status: 201 })
+    } catch (error) {
+      return repositoryErrorResponse(error)
     }
-
-    const list = {
-      id,
-      title: body.title,
-      slug: body.slug,
-      description: body.description ?? '',
-      cover_image_url: body.cover_image_url ?? null,
-      is_published: body.is_published ?? false,
-      display_order: body.display_order ?? 0,
-      created_at: now,
-      updated_at: now,
-      items: (body.items ?? []).map((item: any, i: number) => ({
-        ...item,
-        id: newId(),
-        list_id: id,
-        product: db.products.find(p => p.id === item.product_id)
-          ? productSummaryFromDetail(db.products.find(p => p.id === item.product_id)!)
-          : null,
-      })),
-    }
-    db.bestOfLists.push(list)
-    return HttpResponse.json(list, { status: 201 })
   }),
 
   // PATCH /api/mock/best-of-lists/:id
   http.patch(`${BASE}/best-of-lists/:id`, async ({ params, request }) => {
-    const idx = db.bestOfLists.findIndex(l => l.id === params.id)
-    if (idx === -1) return new HttpResponse(null, { status: 404 })
-    const body = (await request.json()) as any
-    const now = new Date().toISOString()
-
-    // Slug clash check
-    if (body.slug && body.slug !== db.bestOfLists[idx].slug) {
-      const clash = db.bestOfLists.find(l => l.slug === body.slug && l.id !== params.id)
-      if (clash) {
-        return HttpResponse.json({ error: 'Slug already exists', code: '23505' }, { status: 409 })
-      }
+    const body = await request.json()
+    try {
+      const list = await bestOfListRepository.update(params.id as string, body)
+      return HttpResponse.json(list)
+    } catch (error) {
+      return repositoryErrorResponse(error)
     }
-
-    db.bestOfLists[idx] = {
-      ...db.bestOfLists[idx],
-      ...body,
-      updated_at: now,
-      items: body.items
-        ? (body.items as any[]).map(item => ({
-            ...item,
-            id: item.id ?? newId(),
-            list_id: params.id as string,
-            product: db.products.find(p => p.id === item.product_id)
-              ? productSummaryFromDetail(db.products.find(p => p.id === item.product_id)!)
-              : item.product ?? null,
-          }))
-        : db.bestOfLists[idx].items,
-    }
-
-    return HttpResponse.json(db.bestOfLists[idx])
   }),
 
   // DELETE /api/mock/best-of-lists/:id
-  http.delete(`${BASE}/best-of-lists/:id`, ({ params }) => {
-    const idx = db.bestOfLists.findIndex(l => l.id === params.id)
-    if (idx === -1) return new HttpResponse(null, { status: 404 })
-    db.bestOfLists.splice(idx, 1)
-    return new HttpResponse(null, { status: 204 })
+  http.delete(`${BASE}/best-of-lists/:id`, async ({ params }) => {
+    try {
+      await bestOfListRepository.remove(params.id as string)
+      return new HttpResponse(null, { status: 204 })
+    } catch (error) {
+      return repositoryErrorResponse(error)
+    }
   }),
 ]
 
@@ -353,10 +302,13 @@ export const affiliateHandlers = [
 
   // POST /api/mock/click-logs
   http.post(`${BASE}/click-logs`, async ({ request }) => {
-    const body = (await request.json()) as any
-    const log = { ...body, id: newId() }
-    db.clickLogs.push(log)
-    return HttpResponse.json(log, { status: 201 })
+    const body = await request.json()
+    try {
+      const log = await clickLogRepository.record(body)
+      return HttpResponse.json(log, { status: 201 })
+    } catch (error) {
+      return repositoryErrorResponse(error)
+    }
   }),
 ]
 

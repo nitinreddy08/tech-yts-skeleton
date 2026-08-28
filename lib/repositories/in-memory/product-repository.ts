@@ -24,19 +24,11 @@ import type {
   ProductCreateInput,
   ProductUpdateInput,
 } from '../product-repository'
-import { assembleProductDetail, toProductSummary } from './mappers'
+import { assembleProductDetail, toProductSummary, clickCountsByProduct } from './mappers'
 
 type Store = typeof DbType
 
 // ─── Query helpers ────────────────────────────────────────────────────────────
-
-function clickCounts(store: Store): Record<string, number> {
-  const counts: Record<string, number> = {}
-  for (const log of store.clickLogs) {
-    counts[log.product_id] = (counts[log.product_id] ?? 0) + 1
-  }
-  return counts
-}
 
 /** Relevance score for free-text search; higher = better match, 0 = no match. */
 function relevanceScore(p: ProductDetail, q: string): number {
@@ -136,7 +128,7 @@ export function createInMemoryProductRepository(store: Store = db): ProductRepos
         return true
       })
 
-    rows = applySort(rows, q.sort ?? (search ? 'relevance' : 'newest'), search, clickCounts(store))
+    rows = applySort(rows, q.sort ?? (search ? 'relevance' : 'newest'), search, clickCountsByProduct(store))
     if (q.limit != null) rows = rows.slice(0, q.limit)
     return rows
   }

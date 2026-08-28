@@ -18,8 +18,8 @@ const ISSUE_META: Record<
   out_of_stock: { label: 'Out of stock', icon: PackageX, className: 'text-gray-600 bg-gray-50 border-gray-200' },
 }
 
-export default function AdminPricesPage() {
-  const queue = getPriceHealthQueue()
+export default async function AdminPricesPage() {
+  const queue = await getPriceHealthQueue()
   const grouped = queue.reduce<Record<string, PriceHealthRow[]>>((acc, row) => {
     if (!acc[row.issue]) acc[row.issue] = []
     acc[row.issue].push(row)
