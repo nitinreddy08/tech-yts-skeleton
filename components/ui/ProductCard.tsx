@@ -101,7 +101,7 @@ export function ProductCard({ product, showDealBadge = true, activeDeal, rank, p
           </p>
         )}
 
-        <div className="flex items-center gap-2 mt-auto pt-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-auto pt-2">
           <button
             type="button"
             onClick={(e) => { e.preventDefault(); setQuickView(true) }}
