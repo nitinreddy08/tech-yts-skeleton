@@ -3,7 +3,7 @@ import { fetchProductBySlug } from '@/lib/data/products'
 import { buildSpecDiffTable } from '@/lib/utils/compare'
 import { generateComparisonMetadata, generateCompareLandingMetadata, SITE_URL } from '@/lib/utils/seo'
 import { CompareClient } from '@/components/ui/CompareClient'
-import { db } from '@/lib/mock/db'
+import { productRepository } from '@/lib/repositories'
 import type { Metadata } from 'next'
 import type { ProductDetail } from '@/types'
 
@@ -46,8 +46,8 @@ export default async function DirectComparePage({
 
   const diffRows = buildSpecDiffTable(products)
 
-  const allProductOptions = db.products
-    .filter((p) => p.is_published)
+  const publishedProducts = await productRepository.list()
+  const allProductOptions = publishedProducts
     .map((p) => ({
       id: p.id,
       name: p.name,

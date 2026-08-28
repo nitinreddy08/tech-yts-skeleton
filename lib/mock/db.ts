@@ -853,18 +853,6 @@ export function findProductBySlug(
   )
 }
 
-/** Return products that match a text query against name + tags */
-export function searchDb(query: string, limit = 10) {
-  const q = query.toLowerCase().trim()
-  return db.products
-    .filter(
-      p =>
-        p.is_published &&
-        (p.name.toLowerCase().includes(q) ||
-          p.tags.some(t => t.toLowerCase().includes(q)))
-    )
-    .slice(0, limit)
-}
 
 /** Sync affiliate_links + faqs back into the product record */
 export function syncProductRelations(productId: string) {

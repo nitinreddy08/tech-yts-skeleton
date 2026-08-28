@@ -1,7 +1,17 @@
-import { db } from '@/lib/mock/db'
-import { getProductClickCounts } from '@/lib/data/trending'
+/**
+ * lib/data/search.ts
+ *
+ * Full-page and typeahead search. Filtering, text matching, and sorting are no
+ * longer reimplemented here — they're the same `productRepository.list()` used
+ * by category pages and the MSW `/api/mock/products` endpoint, so search and
+ * browse can never quietly disagree about what "matches" or "sorts first"
+ * means. This file's only job is composing the query and layering deal badges
+ * onto the result.
+ */
+import { productRepository, type ProductSort } from '@/lib/repositories'
 import { getActiveDealMap } from '@/lib/data/product-deals'
 import type { SearchResult } from '@/types'
+
 export interface RichSearchResult extends SearchResult {
   category_id: string
   brand_id: string
@@ -23,7 +33,7 @@ export interface SearchFilters {
   minPrice?: number
   maxPrice?: number
   minRating?: number
-  sort?: 'relevance' | 'price_asc' | 'price_desc' | 'rating_desc' | 'newest' | 'popular'
+  sort?: ProductSort
 }
 
 /**
@@ -34,57 +44,14 @@ export async function searchProductsFull(
   query: string,
   filters: SearchFilters = {}
 ): Promise<RichSearchResult[]> {
-  const q = query.toLowerCase().trim()
-
-  let results = db.products.filter((p) => {
-    if (!p.is_published) return false
-
-    // Text match against name, tags, brand name, category name
-    const textMatch =
-      !q ||
-      q.length < 2 ||
-      p.name.toLowerCase().includes(q) ||
-      p.tags.some((t) => t.toLowerCase().includes(q)) ||
-      p.brand_name.toLowerCase().includes(q) ||
-      p.category.name.toLowerCase().includes(q)
-
-    if (!textMatch) return false
-
-    // Category filter
-    if (filters.category && p.category_slug !== filters.category) return false
-
-    // Price filters
-    const price = p.current_price_inr
-    if (filters.minPrice != null && (price == null || price < filters.minPrice)) return false
-    if (filters.maxPrice != null && (price == null || price > filters.maxPrice)) return false
-
-    // Rating filter
-    if (filters.minRating != null && p.creator_rating < filters.minRating) return false
-
-    return true
+  const results = await productRepository.listDetailed({
+    search: query,
+    categorySlug: filters.category,
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    minRating: filters.minRating,
+    sort: filters.sort ?? 'relevance',
   })
-
-  // Sort
-  const sort = filters.sort ?? 'relevance'
-  if (sort === 'price_asc') {
-    results = results.sort((a, b) => (a.current_price_inr ?? Infinity) - (b.current_price_inr ?? Infinity))
-  } else if (sort === 'price_desc') {
-    results = results.sort((a, b) => (b.current_price_inr ?? 0) - (a.current_price_inr ?? 0))
-  } else if (sort === 'rating_desc') {
-    results = results.sort((a, b) => b.creator_rating - a.creator_rating)
-  } else if (sort === 'newest') {
-    results = results.sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    )
-  } else if (sort === 'popular') {
-    const clicks = getProductClickCounts()
-    results = results.sort((a, b) => {
-      const ca = clicks[a.id] ?? 0
-      const cb = clicks[b.id] ?? 0
-      if (cb !== ca) return cb - ca
-      return b.creator_rating - a.creator_rating
-    })
-  }
 
   const dealMap = getActiveDealMap()
 

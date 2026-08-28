@@ -4,7 +4,7 @@ import { generateComparisonMetadata, generateCompareLandingMetadata, SITE_URL } 
 import { CompareClient } from '@/components/ui/CompareClient'
 import { CompareSuggestions } from '@/components/ui/CompareSuggestions'
 import { RecentComparesStrip } from '@/components/ui/RecentComparesStrip'
-import { db } from '@/lib/mock/db'
+import { productRepository } from '@/lib/repositories'
 import type { Metadata } from 'next'
 import type { ProductDetail } from '@/types'
 
@@ -46,8 +46,8 @@ export default async function ComparePage({
   const diffRows = products.length >= 2 ? buildSpecDiffTable(products) : []
 
   // All published products as picker options
-  const allProductOptions = db.products
-    .filter((p) => p.is_published)
+  const publishedProducts = await productRepository.list()
+  const allProductOptions = publishedProducts
     .map((p) => ({
       id: p.id,
       name: p.name,

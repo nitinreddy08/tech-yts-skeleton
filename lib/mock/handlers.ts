@@ -2,17 +2,20 @@
  * lib/mock/handlers.ts
  *
  * MSW request handlers.  These intercept fetch() calls made from browser-side
- * code (DynamicSpecForm, SearchBar, etc.) and return data from the mock db.
+ * code (DynamicSpecForm, etc.) against the /api/mock/* namespace and route
+ * them through the same repositories server code uses.
  *
  * NOTE: Server Components, Server Actions, and Route Handlers import
- * lib/mock/db.ts directly — they don't go through these handlers.
+ * lib/mock/db.ts (or the repositories) directly — they don't go through these
+ * handlers. Real Next.js Route Handlers under /api/* (e.g. /api/search) are
+ * deliberately left unregistered here too, so they aren't shadowed in the
+ * browser during development — see the Search section below.
  */
 
 import { http, HttpResponse } from 'msw'
 import {
   db,
   newId,
-  searchDb,
 } from './db'
 import { productRepository, dealRepository } from '@/lib/repositories'
 import { repositoryErrorResponse } from './http-error'
@@ -161,24 +164,15 @@ export const productHandlers = [
 ]
 
 // ─── Search ───────────────────────────────────────────────────────────────────
-
-export const searchHandlers = [
-  http.get('/api/search', ({ request }) => {
-    const url = new URL(request.url)
-    const q = url.searchParams.get('q') ?? ''
-    const limit = Number(url.searchParams.get('limit') ?? '10')
-    const results = searchDb(q, limit).map(p => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      category_slug: p.category_slug,
-      thumbnail_url: p.thumbnail_url,
-      current_price_inr: p.current_price_inr,
-      type: 'product' as const,
-    }))
-    return HttpResponse.json(results)
-  }),
-]
+//
+// No MSW handler for /api/search: it's a real Next.js Route Handler
+// (app/api/search/route.ts, backed by lib/data/search.ts's
+// productRepository-powered searchProductsFull). Registering a mock here would
+// shadow it in the browser during development — SearchBar and HeroFinder fetch
+// this same path client-side — so client-side search would silently run a
+// different, simpler algorithm than the server-rendered /search page and
+// production ever use. Leaving the path unregistered lets
+// `onUnhandledRequest: 'bypass'` route it straight to the real handler.
 
 // ─── Deals ────────────────────────────────────────────────────────────────────
 
@@ -407,7 +401,6 @@ export const handlers = [
   ...categoryHandlers,
   ...brandHandlers,
   ...productHandlers,
-  ...searchHandlers,
   ...dealHandlers,
   ...bestOfListHandlers,
   ...affiliateHandlers,
