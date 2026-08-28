@@ -132,7 +132,7 @@ mode a token swap instead of a rewrite.
 | `bg-soft` | `neutral-100` `#F9F9FB` | `neutral-950` `#3A3546` |
 | `bg-elevated` | `neutral-0` + `shadow-sm` | `neutral-900` `#585365` |
 | `text-primary` | `neutral-1000` `#18151E` | `neutral-0` `#FFFFFF` |
-| `text-secondary` | `neutral-800` `#767184` | `neutral-600` `#AAA5B6` |
+| `text-muted` | `neutral-800` `#767184` | `neutral-600` `#AAA5B6` |
 | `text-link` | `primary-600` `#5722D3` | `primary-300` `#AF93F0` |
 | `border-default` | `neutral-500` `#C4C0CE` | `neutral-800` `#767184` |
 | `border-focus` | `primary-500` `#723EEA` | `primary-400` `#8D65EC` |
@@ -145,3 +145,12 @@ mappings above intentionally pick a *different step* on the same scale
 (e.g. `text-link` goes from `primary-600` to `primary-300`, not to a
 darkened `primary-600`) so contrast stays correct against the dark
 background.
+
+**Naming note.** This table names the muted/secondary-emphasis text role
+`text-muted`, not `text-secondary` — the app's existing `--color-muted`
+token already implements it, and `text-secondary` is unusable here: Tailwind
+resolves a `text-secondary` class against the `secondary` (Deal Amber)
+brand scale, not a semantic "secondary text" concept, so the two would
+collide. Earlier drafts of this doc used `text-secondary` for both meanings
+before this was caught; `text-muted` is the only correct name going
+forward.

@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils/cn'
+import { categoryBadgeClasses } from '@/lib/utils/category-colors'
 
 export type BadgeVariant = 'neutral' | 'accent' | 'discount' | 'deal' | 'success' | 'warning' | 'error' | 'category'
 export type BadgeSize = 'sm' | 'md'
@@ -22,19 +23,6 @@ const SIZE_CLASSES: Record<BadgeSize, string> = {
   sm: 'h-5 px-2 text-xs',
 }
 
-/** Category slugs this app currently ships, plus a few reserved for
- *  categories not live yet — keeps the map future-proof without a
- *  hardcoded fallback color that would silently mismatch new categories.
- *  Tint/ink pairs come from the category-* tokens in app/globals.css. */
-const CATEGORY_COLORS: Record<string, string> = {
-  smartphones: 'bg-category-smartphones-tint text-primary-700',
-  laptops: 'bg-category-laptops-tint text-[color:var(--category-laptops)]',
-  headphones: 'bg-category-headphones-tint text-[color:var(--category-headphones)]',
-  tablets: 'bg-category-tablets-tint text-[color:var(--category-tablets)]',
-  wearables: 'bg-category-wearables-tint text-[color:var(--category-wearables)]',
-  gaming: 'bg-category-gaming-tint text-[color:var(--category-gaming)]',
-}
-
 export function badgeVariants({
   variant = 'neutral',
   size = 'md',
@@ -46,10 +34,7 @@ export function badgeVariants({
   category?: string
   className?: string
 } = {}): string {
-  const variantClass =
-    variant === 'category'
-      ? (category && CATEGORY_COLORS[category]) || 'bg-neutral-100 text-secondary'
-      : VARIANT_CLASSES[variant]
+  const variantClass = variant === 'category' ? categoryBadgeClasses(category) : VARIANT_CLASSES[variant]
   return cn(BASE, variantClass, SIZE_CLASSES[size], className)
 }
 

@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { SlidersHorizontal, X, Search } from 'lucide-react'
 import type { SpecFilterDef } from '@/lib/utils/spec-filters'
 import { specFilterParamKey } from '@/lib/utils/spec-filters'
+import { Chip } from '@/components/ui/Chip'
+import { Badge } from '@/components/ui/Badge'
 
 const PRICE_RANGES = [
   { label: 'Under ₹20K', min: 0, max: 20000 },
@@ -192,18 +194,13 @@ export function CategoryFilterClient({
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">{def.label}</p>
           <div className="flex flex-wrap gap-1.5">
             {def.options.map((opt) => (
-              <button
+              <Chip
                 key={`${def.key}-${opt.value}`}
-                type="button"
                 onClick={() => toggleSpec(def.key, opt.value)}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                  activeSpecs[def.key] === opt.value
-                    ? 'bg-accent text-white'
-                    : 'border border-border bg-surface text-primary hover:border-accent/50'
-                }`}
+                active={activeSpecs[def.key] === opt.value}
               >
                 {opt.label}
-              </button>
+              </Chip>
             ))}
           </div>
         </div>
@@ -214,18 +211,13 @@ export function CategoryFilterClient({
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Price Range</p>
         <div className="flex flex-wrap gap-1.5">
           {PRICE_RANGES.map((r) => (
-            <button
+            <Chip
               key={r.label}
-              type="button"
               onClick={() => togglePriceRange(r.min, r.max)}
-              className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                activeMinPrice === r.min && activeMaxPrice === r.max
-                  ? 'bg-accent text-white'
-                  : 'border border-border bg-surface text-primary hover:border-accent/50'
-              }`}
+              active={activeMinPrice === r.min && activeMaxPrice === r.max}
             >
               {r.label}
-            </button>
+            </Chip>
           ))}
         </div>
       </div>
@@ -255,18 +247,9 @@ export function CategoryFilterClient({
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Min Rating</p>
         <div className="flex flex-wrap gap-1.5">
           {RATINGS.map((r) => (
-            <button
-              key={r.value}
-              type="button"
-              onClick={() => toggleRating(r.value)}
-              className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                activeRating === r.value
-                  ? 'bg-accent text-white'
-                  : 'border border-border bg-surface text-primary hover:border-accent/50'
-              }`}
-            >
+            <Chip key={r.value} onClick={() => toggleRating(r.value)} active={activeRating === r.value}>
               {r.label}
-            </button>
+            </Chip>
           ))}
         </div>
       </div>
@@ -296,9 +279,7 @@ export function CategoryFilterClient({
             <SlidersHorizontal size={14} />
             Filters
             {activeChips.length > 0 && (
-              <span className="rounded-full bg-accent text-white px-1.5 py-0.5 text-[10px]">
-                {activeChips.length}
-              </span>
+              <Badge variant="accent" size="sm">{activeChips.length}</Badge>
             )}
           </button>
           <p className="ml-auto text-xs text-muted">

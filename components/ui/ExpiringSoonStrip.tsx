@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Clock } from 'lucide-react'
 import { DealCountdown } from '@/components/ui/DealCountdown'
 import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
+import { buttonVariants } from '@/components/ui/Button'
 import { formatIndianPrice } from '@/lib/utils/format'
 import type { Deal } from '@/types'
 
@@ -48,7 +49,7 @@ export function ExpiringSoonStrip({ deals }: ExpiringSoonStripProps) {
                 storeName={deal.store_name}
                 productName={deal.product.name}
                 priceInr={deal.deal_price_inr}
-                className="mt-auto text-center rounded-md bg-secondary py-1.5 text-xs font-semibold text-primary hover:bg-secondary-600 transition-colors"
+                className={buttonVariants({ variant: 'deal', size: 'auto', className: 'mt-auto py-1.5 text-xs' })}
               >
                 Grab deal
               </AffiliateOutboundLink>

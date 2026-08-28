@@ -1,4 +1,5 @@
 import type { SpecHighlight } from '@/lib/utils/spec-highlights'
+import { Eyebrow } from '@/components/ui/Eyebrow'
 
 interface KeySpecStripProps {
   highlights: SpecHighlight[]
@@ -17,9 +18,7 @@ export function KeySpecStrip({ highlights, className = '' }: KeySpecStripProps) 
       className={`rounded-xl border border-border bg-surface p-4 ${className}`}
       aria-label="Key specifications"
     >
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-3">
-        Key Specs at a Glance
-      </p>
+      <Eyebrow className="mb-3">Key Specs at a Glance</Eyebrow>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         {highlights.map((h) => (
           <div

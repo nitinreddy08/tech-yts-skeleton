@@ -5,6 +5,7 @@ import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
 import { EmiHint } from '@/components/ui/EmiHint'
 import { Badge } from '@/components/ui/Badge'
 import { buttonVariants } from '@/components/ui/Button'
+import { Eyebrow } from '@/components/ui/Eyebrow'
 import { cn } from '@/lib/utils/cn'
 import type { AffiliateLink, StockStatus } from '@/types'
 
@@ -67,7 +68,7 @@ export function BuySection({ links, productName, launchPrice }: BuySectionProps)
           </div>
           {bestPrice != null && (
             <div className="text-right shrink-0">
-              <p className="text-[10px] uppercase tracking-wider text-muted">Best price</p>
+              <Eyebrow>Best price</Eyebrow>
               <p className="text-xl font-bold text-accent">{formatIndianPrice(bestPrice)}</p>
               <EmiHint priceInr={bestPrice} className="mt-0.5 text-right" />
             </div>

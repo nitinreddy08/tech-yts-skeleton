@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Clock, ChevronRight, Package } from 'lucide-react'
 import { loadRecentlyViewed } from '@/lib/utils/recently-viewed'
 import { formatIndianPrice } from '@/lib/utils/format'
+import { Eyebrow } from '@/components/ui/Eyebrow'
 import type { ProductSummary } from '@/types'
 
 interface RecentlyViewedStripProps {
@@ -42,9 +43,9 @@ export function RecentlyViewedStrip({
   if (variant === 'compact') {
     return (
       <div className={`rounded-xl border border-border bg-surface p-4 ${className}`}>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-3 flex items-center gap-1.5">
+        <Eyebrow className="mb-3 flex items-center gap-1.5">
           <Clock size={13} /> Recently Viewed
-        </p>
+        </Eyebrow>
         <ul className="flex flex-col gap-2">
           {items.slice(0, 4).map((p) => (
             <li key={p.id}>

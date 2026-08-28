@@ -17,6 +17,7 @@ import { DealCountdown } from '@/components/ui/DealCountdown'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
 import { Badge } from '@/components/ui/Badge'
+import { Chip } from '@/components/ui/Chip'
 import { buttonVariants } from '@/components/ui/Button'
 import { formatIndianPrice } from '@/lib/utils/format'
 import type { Deal } from '@/types'
@@ -211,36 +212,18 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
           <div className="flex flex-wrap items-center gap-2">
             <SlidersHorizontal size={16} className="text-muted shrink-0" />
             {dealTypes.map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setFilter(type)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                  filter === type
-                    ? 'bg-accent text-white'
-                    : 'border border-border bg-surface text-primary hover:border-accent/50'
-                }`}
-              >
+              <Chip key={type} active={filter === type} onClick={() => setFilter(type)}>
                 {type === 'all' ? 'All Deals' : DEAL_TYPE_LABELS[type as Deal['deal_type']]}
-              </button>
+              </Chip>
             ))}
           </div>
           {categories.length > 2 && (
             <div className="flex flex-wrap items-center gap-2">
               <Tag size={16} className="text-muted shrink-0" />
               {categories.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setCategoryFilter(cat)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors capitalize ${
-                    categoryFilter === cat
-                      ? 'bg-primary text-white'
-                      : 'border border-border bg-surface text-primary hover:border-accent/50'
-                  }`}
-                >
+                <Chip key={cat} active={categoryFilter === cat} onClick={() => setCategoryFilter(cat)} className="capitalize">
                   {cat === 'all' ? 'All Categories' : categoryLabel(cat)}
-                </button>
+                </Chip>
               ))}
             </div>
           )}
@@ -248,18 +231,9 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
             <div className="flex flex-wrap items-center gap-2">
               <Store size={16} className="text-muted shrink-0" />
               {stores.map((store) => (
-                <button
-                  key={store}
-                  type="button"
-                  onClick={() => setStoreFilter(store)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                    storeFilter === store
-                      ? 'bg-orange-600 text-white'
-                      : 'border border-border bg-surface text-primary hover:border-accent/50'
-                  }`}
-                >
+                <Chip key={store} active={storeFilter === store} onClick={() => setStoreFilter(store)}>
                   {store === 'all' ? 'All Stores' : store}
-                </button>
+                </Chip>
               ))}
             </div>
           )}

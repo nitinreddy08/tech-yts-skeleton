@@ -23,6 +23,7 @@ import { CompareWinnerSummary } from '@/components/ui/CompareWinnerSummary'
 import { CompareSuggestions } from '@/components/ui/CompareSuggestions'
 import { saveRecentCompare } from '@/lib/utils/recent-compares'
 import { specWinners } from '@/lib/utils/compare-scores'
+import { Eyebrow } from '@/components/ui/Eyebrow'
 import type { ProductDetail, SpecDiffRow } from '@/types'
 
 interface CompareClientProps {
@@ -206,9 +207,7 @@ export function CompareClient({ products, diffRows, allProductOptions, shareUrl 
               </Link>
 
               {/* Info */}
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">
-                {p.brand_name}
-              </p>
+              <Eyebrow>{p.brand_name}</Eyebrow>
               <Link href={`/${p.category_slug}/${p.slug}`}>
                 <h2 className="mt-0.5 text-sm font-semibold text-primary leading-tight hover:text-accent transition-colors line-clamp-2">
                   {p.name}

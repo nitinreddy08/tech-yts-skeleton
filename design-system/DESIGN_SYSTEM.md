@@ -134,7 +134,7 @@ category-gaming:      #E24236
 ### Semantic tokens (prefer these in component code)
 
 Aliases over the palette that can swap in dark mode: `bg-default`,
-`bg-soft`, `bg-elevated`, `text-primary`, `text-secondary`, `text-link`,
+`bg-soft`, `bg-elevated`, `text-primary`, `text-muted`, `text-link`,
 `border-default`, `border-focus`, `interactive-primary`. Full table in
 `colors.md`. Components written against semantic tokens get dark mode for
 free; components written against raw palette tokens stay fixed (intentional
@@ -241,10 +241,13 @@ shadow-xl: 0 16px 32px 0 rgba(24,21,30,0.10), 0 8px 16px 0 rgba(24,21,30,0.08)
 
 Detailed specs for the core set are in `components.md`.
 
-- **Form controls**: Button, Input, Toggle, Badge/Tag
+- **Form controls**: Button, Input, Toggle, Badge/Tag, Chip
 - **Content blocks**: Eyebrow, Product Card, Score Ring, Price Block, Text
   block
 - **Feedback**: Deal badge, Status banner
+
+Chip was added after the first implementation pass, once real usage
+surfaced a case Badge didn't cover — see `components.md` for why.
 
 ### Variant naming convention
 
@@ -290,8 +293,8 @@ it as a prop when forcing a state for testing/storybook.
 design-system/
 ├── DESIGN_SYSTEM.md   <- this file, canonical rules
 ├── colors.md           <- full palette (all scales) + semantic aliases
-├── components.md       <- specs for Button, Badge, Product Card, Score
-│                          Ring, Price Block, Eyebrow, Toggle, Input
+├── components.md       <- specs for Button, Badge, Chip, Product Card,
+│                          Score Ring, Price Block, Eyebrow, Toggle, Input
 ├── tokens.css           <- CSS custom properties, drop-in ready
 └── tokens.json          <- W3C design tokens (machine-readable)
 ```

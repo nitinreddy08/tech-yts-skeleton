@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { Mail, Check, Loader2 } from 'lucide-react'
+import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 
 export function NewsletterSignup() {
   const [email, setEmail] = useState('')
@@ -35,8 +37,8 @@ export function NewsletterSignup() {
 
   if (status === 'success') {
     return (
-      <div className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4">
-        <p className="text-sm font-semibold text-green-800 flex items-center gap-2">
+      <div className="mt-6 rounded-lg border border-success-100 bg-success-50 p-4">
+        <p className="text-sm font-semibold text-success-700 flex items-center gap-2">
           <Check size={16} /> {message}
         </p>
       </div>
@@ -49,25 +51,21 @@ export function NewsletterSignup() {
         <Mail size={12} /> Stay updated
       </p>
       <form onSubmit={handleSubmit} className="flex gap-2">
-        <input
+        <Input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Your email"
           required
           aria-label="Email for updates"
-          className="flex-1 min-w-0 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-primary placeholder:text-muted/50 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+          className="flex-1 min-w-0"
         />
-        <button
-          type="submit"
-          disabled={status === 'loading'}
-          className="shrink-0 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 transition-colors disabled:opacity-60 inline-flex items-center gap-1.5"
-        >
+        <Button type="submit" disabled={status === 'loading'} className="shrink-0">
           {status === 'loading' ? <Loader2 size={14} className="animate-spin" /> : 'Join'}
-        </button>
+        </Button>
       </form>
       {status === 'error' && message && (
-        <p className="text-xs text-red-600 mt-1.5">{message}</p>
+        <p className="text-xs text-error-500 mt-1.5">{message}</p>
       )}
       <p className="text-[10px] text-muted mt-1.5">Deal alerts & new reviews. No spam.</p>
     </div>

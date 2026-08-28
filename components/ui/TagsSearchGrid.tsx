@@ -1,8 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import Link from 'next/link'
 import { Search } from 'lucide-react'
+import { Chip } from '@/components/ui/Chip'
 
 interface TagItem {
   slug: string
@@ -55,16 +55,12 @@ export function TagsSearchGrid({ tags }: TagsSearchGridProps) {
           )}
           <div className="flex flex-wrap justify-center gap-3">
             {filtered.map((t) => (
-              <Link
-                key={t.slug}
-                href={`/tag/${t.slug}`}
-                className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-primary hover:border-accent hover:text-accent transition-colors capitalize"
-              >
+              <Chip key={t.slug} href={`/tag/${t.slug}`} size="md" className="capitalize">
                 #{t.label}
                 <span className="rounded-full bg-surface-alt px-2 py-0.5 text-[10px] text-muted tabular-nums">
                   {t.count}
                 </span>
-              </Link>
+              </Chip>
             ))}
           </div>
         </>

@@ -3,6 +3,8 @@
 import { Suspense } from 'react'
 import { useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 
 function LoginForm() {
   const [error, setError] = useState<string | null>(null)
@@ -45,13 +47,12 @@ function LoginForm() {
           <label htmlFor="email" className="text-sm font-medium text-primary mb-1.5 block">
             Email
           </label>
-          <input
+          <Input
             id="email"
             name="email"
             type="email"
             required
             autoComplete="email"
-            className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-primary placeholder:text-muted outline-none focus:border-accent focus:ring-1 focus:ring-accent"
             placeholder="admin@example.com"
           />
         </div>
@@ -60,30 +61,25 @@ function LoginForm() {
           <label htmlFor="password" className="text-sm font-medium text-primary mb-1.5 block">
             Password
           </label>
-          <input
+          <Input
             id="password"
             name="password"
             type="password"
             required
             autoComplete="current-password"
-            className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-primary placeholder:text-muted outline-none focus:border-accent focus:ring-1 focus:ring-accent"
             placeholder="••••••••"
           />
         </div>
 
         {error && (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600">
+          <p className="rounded-lg border border-error-100 bg-error-50 px-4 py-2.5 text-sm text-error-500">
             {error}
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-lg bg-accent py-2.5 text-sm font-semibold text-white hover:bg-accent/90 transition-colors disabled:opacity-50"
-        >
+        <Button type="submit" disabled={loading} className="w-full">
           {loading ? 'Signing in...' : 'Sign In'}
-        </button>
+        </Button>
 
         <p className="text-center text-xs text-muted">
           Mock credentials: <span className="font-mono">admin@example.com</span> /{' '}

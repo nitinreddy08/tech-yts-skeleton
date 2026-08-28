@@ -3,6 +3,7 @@ import { Tag, Percent, CreditCard, Ticket } from 'lucide-react'
 import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
 import { formatIndianPrice } from '@/lib/utils/format'
 import { dealTypeLabel } from '@/lib/data/product-deals'
+import { Eyebrow } from '@/components/ui/Eyebrow'
 import type { Deal } from '@/types'
 
 const TYPE_ICONS: Record<Deal['deal_type'], typeof Tag> = {
@@ -39,9 +40,9 @@ export function ProductOffersPanel({ deals, productName }: ProductOffersPanelPro
                   <Icon size={16} />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-muted">
+                  <Eyebrow>
                     {dealTypeLabel(deal.deal_type)} · {deal.store_name}
-                  </p>
+                  </Eyebrow>
                   <p className="text-sm font-medium text-primary">{deal.headline}</p>
                   {deal.deal_price_inr != null && (
                     <p className="text-xs text-accent font-semibold mt-0.5">

@@ -38,6 +38,7 @@ import { BenchmarkScores } from '@/components/ui/BenchmarkScores'
 import { EmiHint } from '@/components/ui/EmiHint'
 import { PriceHistoryChart } from '@/components/ui/PriceHistoryChart'
 import { ProductDetailTabs, type DetailTab } from '@/components/ui/ProductDetailTabs'
+import { Eyebrow } from '@/components/ui/Eyebrow'
 import { ProductRecommendationTabs } from '@/components/ui/ProductRecommendationTabs'
 import { ChevronRight, TrendingDown } from 'lucide-react'
 import type { Metadata } from 'next'
@@ -248,11 +249,11 @@ export default async function ProductPage({
         {/* ── Title block ───────────────────────────────────────────────── */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+            <Eyebrow>
               <Link href={`/brand/${p.brand.slug}`} className="hover:text-accent transition-colors">
                 {p.brand_name}
               </Link>
-            </p>
+            </Eyebrow>
             <h1 className="font-heading text-2xl font-bold text-primary mt-0.5 leading-tight">
               {p.name}
             </h1>

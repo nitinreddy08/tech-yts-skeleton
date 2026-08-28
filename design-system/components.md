@@ -107,7 +107,7 @@ family, since this app uses badges far more than marketing eyebrows.
 
 | Variant | Background | Text | Use |
 |---------|------------|------|-----|
-| `neutral` | `neutral-100` `#F9F9FB` | `text-secondary` | Generic tag |
+| `neutral` | `neutral-100` `#F9F9FB` | `text-muted` | Generic tag |
 | `discount` | `error-100` `#FBD0D1` | `error-700` `#B0272B` | "-20%" price badges |
 | `deal` | `secondary-500` `#F7A222` | `neutral-1000` | "Deal of the Day" |
 | `success` | `success-100` `#D4F7E7` | `success-700` `#2B825A` | "In stock," savings |
@@ -124,6 +124,60 @@ type BadgeProps = {
   size?: 'sm' | 'md'
   children: React.ReactNode
 }
+```
+
+---
+
+## Chip
+
+Added after the first implementation pass, once a real inconsistency showed
+up: the deals page filtered by deal-type, category, *and* store using three
+different active-state colors (accent blue, ink black, and a hardcoded
+orange with no token behind it at all) even though all three were the same
+control repeated three times. Badge doesn't fit this — a Badge is a static
+label, and a filter pill is always clickable with a real active/inactive
+state. Not in the original reference system; designed for this app.
+
+### Variant axes
+
+| Axis | Values |
+|------|--------|
+| `active` | `false` · `true` |
+| `size` | `sm` · `md` |
+| `disabled` | via native `disabled` attribute |
+
+### Dimensions
+
+| Size | Height | Padding (x) | Font |
+|------|--------|----------------|------|
+| md | 36px | 16 | 14px / Medium |
+| sm | 30px | 12 | 12px / Medium |
+
+Radius: full (pill). Icons (e.g. a trailing `X` to signal "click to
+remove") are composed by the caller as children, same as Badge — the
+component only owns the active/inactive class logic.
+
+### Colors
+
+| State | Border | Background | Text |
+|-------|--------|-------------|------|
+| Inactive | `neutral-500` `#C4C0CE` | `neutral-0` | `text-muted` |
+| Inactive hover | `primary-500` (border+text) | `neutral-0` | `primary-500` |
+| Active | `primary-600` | `primary-600` | white |
+| Disabled | `neutral-300` | `neutral-100` | `neutral-600` |
+
+Every filter/tag toggle in the app (deal-type, category, store, price
+range, rating, tag search) uses the same active color — one violet, not
+three unrelated colors depending on which filter group happened to render
+it.
+
+### Implementation pattern
+
+```tsx
+type ChipProps = {
+  active?: boolean
+  size?: 'sm' | 'md'
+} & React.ButtonHTMLAttributes<HTMLButtonElement>
 ```
 
 ---
@@ -147,10 +201,10 @@ scratch to the same rigor as Button.
 [ Save button — top-right overlay, 32×32px circle ]
 [ Discount badge — top-left overlay, if on sale ]
 [ Thumbnail image — 1:1 aspect ]
-[ Brand name — 12px, text-secondary ]
+[ Brand name — 12px, text-muted ]
 [ Product name — 14px, Medium, 2-line clamp ]
 [ Rating badge (Score Ring, sm) + rating count ]
-[ Price — Bold, 16px, primary text  |  strikethrough launch price, 12px, text-secondary ]
+[ Price — Bold, 16px, primary text  |  strikethrough launch price, 12px, text-muted ]
 [ Quick view · Compare — 12px links, gap-16 ]
 ```
 
@@ -246,8 +300,8 @@ so every instance stays visually consistent.
 
 ```
 [ Best price — Bold, primary text ]  [ Discount badge, if any ]
-[ Launch price — strikethrough, text-secondary, if discounted ]
-[ EMI hint — text-secondary, 12px, optional ]
+[ Launch price — strikethrough, text-muted, if discounted ]
+[ EMI hint — text-muted, 12px, optional ]
 ```
 
 ### Sizes
@@ -262,7 +316,7 @@ so every instance stays visually consistent.
 
 - Best price: `text-primary`, **Bold**.
 - Discount badge: `variant="discount"` Badge (see above).
-- Launch price strikethrough: `text-secondary`, regular weight,
+- Launch price strikethrough: `text-muted`, regular weight,
   `text-decoration: line-through`.
 - "You save X%": `success-700` on `success-100` background pill.
 
@@ -289,7 +343,7 @@ PDP title, section labels ("BROWSE BY CATEGORY").
 
 | Tone | Text |
 |------|------|
-| `neutral` | `text-secondary` `#767184` |
+| `neutral` | `text-muted` `#767184` |
 | `category` | category `-500` accent (see `colors.md`) |
 
 ---
@@ -348,4 +402,4 @@ target, so inputs never need a separate mobile-size variant.
 | Error | `error-500` `#E74B51`, 2px | `error-50` | `text-primary` |
 | Disabled | `neutral-300` | `neutral-100` | `neutral-600` |
 
-Placeholder text: `text-secondary` `#767184`.
+Placeholder text: `text-muted` `#767184`.

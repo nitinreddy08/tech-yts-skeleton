@@ -85,7 +85,7 @@
   --bg-soft:                 var(--neutral-100);
   --bg-elevated:              var(--neutral-0);
   --text-primary:            var(--neutral-1000);
-  --text-secondary:          var(--neutral-800);
+  --text-muted:          var(--neutral-800);
   --text-link:                var(--primary-600);
   --border-default:          var(--neutral-500);
   --border-focus:             var(--primary-500);
@@ -145,7 +145,7 @@
     --bg-soft:        var(--neutral-950);
     --bg-elevated:     var(--neutral-900);
     --text-primary:   var(--neutral-0);
-    --text-secondary: var(--neutral-600);
+    --text-muted: var(--neutral-600);
     --text-link:       var(--primary-300);
     --border-default: var(--neutral-800);
     --border-focus:    var(--primary-400);
@@ -159,7 +159,7 @@
   --bg-soft:        var(--neutral-950);
   --bg-elevated:     var(--neutral-900);
   --text-primary:   var(--neutral-0);
-  --text-secondary: var(--neutral-600);
+  --text-muted: var(--neutral-600);
   --text-link:       var(--primary-300);
   --border-default: var(--neutral-800);
   --border-focus:    var(--primary-400);

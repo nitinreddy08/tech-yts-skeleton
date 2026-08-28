@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils/cn'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'deal' | 'ghost'
-export type ButtonSize = 'md' | 'sm'
+export type ButtonSize = 'md' | 'sm' | 'auto'
 
 const BASE =
   'inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors disabled:cursor-not-allowed'
@@ -20,6 +20,10 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 const SIZE_CLASSES: Record<ButtonSize, string> = {
   md: 'h-12 px-6 text-md',
   sm: 'h-[38px] px-6 text-base',
+  // No height/padding/text-size of its own — for compact contexts (a card
+  // footer CTA) that need custom sizing but still want the shared
+  // color/radius/transition treatment.
+  auto: '',
 }
 
 export function buttonVariants({

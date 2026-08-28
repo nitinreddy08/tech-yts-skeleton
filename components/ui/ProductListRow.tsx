@@ -8,6 +8,7 @@ import { useCompareOptional } from '@/components/providers/CompareProvider'
 import { SaveButton } from '@/components/ui/SaveButton'
 import { ScoreRing } from '@/components/ui/ScoreRing'
 import { DealRibbon } from '@/components/ui/ActiveDealBanner'
+import { Eyebrow } from '@/components/ui/Eyebrow'
 import type { ProductSummary } from '@/types'
 import type { ProductDealBadge } from '@/lib/data/product-deals'
 
@@ -49,7 +50,7 @@ export function ProductListRow({ product, activeDeal }: ProductListRowProps) {
       </Link>
 
       <div className="flex flex-1 flex-col min-w-0 gap-1">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{product.brand_name}</p>
+        <Eyebrow>{product.brand_name}</Eyebrow>
         <Link href={`/${product.category_slug}/${product.slug}`}>
           <h3 className="text-sm font-semibold text-primary line-clamp-2 hover:text-accent transition-colors">
             {product.name}

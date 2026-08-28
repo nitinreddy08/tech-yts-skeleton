@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import * as Slider from '@radix-ui/react-slider'
+import { Input } from '@/components/ui/Input'
+import { Chip } from '@/components/ui/Chip'
 import {
   Wifi,
   MemoryStick,
@@ -138,19 +140,10 @@ export function HeroFinder() {
       {/* Category tabs — 91Mobiles multi-finder pattern */}
       <div className="flex flex-wrap gap-1.5 mb-5">
         {CATEGORIES.map(({ slug, label, icon: Icon }) => (
-          <button
-            key={slug}
-            type="button"
-            onClick={() => setCategory(slug)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-              category === slug
-                ? 'bg-accent text-white'
-                : 'border border-border bg-surface-alt text-primary hover:border-accent/50'
-            }`}
-          >
+          <Chip key={slug} onClick={() => setCategory(slug)} active={category === slug}>
             <Icon size={14} />
             {label}
-          </button>
+          </Chip>
         ))}
       </div>
 
@@ -162,23 +155,20 @@ export function HeroFinder() {
           {/* Quick presets */}
           <div className="flex flex-wrap gap-1.5 mb-4">
             {PRICE_PRESETS.filter((p) => p.min < MAX_PRICE).map((preset) => (
-              <button
+              <Chip
                 key={preset.label}
-                type="button"
+                size="auto"
                 onClick={() => applyPreset(preset.min, Math.min(preset.max, MAX_PRICE))}
-                className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                  activePreset?.label === preset.label
-                    ? 'bg-accent text-white'
-                    : 'border border-border text-muted hover:text-primary hover:border-accent/50'
-                }`}
+                active={activePreset?.label === preset.label}
+                className="px-2.5 py-1 text-[11px]"
               >
                 {preset.label}
-              </button>
+              </Chip>
             ))}
           </div>
 
           <div className="flex items-center gap-2 mb-4">
-            <input
+            <Input
               type="text"
               inputMode="numeric"
               placeholder={fmt(min)}
@@ -187,10 +177,10 @@ export function HeroFinder() {
               onBlur={commitMin}
               onKeyDown={(e) => e.key === 'Enter' && commitMin()}
               aria-label="Minimum price"
-              className="flex-1 min-w-0 rounded-lg border border-border bg-surface-alt px-3 py-2.5 text-sm text-primary placeholder:text-muted/40 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="flex-1 min-w-0"
             />
             <span className="text-muted/60 text-sm shrink-0">to</span>
-            <input
+            <Input
               type="text"
               inputMode="numeric"
               placeholder={max >= MAX_PRICE ? `${fmt(MAX_PRICE)}+` : fmt(max)}
@@ -199,7 +189,7 @@ export function HeroFinder() {
               onBlur={commitMax}
               onKeyDown={(e) => e.key === 'Enter' && commitMax()}
               aria-label="Maximum price"
-              className="flex-1 min-w-0 rounded-lg border border-border bg-surface-alt px-3 py-2.5 text-sm text-primary placeholder:text-muted/40 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+              className="flex-1 min-w-0"
             />
           </div>
 

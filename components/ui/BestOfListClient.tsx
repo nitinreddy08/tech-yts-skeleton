@@ -15,6 +15,7 @@ import {
 import { formatIndianPrice } from '@/lib/utils/format'
 import { siteConfig } from '@/lib/config'
 import { ShareBar } from '@/components/ui/ShareBar'
+import { Eyebrow } from '@/components/ui/Eyebrow'
 import type { BestOfList, BestOfListItem } from '@/types'
 
 function getPickBadge(rank: number, items: BestOfListItem[]): { label: string; className: string } | null {
@@ -256,9 +257,7 @@ export function BestOfListClient({ list, shareUrl }: BestOfListClientProps) {
         {list.items.length > 0 && (
           <aside className="hidden lg:block w-56 shrink-0">
             <div className="sticky top-24 rounded-xl border border-border bg-surface p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-3">
-                In this guide
-              </p>
+              <Eyebrow className="mb-3">In this guide</Eyebrow>
               <nav className="flex flex-col gap-0.5">
                 {list.items.map((item) => {
                   const badge = getPickBadge(item.rank, list.items)

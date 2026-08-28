@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Hash } from 'lucide-react'
+import { Chip } from '@/components/ui/Chip'
 import type { CategoryTagCount } from '@/lib/data/category-tags'
 
 interface CategoryPopularTagsProps {
@@ -20,14 +21,10 @@ export function CategoryPopularTags({ categoryName, tags }: CategoryPopularTagsP
       </div>
       <div className="flex flex-wrap gap-2">
         {tags.map((tag) => (
-          <Link
-            key={tag.slug}
-            href={`/tag/${tag.slug}`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-primary hover:border-accent hover:text-accent transition-colors capitalize"
-          >
+          <Chip key={tag.slug} href={`/tag/${tag.slug}`} className="capitalize">
             {tag.label}
             <span className="text-[10px] text-muted tabular-nums">{tag.count}</span>
-          </Link>
+          </Chip>
         ))}
         <Link
           href="/tags"

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback } from 'react'
 import { X, SlidersHorizontal } from 'lucide-react'
+import { Chip } from '@/components/ui/Chip'
 
 interface SearchFilterBarProps {
   categories: { slug: string; name: string; icon: string }[]
@@ -84,15 +85,6 @@ export function SearchFilterBar({ categories, resultCount, query }: SearchFilter
     router.push(`/search?q=${encodeURIComponent(query)}`)
   }
 
-  // Chip base classes
-  const chip = (active: boolean) =>
-    [
-      'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium cursor-pointer transition-all select-none',
-      active
-        ? 'border-accent bg-accent text-white shadow-sm'
-        : 'border-border bg-surface text-muted hover:border-accent hover:text-accent',
-    ].join(' ')
-
   return (
     <div className="flex flex-col gap-3">
       {/* Top row: result count + sort */}
@@ -130,15 +122,15 @@ export function SearchFilterBar({ categories, resultCount, query }: SearchFilter
         {/* Category chips */}
         <div className="flex flex-wrap gap-1.5">
           {categories.map((cat) => (
-            <button
+            <Chip
               key={cat.slug}
               onClick={() => toggleCategory(cat.slug)}
-              className={chip(activeCategory === cat.slug)}
+              active={activeCategory === cat.slug}
               aria-pressed={activeCategory === cat.slug}
             >
               {cat.icon} {cat.name}
               {activeCategory === cat.slug && <X size={11} />}
-            </button>
+            </Chip>
           ))}
         </div>
 
@@ -147,15 +139,10 @@ export function SearchFilterBar({ categories, resultCount, query }: SearchFilter
           {PRICE_RANGES.map((r) => {
             const active = activePriceRange?.min === r.min && activePriceRange?.max === r.max
             return (
-              <button
-                key={r.label}
-                onClick={() => togglePriceRange(r.min, r.max)}
-                className={chip(active)}
-                aria-pressed={active}
-              >
+              <Chip key={r.label} onClick={() => togglePriceRange(r.min, r.max)} active={active} aria-pressed={active}>
                 {r.label}
                 {active && <X size={11} />}
-              </button>
+              </Chip>
             )
           })}
 
@@ -164,15 +151,10 @@ export function SearchFilterBar({ categories, resultCount, query }: SearchFilter
           {RATINGS.map((r) => {
             const active = activeRating === r.value
             return (
-              <button
-                key={r.value}
-                onClick={() => toggleRating(r.value)}
-                className={chip(active)}
-                aria-pressed={active}
-              >
+              <Chip key={r.value} onClick={() => toggleRating(r.value)} active={active} aria-pressed={active}>
                 ⭐ {r.label}
                 {active && <X size={11} />}
-              </button>
+              </Chip>
             )
           })}
 

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Hash } from 'lucide-react'
 import { fetchAllTags } from '@/lib/data/tags'
+import { chipVariants } from '@/components/ui/Chip'
 
 export async function PopularTagsStrip({ limit = 14 }: { limit?: number }) {
   const tags = await fetchAllTags()
@@ -41,7 +42,7 @@ export async function PopularTagsStrip({ limit = 14 }: { limit?: number }) {
               <Link
                 key={tag.slug}
                 href={`/tag/${tag.slug}`}
-                className={`inline-flex items-center gap-1.5 rounded-full border border-border bg-surface hover:border-accent hover:text-accent transition-colors text-primary ${weight}`}
+                className={chipVariants({ size: 'auto', className: weight })}
               >
                 {tag.label}
                 <span className="text-[10px] text-muted tabular-nums">{tag.count}</span>

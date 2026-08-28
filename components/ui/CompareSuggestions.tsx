@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { GitCompare, ArrowRight } from 'lucide-react'
 import { POPULAR_COMPARES } from '@/lib/constants/popular-compares'
+import { Eyebrow } from '@/components/ui/Eyebrow'
 
 interface CompareSuggestionsProps {
   compact?: boolean
@@ -11,10 +12,10 @@ export function CompareSuggestions({ compact = false, className = '' }: CompareS
   return (
     <div className={className}>
       {!compact && (
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-3 flex items-center gap-1.5">
+        <Eyebrow className="mb-3 flex items-center gap-1.5">
           <GitCompare size={14} />
           Popular comparisons
-        </p>
+        </Eyebrow>
       )}
       <div className="flex flex-wrap justify-center gap-2">
         {POPULAR_COMPARES.map(({ label, href }) => (
