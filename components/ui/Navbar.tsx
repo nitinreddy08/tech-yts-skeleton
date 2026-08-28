@@ -11,7 +11,8 @@ import { SavedNavLink } from '@/components/ui/SavedNavLink'
 import { AlertsNavLink } from '@/components/ui/AlertsNavLink'
 import { MyStuffNavLink } from '@/components/ui/MyStuffNavLink'
 import { SiteLogoMark } from '@/components/ui/SiteLogo'
-import { Menu, X, ChevronDown, Zap, GitCompare, Trophy } from 'lucide-react'
+import { loadWishlist } from '@/lib/utils/wishlist'
+import { Menu, X, ChevronDown, Zap, GitCompare, Trophy, Home, Search, Bookmark } from 'lucide-react'
 
 interface NavCategory {
   slug: string
@@ -167,6 +168,52 @@ function CategoryLink({ category }: { category: NavCategory }) {
   )
 }
 
+function BottomNavItem({
+  href,
+  icon,
+  label,
+  active,
+  badge,
+  onClick,
+}: {
+  href?: string
+  icon: React.ReactNode
+  label: string
+  active: boolean
+  badge?: number
+  onClick?: () => void
+}) {
+  const content = (
+    <>
+      <span className="relative">
+        {icon}
+        {!!badge && badge > 0 && (
+          <span className="absolute -top-1.5 -right-2 rounded-full bg-accent text-white px-1 py-0.5 text-[9px] font-bold min-w-[15px] text-center leading-none">
+            {badge}
+          </span>
+        )}
+      </span>
+      <span className="text-[10px] font-medium">{label}</span>
+    </>
+  )
+  const className = `flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[56px] transition-colors ${
+    active ? 'text-accent' : 'text-muted'
+  }`
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={className} aria-label={label}>
+        {content}
+      </button>
+    )
+  }
+  return (
+    <Link href={href!} className={className} aria-label={label}>
+      {content}
+    </Link>
+  )
+}
+
 export default function Navbar({ categories, bestOfLists, activeDealCount }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -175,11 +222,26 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
   const compare = useCompareOptional()
   const compareCount = compare?.products.length ?? 0
   const compareHref = compareCount >= 2 ? buildCompareUrl(compare!.products.map((p) => p.slug)) : '/compare'
+  const [savedCount, setSavedCount] = useState(0)
+
+  const pathSegments = pathname.split('/').filter(Boolean)
+  const isProductPage = pathSegments.length === 2 && categories.some((c) => c.slug === pathSegments[0])
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 8)
     window.addEventListener('scroll', handler, { passive: true })
     return () => window.removeEventListener('scroll', handler)
+  }, [])
+
+  useEffect(() => {
+    const refresh = () => setSavedCount(loadWishlist().length)
+    refresh()
+    window.addEventListener('wishlist-updated', refresh)
+    window.addEventListener('storage', refresh)
+    return () => {
+      window.removeEventListener('wishlist-updated', refresh)
+      window.removeEventListener('storage', refresh)
+    }
   }, [])
 
   useEffect(() => {
@@ -422,6 +484,45 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
             </div>
           </div>
         </div>
+      )}
+
+      {/* Mobile bottom tab bar — thumb-reachable primary actions.
+          Hidden on product pages, which have their own sticky buy bar. */}
+      {!isProductPage && (
+        <nav
+          className={`md:hidden fixed inset-x-0 z-40 flex border-t border-border bg-surface/95 backdrop-blur-sm transition-all ${
+            compareCount >= 1 ? 'bottom-16' : 'bottom-0'
+          }`}
+          aria-label="Primary"
+        >
+          <BottomNavItem href="/" icon={<Home size={20} />} label="Home" active={pathname === '/'} />
+          <BottomNavItem
+            href="/search"
+            icon={<Search size={20} />}
+            label="Search"
+            active={pathname === '/search'}
+          />
+          <BottomNavItem
+            href={compareHref}
+            icon={<GitCompare size={20} />}
+            label="Compare"
+            active={pathname.startsWith('/compare')}
+            badge={compareCount}
+          />
+          <BottomNavItem
+            href="/saved"
+            icon={<Bookmark size={20} />}
+            label="Saved"
+            active={pathname === '/saved'}
+            badge={savedCount}
+          />
+          <BottomNavItem
+            icon={<Menu size={20} />}
+            label="Menu"
+            active={drawerOpen}
+            onClick={() => setDrawerOpen(true)}
+          />
+        </nav>
       )}
     </header>
   )

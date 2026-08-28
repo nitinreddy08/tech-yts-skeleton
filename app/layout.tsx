@@ -29,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en" className={`${geist.variable} ${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-surface text-primary">
+      <body className="min-h-full flex flex-col bg-surface text-primary pb-14 md:pb-0">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}
