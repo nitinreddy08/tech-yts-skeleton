@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Building2 } from 'lucide-react'
 import { fetchBrandsWithCounts } from '@/lib/data/brands'
+import { BrandLogo } from '@/components/ui/BrandLogo'
 
 export async function PopularBrandsStrip({ limit = 8 }: { limit?: number }) {
   const brands = await fetchBrandsWithCounts()
@@ -31,12 +32,13 @@ export async function PopularBrandsStrip({ limit = 8 }: { limit?: number }) {
             <Link
               key={brand.id}
               href={`/brand/${brand.slug}`}
-              className="group flex flex-col items-center justify-center rounded-xl border border-border bg-surface p-4 hover:border-accent hover:shadow-sm transition-all text-center min-h-[88px]"
+              className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-border bg-surface p-4 hover:border-accent hover:shadow-sm transition-all text-center min-h-[88px]"
             >
-              <span className="font-heading text-sm font-bold text-primary group-hover:text-accent transition-colors">
+              <BrandLogo name={brand.name} size="sm" />
+              <span className="font-heading text-xs font-bold text-primary group-hover:text-accent transition-colors">
                 {brand.name}
               </span>
-              <span className="text-[10px] text-muted mt-1 tabular-nums">
+              <span className="text-[10px] text-muted tabular-nums">
                 {brand.productCount} product{brand.productCount !== 1 ? 's' : ''}
               </span>
             </Link>

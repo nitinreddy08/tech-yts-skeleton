@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { generateBreadcrumbJsonLd, SITE_URL } from '@/lib/utils/seo'
 import { siteConfig } from '@/lib/config'
 import { SearchX } from 'lucide-react'
+import { BrandLogo } from '@/components/ui/BrandLogo'
 
 export const revalidate = 60
 
@@ -65,12 +66,15 @@ export default async function BrandPage({
           <span className="text-primary font-medium">{brand.name}</span>
         </nav>
 
-        <div className="mb-8 rounded-xl border border-border bg-surface-alt p-6">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Brand</p>
-          <h1 className="font-heading text-3xl font-bold text-primary">{brand.name}</h1>
-          <p className="text-sm text-muted mt-2">
-            {products.length} reviewed product{products.length !== 1 ? 's' : ''} — sorted by creator rating
-          </p>
+        <div className="mb-8 flex items-center gap-4 rounded-xl border border-border bg-surface-alt p-6">
+          <BrandLogo name={brand.name} size="lg" />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Brand</p>
+            <h1 className="font-heading text-3xl font-bold text-primary">{brand.name}</h1>
+            <p className="text-sm text-muted mt-2">
+              {products.length} reviewed product{products.length !== 1 ? 's' : ''} — sorted by creator rating
+            </p>
+          </div>
         </div>
 
         {products.length === 0 ? (

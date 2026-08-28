@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Zap, ArrowRight, Star } from 'lucide-react'
+import { Zap, ArrowRight } from 'lucide-react'
 import { fetchFeaturedProducts, fetchLatestProducts } from '@/lib/data/products'
 import { fetchTrendingProducts } from '@/lib/data/trending'
 import { getActiveDealMap } from '@/lib/data/product-deals'
@@ -8,7 +8,6 @@ import { fetchActiveDeals } from '@/lib/data/deals'
 import { fetchBestOfLists } from '@/lib/data/best-of-lists'
 import { fetchAllCategories } from '@/lib/data/categories'
 import { productRepository } from '@/lib/repositories'
-import { ProductCard } from '@/components/ui/ProductCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { MotionSection } from '@/components/ui/MotionSection'
 import { HeroFinder } from '@/components/ui/HeroFinder'
@@ -16,13 +15,8 @@ import { HomeDealCard } from '@/components/ui/HomeDealCard'
 import { BestOfPreviewCard } from '@/components/ui/BestOfPreviewCard'
 import { CategoryDiscoveryGrid } from '@/components/ui/CategoryDiscoveryGrid'
 import { TrustStrip } from '@/components/ui/TrustStrip'
-import { TrendingProductsStrip } from '@/components/ui/TrendingProductsStrip'
-import { QuickCompareStrip } from '@/components/ui/QuickCompareStrip'
+import { HomeProductTabs } from '@/components/ui/HomeProductTabs'
 import { RecentlyViewedStrip } from '@/components/ui/RecentlyViewedStrip'
-import { SavedProductsStrip } from '@/components/ui/SavedProductsStrip'
-import { RecentComparesStrip } from '@/components/ui/RecentComparesStrip'
-import { PopularTagsStrip } from '@/components/ui/PopularTagsStrip'
-import { PopularBrandsStrip } from '@/components/ui/PopularBrandsStrip'
 import { DealCountdown } from '@/components/ui/DealCountdown'
 import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
 import { formatIndianPrice } from '@/lib/utils/format'
@@ -42,7 +36,7 @@ export default async function HomePage() {
     fetchActiveDeals(),
     fetchBestOfLists(),
     fetchAllCategories(),
-    fetchTrendingProducts(4),
+    fetchTrendingProducts(8),
     productRepository.list(),
   ])
 
@@ -54,13 +48,14 @@ export default async function HomePage() {
     productCounts[p.category_slug] = (productCounts[p.category_slug] ?? 0) + 1
   }
   const dealMap = getActiveDealMap()
+  const hasAnyProducts = featured.length > 0 || latest.length > 0 || trending.length > 0
 
   return (
     <main className="flex flex-col">
       {/* Hero */}
-      <section className="bg-surface-alt border-b border-border py-10 px-4">
+      <section className="bg-surface-alt border-b border-border py-8 md:py-10 px-4">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-6 text-center lg:text-left">
+          <div className="mb-5 text-center lg:text-left">
             <h1 className="font-heading text-2xl md:text-3xl font-bold text-primary">
               {siteConfig.site_name}
             </h1>
@@ -103,24 +98,13 @@ export default async function HomePage() {
 
       <TrustStrip />
 
-      <RecentlyViewedStrip />
-
-      <SavedProductsStrip />
-
-      <RecentComparesStrip />
-
-      <TrendingProductsStrip products={trending} dealMap={dealMap} />
-
+      {/* Core navigation — what most visitors want first: "show me my category" */}
       <CategoryDiscoveryGrid categories={categories} productCounts={productCounts} />
 
-      <PopularTagsStrip />
-
-      <PopularBrandsStrip />
-
-      {/* Deal of the Day */}
+      {/* Deal of the Day — high-urgency, kept near the top */}
       {dealOfDay && dealOfDay.product && (
         <MotionSection>
-          <div className="mx-auto max-w-7xl px-4 py-16">
+          <div className="mx-auto max-w-7xl px-4 py-12">
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-accent/10 via-surface to-surface-alt border border-accent/15 p-6 md:p-10">
               <div className="flex flex-col md:flex-row gap-8 items-center">
                 <div className="relative h-44 w-44 shrink-0 rounded-2xl bg-surface border border-border overflow-hidden">
@@ -191,11 +175,12 @@ export default async function HomePage() {
         </MotionSection>
       )}
 
-      <QuickCompareStrip />
+      {/* Trending / Top Rated / Newest — one tabbed section instead of three stacked grids */}
+      <HomeProductTabs trending={trending} featured={featured} latest={latest} dealMap={dealMap} />
 
       {/* Best Of */}
       {bestOfLists.length > 0 && (
-        <MotionSection className="py-16 px-4 bg-surface-alt">
+        <MotionSection className="py-12 px-4 bg-surface-alt">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-end justify-between mb-6">
               <div>
@@ -215,47 +200,9 @@ export default async function HomePage() {
         </MotionSection>
       )}
 
-      {/* Featured */}
-      {featured.length > 0 && (
-        <MotionSection className="py-16 px-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-end justify-between mb-6">
-              <div>
-                <h2 className="font-heading text-2xl font-bold text-primary flex items-center gap-2">
-                  <Star size={22} className="text-accent" /> Featured Reviews
-                </h2>
-                <p className="text-sm text-muted mt-1">Hand-picked by our creator team</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {featured.map((p) => (
-                <ProductCard key={p.id} product={p} activeDeal={dealMap[p.id]} />
-              ))}
-            </div>
-          </div>
-        </MotionSection>
-      )}
+      <RecentlyViewedStrip />
 
-      {/* Latest */}
-      {latest.length > 0 && (
-        <MotionSection className="py-16 px-4 bg-surface-alt">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-end justify-between mb-6">
-              <h2 className="font-heading text-2xl font-bold text-primary">Latest Reviews</h2>
-              <Link href="/search?sort=newest" className="text-sm text-accent hover:underline">
-                View all →
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {latest.map((p) => (
-                <ProductCard key={p.id} product={p} activeDeal={dealMap[p.id]} />
-              ))}
-            </div>
-          </div>
-        </MotionSection>
-      )}
-
-      {featured.length === 0 && latest.length === 0 && (
+      {!hasAnyProducts && (
         <MotionSection className="py-20 px-4">
           <div className="max-w-7xl mx-auto">
             <EmptyState icon={Package} heading="No products yet" description="Check back soon" />

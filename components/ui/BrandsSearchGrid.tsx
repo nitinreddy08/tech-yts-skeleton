@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
+import { BrandLogo } from '@/components/ui/BrandLogo'
 
 interface BrandItem {
   id: string
@@ -38,12 +39,13 @@ export function BrandsSearchGrid({ brands }: { brands: BrandItem[] }) {
           <Link
             key={brand.id}
             href={`/brand/${brand.slug}`}
-            className="group flex flex-col items-center justify-center rounded-xl border border-border bg-surface p-6 hover:border-accent hover:shadow-md transition-all text-center"
+            className="group flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-surface p-6 hover:border-accent hover:shadow-md transition-all text-center"
           >
-            <span className="font-heading text-lg font-bold text-primary group-hover:text-accent transition-colors">
+            <BrandLogo name={brand.name} size="lg" />
+            <span className="font-heading text-base font-bold text-primary group-hover:text-accent transition-colors">
               {brand.name}
             </span>
-            <span className="text-xs text-muted mt-1">
+            <span className="text-xs text-muted">
               {brand.productCount} product{brand.productCount !== 1 ? 's' : ''}
             </span>
           </Link>

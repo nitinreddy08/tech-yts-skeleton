@@ -1,51 +1,24 @@
 import { ShieldCheck, GitCompare, IndianRupee, PlayCircle } from 'lucide-react'
-import { siteConfig } from '@/lib/config'
 
 const TRUST_ITEMS = [
-  {
-    icon: ShieldCheck,
-    title: 'Honest Reviews',
-    desc: 'Creator-tested, no paid rankings',
-  },
-  {
-    icon: IndianRupee,
-    title: 'Best Prices',
-    desc: 'Tracked across Amazon, Flipkart & more',
-  },
-  {
-    icon: GitCompare,
-    title: 'Side-by-Side Compare',
-    desc: 'Spec diff up to 4 products at once',
-  },
-  {
-    icon: PlayCircle,
-    title: 'Video Reviews',
-    desc: 'Watch before you buy',
-  },
+  { icon: ShieldCheck, label: 'Honest, creator-tested reviews' },
+  { icon: IndianRupee, label: 'Best prices, tracked daily' },
+  { icon: GitCompare, label: 'Compare up to 4 products' },
+  { icon: PlayCircle, label: 'Video reviews' },
 ] as const
 
+/** A single slim trust bar — not a full section with headings and card borders. */
 export function TrustStrip() {
   return (
-    <section className="border-y border-border bg-surface-alt py-8 px-4">
-      <div className="mx-auto max-w-7xl">
-        <p className="text-center text-xs font-semibold uppercase tracking-wider text-muted mb-5">
-          Why {siteConfig.site_name}?
-        </p>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {TRUST_ITEMS.map(({ icon: Icon, title, desc }) => (
-            <div
-              key={title}
-              className="flex flex-col items-center text-center gap-2 rounded-xl border border-border bg-surface p-4"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
-                <Icon size={20} className="text-accent" />
-              </div>
-              <p className="text-sm font-semibold text-primary">{title}</p>
-              <p className="text-xs text-muted leading-snug">{desc}</p>
-            </div>
-          ))}
-        </div>
+    <div className="border-b border-border bg-surface-alt">
+      <div className="mx-auto max-w-7xl px-4 py-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+        {TRUST_ITEMS.map(({ icon: Icon, label }) => (
+          <span key={label} className="flex items-center gap-1.5 text-xs font-medium text-muted">
+            <Icon size={14} className="text-accent shrink-0" />
+            {label}
+          </span>
+        ))}
       </div>
-    </section>
+    </div>
   )
 }

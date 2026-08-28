@@ -10,6 +10,7 @@ import { buildCompareUrl } from '@/lib/utils/compare-url'
 import { SavedNavLink } from '@/components/ui/SavedNavLink'
 import { AlertsNavLink } from '@/components/ui/AlertsNavLink'
 import { MyStuffNavLink } from '@/components/ui/MyStuffNavLink'
+import { SiteLogoMark } from '@/components/ui/SiteLogo'
 import { Menu, X, ChevronDown, Zap, GitCompare, Trophy } from 'lucide-react'
 
 interface NavCategory {
@@ -208,9 +209,10 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
         >
           <Link
             href="/"
-            className="font-heading text-lg font-bold text-primary shrink-0 hover:text-accent transition-colors"
+            className="flex items-center gap-2 font-heading text-lg font-bold text-primary shrink-0 hover:text-accent transition-colors"
           >
-            {siteConfig.site_name}
+            <SiteLogoMark className="h-7 w-7 shrink-0" />
+            <span className="truncate">{siteConfig.site_name}</span>
           </Link>
 
           <div className="flex-1 max-w-2xl hidden md:block">
@@ -280,7 +282,10 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
           <div className="absolute inset-0 bg-black/40" onClick={() => setDrawerOpen(false)} aria-hidden />
           <div className="absolute inset-y-0 right-0 w-full max-w-sm bg-surface shadow-xl flex flex-col">
             <div className="flex items-center justify-between border-b border-border px-4 h-14 shrink-0">
-              <span className="font-heading font-bold text-primary">{siteConfig.site_name}</span>
+              <span className="flex items-center gap-2 font-heading font-bold text-primary">
+                <SiteLogoMark className="h-6 w-6 shrink-0" />
+                {siteConfig.site_name}
+              </span>
               <button
                 type="button"
                 className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-surface-alt"

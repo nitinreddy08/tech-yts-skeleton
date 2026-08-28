@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { siteConfig } from '@/lib/config'
 import { ArrowUp, ShieldCheck } from 'lucide-react'
 import { NewsletterSignup } from '@/components/ui/NewsletterSignup'
+import { SiteLogoMark } from '@/components/ui/SiteLogo'
 
 interface FooterCategory {
   slug: string
@@ -102,7 +103,10 @@ export default function Footer({ categories, bestOfLists }: FooterProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand + newsletter */}
           <div className="sm:col-span-2 lg:col-span-1">
-            <p className="font-heading text-lg font-bold text-primary">{siteConfig.site_name}</p>
+            <p className="flex items-center gap-2 font-heading text-lg font-bold text-primary">
+              <SiteLogoMark className="h-6 w-6 shrink-0" />
+              {siteConfig.site_name}
+            </p>
             <p className="mt-2 text-sm text-muted leading-relaxed">{siteConfig.tagline}</p>
             <p className="mt-3 text-xs text-muted">
               Honest tech reviews and best prices for the Indian market.
