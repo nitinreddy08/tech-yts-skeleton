@@ -76,7 +76,7 @@ export default async function SearchPage({
   const showCatalog = !hasQuery && hasBrowseFilters
   const showResults = (hasQuery || showCatalog) && results.length > 0
   const hasResults = results.length > 0
-  const suggestions = hasQuery && !hasResults ? getSearchSuggestions(q) : []
+  const suggestions = hasQuery && !hasResults ? await getSearchSuggestions(q) : []
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">

@@ -1,4 +1,4 @@
-import { db } from '@/lib/mock/db'
+import { productRepository } from '@/lib/repositories'
 
 const POPULAR_TERMS = [
   'OnePlus 13',
@@ -14,14 +14,14 @@ const POPULAR_TERMS = [
 ]
 
 /** Baymard / Google-style "did you mean" from catalog tokens */
-export function getSearchSuggestions(query: string, limit = 5): string[] {
+export async function getSearchSuggestions(query: string, limit = 5): Promise<string[]> {
   const q = query.toLowerCase().trim()
   if (q.length < 2) return []
 
   const candidates = new Set<string>()
+  const products = await productRepository.list()
 
-  for (const p of db.products) {
-    if (!p.is_published) continue
+  for (const p of products) {
     if (p.name.toLowerCase().includes(q) || q.includes(p.name.toLowerCase().slice(0, 4))) {
       candidates.add(p.name)
     }

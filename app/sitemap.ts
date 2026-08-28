@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
-import { db } from '@/lib/mock/db'
-import { bestOfListRepository, categoryRepository, brandRepository } from '@/lib/repositories'
+import { productRepository, bestOfListRepository, categoryRepository, brandRepository } from '@/lib/repositories'
+import { tagSlug } from '@/lib/data/tags'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://example.com'
 
@@ -27,14 +27,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
-  const productEntries: MetadataRoute.Sitemap = db.products
-    .filter((p) => p.is_published)
-    .map((product) => ({
-      url: `${SITE_URL}/${product.category_slug}/${product.slug}`,
-      lastModified: product.updated_at ? new Date(product.updated_at) : new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.6,
-    }))
+  const publishedProducts = await productRepository.listDetailed()
+
+  const productEntries: MetadataRoute.Sitemap = publishedProducts.map((product) => ({
+    url: `${SITE_URL}/${product.category_slug}/${product.slug}`,
+    lastModified: product.updated_at ? new Date(product.updated_at) : new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  }))
 
   const bestOfEntries: MetadataRoute.Sitemap = (await bestOfListRepository.list()).map((list) => ({
     url: `${SITE_URL}/best-of/${list.slug}`,
@@ -51,9 +51,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   const tagSlugs = new Set<string>()
-  for (const p of db.products) {
-    if (!p.is_published) continue
-    for (const t of p.tags) tagSlugs.add(t.toLowerCase().replace(/\s+/g, '-'))
+  for (const p of publishedProducts) {
+    for (const t of p.tags) tagSlugs.add(tagSlug(t))
   }
   const tagEntries: MetadataRoute.Sitemap = [...tagSlugs].map((slug) => ({
     url: `${SITE_URL}/tag/${slug}`,
