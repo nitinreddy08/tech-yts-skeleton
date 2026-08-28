@@ -1,4 +1,7 @@
-import { db } from '@/lib/mock/db'
+/**
+ * lib/data/frequent-compares.ts
+ */
+import { productRepository } from '@/lib/repositories'
 
 export interface FrequentCompare {
   label: string
@@ -29,28 +32,34 @@ const CURATED: FrequentCompare[] = [
   },
 ]
 
-export function getFrequentComparesForProduct(productSlug: string, limit = 3): FrequentCompare[] {
-  const sameCategory = db.products.find((p) => p.slug === productSlug)?.category_slug
-  const curated = CURATED.filter(
-    (c) => c.slugs.includes(productSlug) && c.slugs.every((s) => db.products.some((p) => p.slug === s && p.is_published))
+export async function getFrequentComparesForProduct(
+  productSlug: string,
+  limit = 3
+): Promise<FrequentCompare[]> {
+  const product = await productRepository.findBySlug(productSlug)
+  const sameCategory = product?.category_slug
+
+  const curatedChecks = await Promise.all(
+    CURATED.map(async (c) => {
+      if (!c.slugs.includes(productSlug)) return false
+      const others = await Promise.all(c.slugs.map((s) => productRepository.findBySlug(s)))
+      return others.every((p) => p !== null)
+    })
   )
+  const curated = CURATED.filter((_, i) => curatedChecks[i])
 
   if (curated.length >= limit) return curated.slice(0, limit)
 
-  const extras = db.products
-    .filter(
-      (p) =>
-        p.is_published &&
-        p.slug !== productSlug &&
-        p.category_slug === sameCategory &&
-        !curated.some((c) => c.slugs.includes(p.slug))
-    )
-    .slice(0, limit - curated.length)
-    .map((p) => ({
-      label: `Compare with ${p.name.split(' ').slice(-2).join(' ')}`,
-      slugs: [productSlug, p.slug],
-      href: `/compare?products=${productSlug},${p.slug}`,
-    }))
+  const extras = sameCategory
+    ? (await productRepository.list({ categorySlug: sameCategory }))
+        .filter((p) => p.slug !== productSlug && !curated.some((c) => c.slugs.includes(p.slug)))
+        .slice(0, limit - curated.length)
+        .map((p) => ({
+          label: `Compare with ${p.name.split(' ').slice(-2).join(' ')}`,
+          slugs: [productSlug, p.slug],
+          href: `/compare?products=${productSlug},${p.slug}`,
+        }))
+    : []
 
   return [...curated, ...extras].slice(0, limit)
 }

@@ -1,14 +1,13 @@
 import Link from 'next/link'
 import { GitCompare } from 'lucide-react'
-import { getFrequentComparesForProduct } from '@/lib/data/frequent-compares'
+import type { FrequentCompare } from '@/lib/data/frequent-compares'
 
 interface FrequentComparesStripProps {
-  productSlug: string
   productName: string
+  pairs: FrequentCompare[]
 }
 
-export function FrequentComparesStrip({ productSlug, productName }: FrequentComparesStripProps) {
-  const pairs = getFrequentComparesForProduct(productSlug)
+export function FrequentComparesStrip({ productName, pairs }: FrequentComparesStripProps) {
   if (pairs.length === 0) return null
 
   return (

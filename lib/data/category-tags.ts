@@ -1,5 +1,5 @@
-import { db } from '@/lib/mock/db'
-import { tagSlug } from '@/lib/data/tags'
+import { productRepository } from '@/lib/repositories'
+import { tagSlug, tagLabel } from '@/lib/data/tags'
 
 export interface CategoryTagCount {
   slug: string
@@ -7,11 +7,14 @@ export interface CategoryTagCount {
   count: number
 }
 
-export function getPopularTagsForCategory(categorySlug: string, limit = 12): CategoryTagCount[] {
+export async function getPopularTagsForCategory(
+  categorySlug: string,
+  limit = 12
+): Promise<CategoryTagCount[]> {
+  const products = await productRepository.list({ categorySlug })
   const counts = new Map<string, number>()
 
-  for (const p of db.products) {
-    if (!p.is_published || p.category_slug !== categorySlug) continue
+  for (const p of products) {
     for (const tag of p.tags) {
       const slug = tagSlug(tag)
       counts.set(slug, (counts.get(slug) ?? 0) + 1)
@@ -19,11 +22,7 @@ export function getPopularTagsForCategory(categorySlug: string, limit = 12): Cat
   }
 
   return [...counts.entries()]
-    .map(([slug, count]) => ({
-      slug,
-      label: slug.replace(/-/g, ' '),
-      count,
-    }))
+    .map(([slug, count]) => ({ slug, label: tagLabel(slug), count }))
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
     .slice(0, limit)
 }

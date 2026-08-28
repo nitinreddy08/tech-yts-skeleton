@@ -1,28 +1,13 @@
+/**
+ * lib/data/tags.ts
+ *
+ * Tag aggregation over the product catalog. Sources products via
+ * productRepository.list() (published only) instead of a hand-rolled
+ * db.products filter + its own copy of the summary mapper.
+ */
 import { unstable_cache } from 'next/cache'
-import { db } from '@/lib/mock/db'
+import { productRepository } from '@/lib/repositories'
 import type { ProductSummary } from '@/types'
-
-function toSummary(p: (typeof db.products)[0]): ProductSummary {
-  return {
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    category_id: p.category_id,
-    category_slug: p.category_slug,
-    brand_id: p.brand_id,
-    brand_name: p.brand_name,
-    thumbnail_url: p.thumbnail_url,
-    creator_rating: p.creator_rating,
-    current_price_inr: p.current_price_inr,
-    launch_price_inr: p.launch_price_inr,
-    is_featured: p.is_featured,
-    is_deal_of_the_day: p.is_deal_of_the_day,
-    deal_badge_text: p.deal_badge_text,
-    tags: p.tags,
-    youtube_video_url: p.youtube_video_url,
-    created_at: p.created_at,
-  }
-}
 
 export interface TagWithCount {
   slug: string
@@ -40,9 +25,9 @@ export function tagLabel(slug: string): string {
 
 export const fetchAllTags = unstable_cache(
   async (): Promise<TagWithCount[]> => {
+    const products = await productRepository.list()
     const counts = new Map<string, number>()
-    for (const p of db.products) {
-      if (!p.is_published) continue
+    for (const p of products) {
       for (const tag of p.tags) {
         const slug = tagSlug(tag)
         counts.set(slug, (counts.get(slug) ?? 0) + 1)
@@ -59,20 +44,15 @@ export const fetchAllTags = unstable_cache(
 export const fetchProductsByTag = unstable_cache(
   async (slug: string): Promise<{ tag: string; products: ProductSummary[] } | null> => {
     const normalized = slug.toLowerCase()
-    const products = db.products
-      .filter(
-        (p) =>
-          p.is_published && p.tags.some((t) => tagSlug(t) === normalized)
-      )
-      .map(toSummary)
+    const allProducts = await productRepository.list()
+    const products = allProducts
+      .filter((p) => p.tags.some((t) => tagSlug(t) === normalized))
       .sort((a, b) => b.creator_rating - a.creator_rating)
 
     if (products.length === 0) return null
 
     const tag =
-      db.products
-        .flatMap((p) => p.tags)
-        .find((t) => tagSlug(t) === normalized) ?? tagLabel(slug)
+      allProducts.flatMap((p) => p.tags).find((t) => tagSlug(t) === normalized) ?? tagLabel(slug)
 
     return { tag, products }
   },

@@ -5,6 +5,7 @@ import { filterAndSortProducts } from '@/lib/utils/filter'
 import { getSpecFiltersForCategory, parseSpecFiltersFromParams } from '@/lib/utils/spec-filters'
 import { getProductClickCounts } from '@/lib/data/trending'
 import { getActiveDealMap } from '@/lib/data/product-deals'
+import { getPopularTagsForCategory } from '@/lib/data/category-tags'
 import { generateCategoryMetadata, generateBreadcrumbJsonLd, generateCategoryItemListJsonLd } from '@/lib/utils/seo'
 import { productRepository } from '@/lib/repositories'
 import { CategoryProductResults } from '@/components/ui/CategoryProductResults'
@@ -55,7 +56,10 @@ export default async function CategoryPage({
   const cat = await fetchCategoryBySlug(category)
   if (!cat) notFound()
 
-  const categoryProducts = await productRepository.listDetailed({ categorySlug: category })
+  const [categoryProducts, popularTags] = await Promise.all([
+    productRepository.listDetailed({ categorySlug: category }),
+    getPopularTagsForCategory(category),
+  ])
   const allProductsWithSpecs = categoryProducts.map((p) => ({
     id: p.id,
     name: p.name,
@@ -167,7 +171,7 @@ export default async function CategoryPage({
         </Suspense>
 
         <div className="flex-1 min-w-0">
-          <CategoryPopularTags categorySlug={cat.slug} categoryName={cat.name} />
+          <CategoryPopularTags categoryName={cat.name} tags={popularTags} />
           <Suspense fallback={null}>
             <CategoryBudgetChips categorySlug={cat.slug} />
           </Suspense>

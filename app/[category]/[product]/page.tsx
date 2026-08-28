@@ -25,6 +25,7 @@ import { getSpecHighlights } from '@/lib/utils/spec-highlights'
 import { generatePriceHistory } from '@/lib/utils/price-history'
 import { getRelatedGuidesForProduct } from '@/lib/data/related-guides'
 import { getCheaperAlternatives } from '@/lib/data/alternatives'
+import { getFrequentComparesForProduct } from '@/lib/data/frequent-compares'
 import { tagSlug } from '@/lib/data/tags'
 import { CheaperAlternativesStrip } from '@/components/ui/CheaperAlternativesStrip'
 import { RelatedGuidesStrip } from '@/components/ui/RelatedGuidesStrip'
@@ -114,7 +115,8 @@ export default async function ProductPage({
       ? generateVideoObjectJsonLd(p, p.youtube_short_url)
       : null
   const relatedGuides = await getRelatedGuidesForProduct(p.id)
-  const cheaperAlternatives = getCheaperAlternatives(p.id, p.category_slug, bestPrice)
+  const cheaperAlternatives = await getCheaperAlternatives(p.id, p.category_slug, bestPrice)
+  const frequentComparePairs = await getFrequentComparesForProduct(p.slug)
   const priceHistory = generatePriceHistory({
     launchPrice: p.launch_price_inr,
     currentPrice: bestPrice,
@@ -217,7 +219,7 @@ export default async function ProductPage({
 
         <KeySpecStrip highlights={specHighlights} className="mb-6" />
 
-        <FrequentComparesStrip productSlug={p.slug} productName={p.name} />
+        <FrequentComparesStrip productName={p.name} pairs={frequentComparePairs} />
 
         {(p.pros.length > 0 || p.cons.length > 0) && (
           <div className="mb-6">

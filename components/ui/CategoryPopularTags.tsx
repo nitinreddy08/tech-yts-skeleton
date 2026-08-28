@@ -1,15 +1,13 @@
 import Link from 'next/link'
 import { Hash } from 'lucide-react'
-import { getPopularTagsForCategory } from '@/lib/data/category-tags'
+import type { CategoryTagCount } from '@/lib/data/category-tags'
 
 interface CategoryPopularTagsProps {
-  categorySlug: string
   categoryName: string
+  tags: CategoryTagCount[]
 }
 
-export function CategoryPopularTags({ categorySlug, categoryName }: CategoryPopularTagsProps) {
-  const tags = getPopularTagsForCategory(categorySlug)
-
+export function CategoryPopularTags({ categoryName, tags }: CategoryPopularTagsProps) {
   if (tags.length === 0) return null
 
   return (
