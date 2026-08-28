@@ -65,7 +65,7 @@ describe('ProductCard', () => {
         )
 
         const shouldShowBadge = product.is_deal_of_the_day || !!product.deal_badge_text
-        const badgeEl = container.querySelector('.bg-accent')
+        const badgeEl = container.querySelector('.bg-secondary')
 
         if (shouldShowBadge) {
           expect(badgeEl).not.toBeNull()
@@ -152,10 +152,10 @@ describe('ProductCard', () => {
   }, 30000)
 
   /**
-   * Property 4b: DealBadge accent color
+   * Property 4b: DealBadge amber color
    * Validates: Requirements 5.7
    */
-  it('Property 4b: DealBadge accent color', () => {
+  it('Property 4b: DealBadge amber color', () => {
     // Products that should show badge
     const dealProductArb = fc.record({
       id: fc.constant('test-id'),
@@ -190,23 +190,23 @@ describe('ProductCard', () => {
       deal_badge_text: null,
     }))
 
-    // flagged products must have .bg-accent
+    // flagged products must have .bg-secondary
     fc.assert(
       fc.property(flaggedArb, (product) => {
         const { container } = render(
           <ProductCard product={product} showDealBadge={true} />
         )
-        expect(container.querySelector('.bg-accent')).not.toBeNull()
+        expect(container.querySelector('.bg-secondary')).not.toBeNull()
       })
     )
 
-    // unflagged products must NOT have .bg-accent
+    // unflagged products must NOT have .bg-secondary
     fc.assert(
       fc.property(unflaggedArb, (product) => {
         const { container } = render(
           <ProductCard product={product} showDealBadge={true} />
         )
-        expect(container.querySelector('.bg-accent')).toBeNull()
+        expect(container.querySelector('.bg-secondary')).toBeNull()
       })
     )
   })

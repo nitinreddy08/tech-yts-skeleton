@@ -55,7 +55,7 @@ export function ProductCard({ product, showDealBadge = true, activeDeal, rank, p
       </div>
 
       {showBadge && !showLiveDeal && (
-        <div className="absolute top-2 right-2 z-10 rounded-full bg-accent text-white text-xs font-semibold px-2 py-0.5">
+        <div className="absolute top-2 right-2 z-10 rounded-full bg-secondary text-primary text-xs font-semibold px-2 py-0.5">
           {badgeText}
         </div>
       )}

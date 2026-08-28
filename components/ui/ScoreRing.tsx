@@ -2,7 +2,9 @@
 
 /**
  * ScoreRing — Animated SVG radial score indicator, RTINGS-inspired.
- * Rating is 0–10. Color shifts from red → amber → green as score rises.
+ * Rating is 0–10. Ring color derives from the score in four bands
+ * (see design-system/components.md "Score Ring"): success at 9+,
+ * brand violet 8–8.9, deal amber 7–7.9, neutral below 7.
  */
 
 interface ScoreRingProps {
@@ -12,12 +14,21 @@ interface ScoreRingProps {
   label?: string
 }
 
-function scoreColor(score: number): string {
-  if (score >= 9) return '#22c55e'   // green-500
-  if (score >= 8) return '#84cc16'   // lime-500
-  if (score >= 7) return '#f59e0b'   // amber-500
-  if (score >= 6) return '#f97316'   // orange-500
-  return '#ef4444'                   // red-500
+/** Ring stroke — vivid, fine at the wider contrast tolerance SVG strokes get. */
+function scoreRingColor(score: number): string {
+  if (score >= 9) return 'var(--success-500)'
+  if (score >= 8) return 'var(--primary-500)'
+  if (score >= 7) return 'var(--secondary-500)'
+  return 'var(--neutral-600)'
+}
+
+/** Text color — one step darker than the ring in the amber band, where
+ *  secondary-500 alone doesn't clear text-contrast against white. */
+function scoreTextColor(score: number): string {
+  if (score >= 9) return 'var(--success-700)'
+  if (score >= 8) return 'var(--primary-600)'
+  if (score >= 7) return 'var(--secondary-700)'
+  return 'var(--neutral-800)'
 }
 
 function scoreVerdict(score: number): string {
@@ -36,7 +47,8 @@ export function ScoreRing({ score, size = 96, strokeWidth = 7, label }: ScoreRin
   // Fill from 0→10 mapped to full circle. Start at top (rotate -90°).
   const fill = Math.min(Math.max(score / 10, 0), 1)
   const dashOffset = circumference * (1 - fill)
-  const color = scoreColor(score)
+  const ringColor = scoreRingColor(score)
+  const textColor = scoreTextColor(score)
 
   return (
     <div className="flex flex-col items-center gap-1">
@@ -64,7 +76,7 @@ export function ScoreRing({ score, size = 96, strokeWidth = 7, label }: ScoreRin
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke={color}
+            stroke={ringColor}
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeDasharray={circumference}
@@ -76,14 +88,14 @@ export function ScoreRing({ score, size = 96, strokeWidth = 7, label }: ScoreRin
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span
             className="text-xl font-extrabold leading-none tabular-nums"
-            style={{ color }}
+            style={{ color: textColor }}
           >
             {score.toFixed(1)}
           </span>
           <span className="text-[10px] text-muted leading-none mt-0.5">/10</span>
         </div>
       </div>
-      <span className="text-xs font-semibold" style={{ color }}>
+      <span className="text-xs font-semibold" style={{ color: textColor }}>
         {scoreVerdict(score)}
       </span>
       {label && <span className="text-xs text-muted text-center leading-tight">{label}</span>}

@@ -1,27 +1,100 @@
 @import "tailwindcss";
 
+/**
+ * Verdict Design System 1.0 — token layer.
+ * See design-system/DESIGN_SYSTEM.md for the full rationale and spec.
+ * Full palette scales below; the app's existing semantic names
+ * (--color-primary, --color-accent, etc.) are remapped to them so every
+ * `bg-accent` / `text-primary` / `rounded-xl` usage across the app updates
+ * automatically — no per-component color edits required for the bulk of
+ * the app.
+ */
 :root {
-  /* Color tokens */
-  --color-primary:       #111111;
-  --color-accent:        #0066FF;
-  --color-surface:       #FFFFFF;
-  --color-surface-alt:   #F9F9F7;
-  --color-surface-admin: #F5F4F0;
-  --color-border:        #E5E5E5;
-  --color-muted:         #6B7280;
+  /* ---------- Primary — Signal Violet ---------- */
+  --primary-50:  #F5F1FE;
+  --primary-100: #E7DFFB;
+  --primary-200: #D0BFF7;
+  --primary-300: #AF93F0;
+  --primary-400: #8D65EC;
+  --primary-500: #723EEA;
+  --primary-600: #5722D3;
+  --primary-700: #4B24A8;
+  --primary-800: #3E2183;
+  --primary-900: #301C5F;
+  --primary-950: #21143D;
 
-  /* Shadow scale */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.04);
+  /* ---------- Secondary — Deal Amber (rationed: deal badges + hero CTA only) ---------- */
+  --secondary-50:  #FFF7EB;
+  --secondary-100: #FEEACD;
+  --secondary-200: #FDD69B;
+  --secondary-300: #FBC16A;
+  --secondary-400: #F9B043;
+  --secondary-500: #F7A222;
+  --secondary-600: #DD8A0E;
+  --secondary-700: #B3710F;
+  --secondary-800: #8A590F;
+  --secondary-900: #6B460F;
+  --secondary-950: #4E340E;
 
-  /* Border radius tokens */
-  --radius-card:    12px;
-  --radius-card-lg: 16px;
+  /* ---------- Neutrals — Graphite ---------- */
+  --neutral-0:    #FFFFFF;
+  --neutral-50:   #FEFDFE;
+  --neutral-100:  #F9F9FB;
+  --neutral-200:  #F1F0F5;
+  --neutral-300:  #E7E4EC;
+  --neutral-400:  #D9D6E0;
+  --neutral-500:  #C4C0CE;
+  --neutral-600:  #AAA5B6;
+  --neutral-700:  #908A9E;
+  --neutral-800:  #767184;
+  --neutral-900:  #585365;
+  --neutral-950:  #3A3546;
+  --neutral-1000: #18151E;
+
+  /* ---------- Status ---------- */
+  --error-50:   #FEECEC; --error-100: #FBD0D1; --error-500: #E74B51; --error-700: #B0272B;
+  --warning-50: #FFFAEB; --warning-100: #FDEFC3; --warning-500: #EFBE2A; --warning-700: #AA8518;
+  --success-50: #EDFCF5; --success-100: #D4F7E7; --success-500: #33CC85; --success-700: #2B825A;
+  --info-50:    #F0F3FE; --info-100: #D9DEFC; --info-500: #5168EC; --info-700: #273DB9;
+
+  /* ---------- Category accents ---------- */
+  --category-smartphones: #723EEA;
+  --category-laptops:     #30A69E;
+  --category-audio:       #DA4E99;
+  --category-tablets:     #30AEE8;
+  --category-wearables:   #EE7C2B;
+  --category-gaming:      #E24236;
+
+  /* ---------- App semantic tokens (existing names, remapped) ----------
+     --color-accent intentionally sits one step darker than the brand
+     mark (primary-600, not primary-500) — it is used both as button fill
+     and as link/badge color throughout the app, and a single token needs
+     enough weight to work as a solid CTA background. */
+  --color-primary:       var(--neutral-1000);
+  --color-accent:        var(--primary-600);
+  --color-secondary:     var(--secondary-500);
+  --color-surface:       var(--neutral-0);
+  --color-surface-alt:   var(--neutral-100);
+  --color-surface-admin: var(--neutral-200);
+  --color-border:        var(--neutral-300);
+  --color-muted:         var(--neutral-800);
+
+  /* Shadow scale — tinted to brand ink rgb(24 21 30), not neutral black */
+  --shadow-xs: 0 1px 2px 0 rgba(24,21,30,0.05);
+  --shadow-sm: 0 2px 4px 0 rgba(24,21,30,0.08), 0 1px 2px 0 rgba(24,21,30,0.06);
+  --shadow-md: 0 4px 8px 0 rgba(24,21,30,0.08), 0 2px 4px 0 rgba(24,21,30,0.06);
+  --shadow-lg: 0 8px 16px 0 rgba(24,21,30,0.08), 0 4px 8px 0 rgba(24,21,30,0.06);
+  --shadow-xl: 0 16px 32px 0 rgba(24,21,30,0.10), 0 8px 16px 0 rgba(24,21,30,0.08);
+
+  /* Border radius tokens (existing names, used directly in a few files) */
+  --radius-card:    16px;
+  --radius-card-lg: 24px;
 }
 
 @theme inline {
   --color-primary:       var(--color-primary);
   --color-accent:        var(--color-accent);
+  --color-secondary:     var(--color-secondary);
   --color-surface:       var(--color-surface);
   --color-surface-alt:   var(--color-surface-alt);
   --color-surface-admin: var(--color-surface-admin);
@@ -29,8 +102,62 @@
   --color-muted:         var(--color-muted);
   --font-heading:        var(--font-geist-sans);
   --font-body:           var(--font-inter);
-  --shadow-sm:           var(--shadow-sm);
-  --shadow-md:           var(--shadow-md);
+
+  /* Full scales exposed as utilities, e.g. bg-primary-500, text-success-700 */
+  --color-primary-50: var(--primary-50); --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200); --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400); --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600); --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800); --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
+
+  --color-secondary-50: var(--secondary-50); --color-secondary-100: var(--secondary-100);
+  --color-secondary-200: var(--secondary-200); --color-secondary-300: var(--secondary-300);
+  --color-secondary-400: var(--secondary-400); --color-secondary-500: var(--secondary-500);
+  --color-secondary-600: var(--secondary-600); --color-secondary-700: var(--secondary-700);
+  --color-secondary-800: var(--secondary-800); --color-secondary-900: var(--secondary-900);
+  --color-secondary-950: var(--secondary-950);
+
+  --color-neutral-0: var(--neutral-0); --color-neutral-100: var(--neutral-100);
+  --color-neutral-200: var(--neutral-200); --color-neutral-300: var(--neutral-300);
+  --color-neutral-400: var(--neutral-400); --color-neutral-500: var(--neutral-500);
+  --color-neutral-600: var(--neutral-600); --color-neutral-700: var(--neutral-700);
+  --color-neutral-800: var(--neutral-800); --color-neutral-900: var(--neutral-900);
+  --color-neutral-950: var(--neutral-950); --color-neutral-1000: var(--neutral-1000);
+
+  --color-error-50: var(--error-50); --color-error-100: var(--error-100);
+  --color-error-500: var(--error-500); --color-error-700: var(--error-700);
+  --color-warning-50: var(--warning-50); --color-warning-100: var(--warning-100);
+  --color-warning-500: var(--warning-500); --color-warning-700: var(--warning-700);
+  --color-success-50: var(--success-50); --color-success-100: var(--success-100);
+  --color-success-500: var(--success-500); --color-success-700: var(--success-700);
+  --color-info-50: var(--info-50); --color-info-100: var(--info-100);
+  --color-info-500: var(--info-500); --color-info-700: var(--info-700);
+
+  --color-category-smartphones: var(--category-smartphones);
+  --color-category-laptops:     var(--category-laptops);
+  --color-category-audio:       var(--category-audio);
+  --color-category-tablets:     var(--category-tablets);
+  --color-category-wearables:   var(--category-wearables);
+  --color-category-gaming:      var(--category-gaming);
+
+  /* Override Tailwind's built-in radius scale so existing rounded-xl /
+     rounded-2xl / rounded-3xl usage across the app (product cards, hero
+     panels — ~130 instances) picks up the new card-radius language
+     without touching each call site. rounded-lg (8px) is untouched — it
+     already matches the design system's 8px interactive-element default. */
+  --radius-xl:  1rem;    /* 16px, was 12px — cards */
+  --radius-2xl: 1.5rem;  /* 24px, was 16px — larger panels */
+  --radius-3xl: 2.5rem;  /* 40px, was 24px — hero containers */
+
+  /* Override Tailwind's built-in shadow scale to the tinted curve above,
+     so existing shadow-xs/sm/md/lg/xl usage (~50 instances) stays
+     consistent with the two shadow tokens the app already overrode. */
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
 }
 
 body {
@@ -50,7 +177,7 @@ body {
   100% { background-position:  200% 0; }
 }
 .shimmer {
-  background: linear-gradient(90deg, var(--color-surface-alt) 25%, #ebebeb 50%, var(--color-surface-alt) 75%);
+  background: linear-gradient(90deg, var(--color-surface-alt) 25%, var(--neutral-300) 50%, var(--color-surface-alt) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s ease-in-out infinite;
 }

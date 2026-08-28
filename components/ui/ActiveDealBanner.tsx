@@ -13,11 +13,11 @@ interface ActiveDealBannerProps {
 /** Slickdeals / Amazon urgency strip on PDP */
 export function ActiveDealBanner({ deal, productName }: ActiveDealBannerProps) {
   return (
-    <div className="rounded-xl border border-accent/30 bg-gradient-to-r from-accent/10 to-accent/5 p-4 mb-4">
+    <div className="rounded-xl border border-secondary/40 bg-gradient-to-r from-secondary/15 to-secondary/5 p-4 mb-4">
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-0.5 text-[10px] font-bold text-white uppercase">
+            <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-[10px] font-bold text-primary uppercase">
               <Zap size={10} /> {dealTypeLabel(deal.dealType)}
             </span>
             {deal.savingsPercent != null && (
@@ -38,7 +38,7 @@ export function ActiveDealBanner({ deal, productName }: ActiveDealBannerProps) {
             storeName={deal.storeName}
             productName={productName}
             priceInr={deal.dealPrice}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-secondary px-4 py-2 text-sm font-semibold text-primary hover:bg-secondary-600 transition-colors"
           >
             Grab deal on {deal.storeName} <ArrowRight size={14} />
           </AffiliateOutboundLink>
@@ -61,7 +61,7 @@ export function DealRibbon({ deal, className = '' }: DealRibbonProps) {
 
   return (
     <div
-      className={`absolute top-2 right-2 z-10 flex items-center gap-1 rounded-full bg-accent text-white text-[10px] font-bold px-2 py-0.5 shadow-sm ${className}`}
+      className={`absolute top-2 right-2 z-10 flex items-center gap-1 rounded-full bg-secondary text-primary text-[10px] font-bold px-2 py-0.5 shadow-sm ${className}`}
     >
       <Zap size={9} />
       {label}
