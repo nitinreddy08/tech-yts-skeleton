@@ -10,12 +10,11 @@ import { ProductGallery } from '@/components/ui/ProductGallery'
 import { BuySection } from '@/components/ui/BuySection'
 import { SpecsTable } from '@/components/ui/SpecsTable'
 import { FAQAccordion } from '@/components/ui/FAQAccordion'
-import { ProductCard } from '@/components/ui/ProductCard'
 import { ScoreRing } from '@/components/ui/ScoreRing'
 import { StickyBuyBar } from '@/components/ui/StickyBuyBar'
 import { UseCaseBadges } from '@/components/ui/UseCaseBadges'
 import Link from 'next/link'
-import { ProductComparePanel, SimilarCompareStrip } from '@/components/ui/ProductComparePanel'
+import { ProductComparePanel } from '@/components/ui/ProductComparePanel'
 import { KeySpecStrip } from '@/components/ui/KeySpecStrip'
 import { RecentlyViewedTracker } from '@/components/ui/RecentlyViewedTracker'
 import { RecentlyViewedStrip } from '@/components/ui/RecentlyViewedStrip'
@@ -27,10 +26,8 @@ import { getRelatedGuidesForProduct } from '@/lib/data/related-guides'
 import { getCheaperAlternatives } from '@/lib/data/alternatives'
 import { getFrequentComparesForProduct } from '@/lib/data/frequent-compares'
 import { tagSlug } from '@/lib/data/tags'
-import { CheaperAlternativesStrip } from '@/components/ui/CheaperAlternativesStrip'
 import { RelatedGuidesStrip } from '@/components/ui/RelatedGuidesStrip'
 import { fetchProductsByBrand } from '@/lib/data/brands'
-import { MoreFromBrandStrip } from '@/components/ui/MoreFromBrandStrip'
 import { SpecsCopyButton } from '@/components/ui/SpecsCopyButton'
 import { ReviewUpdatedBadge } from '@/components/ui/ReviewUpdatedBadge'
 import { BottomLineVerdict } from '@/components/ui/BottomLineVerdict'
@@ -40,13 +37,9 @@ import { YouTubeShortEmbed } from '@/components/ui/YouTubeShortEmbed'
 import { BenchmarkScores } from '@/components/ui/BenchmarkScores'
 import { EmiHint } from '@/components/ui/EmiHint'
 import { PriceHistoryChart } from '@/components/ui/PriceHistoryChart'
-import {
-  ChevronRight,
-  CheckCircle,
-  XCircle,
-  TrendingDown,
-  Star,
-} from 'lucide-react'
+import { ProductDetailTabs, type DetailTab } from '@/components/ui/ProductDetailTabs'
+import { ProductRecommendationTabs } from '@/components/ui/ProductRecommendationTabs'
+import { ChevronRight, TrendingDown } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const revalidate = 60
@@ -125,11 +118,72 @@ export default async function ProductPage({
 
   const navSections: { id: string; label: string }[] = []
   if (p.pros.length > 0 || p.cons.length > 0) navSections.push({ id: 'verdict', label: 'Verdict' })
-  if (p.description || youtubeId || p.youtube_short_url) navSections.push({ id: 'review', label: 'Review' })
-  navSections.push({ id: 'specs', label: 'Specs' })
-  if (p.faqs.length > 0) navSections.push({ id: 'faq', label: 'FAQ' })
-  if (similarProducts.length > 0) navSections.push({ id: 'similar', label: 'Similar' })
-  if (moreFromBrand.length > 0) navSections.push({ id: 'brand', label: p.brand_name })
+  navSections.push({ id: 'details', label: 'Details' })
+  if (similarProducts.length > 0 || moreFromBrand.length > 0 || cheaperAlternatives.length > 0) {
+    navSections.push({ id: 'similar', label: 'You Might Like' })
+  }
+
+  const detailTabs: DetailTab[] = []
+  if (p.description || youtubeId || p.youtube_short_url) {
+    detailTabs.push({
+      id: 'review',
+      label: 'Review',
+      content: (
+        <div className="flex flex-col gap-4">
+          {youtubeId && (
+            <div className="aspect-video rounded-xl overflow-hidden border border-border">
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${youtubeId}`}
+                title={`${p.name} Review`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="h-full w-full"
+              />
+            </div>
+          )}
+          {p.description && (
+            <p className="text-sm text-muted leading-relaxed">{p.description}</p>
+          )}
+          {p.youtube_short_url && <YouTubeShortEmbed url={p.youtube_short_url} title={p.name} />}
+        </div>
+      ),
+    })
+  }
+  if (p.benchmarks) {
+    detailTabs.push({
+      id: 'benchmarks',
+      label: 'Benchmarks',
+      content: <BenchmarkScores benchmarks={p.benchmarks} productName={p.name} />,
+    })
+  }
+  detailTabs.push({
+    id: 'specs',
+    label: 'Full Specs',
+    content: (
+      <div className="flex flex-col gap-8">
+        <div>
+          <div className="flex items-center justify-end mb-3">
+            <SpecsCopyButton
+              productName={p.name}
+              specifications={p.specifications}
+              template={p.category.spec_template}
+            />
+          </div>
+          <SpecsTable specifications={p.specifications} template={p.category.spec_template} />
+        </div>
+        {priceHistory.length >= 2 && (
+          <PriceHistoryChart points={priceHistory} productName={p.name} />
+        )}
+      </div>
+    ),
+  })
+  if (p.faqs.length > 0) {
+    detailTabs.push({
+      id: 'faq',
+      label: 'FAQ',
+      content: <FAQAccordion faqs={p.faqs} />,
+    })
+  }
 
   const productSummary = {
     id: p.id,
@@ -191,7 +245,7 @@ export default async function ProductPage({
           <span className="truncate max-w-xs text-primary font-medium">{p.name}</span>
         </nav>
 
-        {/* ── Page hero: title + score + price ───────────────────────────── */}
+        {/* ── Title block ───────────────────────────────────────────────── */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-muted">
@@ -217,202 +271,11 @@ export default async function ProductPage({
           </div>
         </div>
 
-        <KeySpecStrip highlights={specHighlights} className="mb-6" />
+        {/* ── Hero: gallery + buy box, above the fold on every viewport ──── */}
+        <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1fr_340px] lg:items-start mb-6">
+          <ProductGallery images={allImages} productName={p.name} />
 
-        <FrequentComparesStrip productName={p.name} pairs={frequentComparePairs} />
-
-        {(p.pros.length > 0 || p.cons.length > 0) && (
-          <div className="mb-6">
-            <BottomLineVerdict
-              rating={p.creator_rating}
-              pros={p.pros}
-              cons={p.cons}
-              productName={p.name}
-            />
-          </div>
-        )}
-
-        {activeDeal && <ActiveDealBanner deal={activeDeal} productName={p.name} />}
-
-        <ProductSectionNav sections={navSections} />
-
-        {relatedGuides.length > 0 && (
-          <RelatedGuidesStrip guides={relatedGuides} productName={p.name} />
-        )}
-
-        {/* ── Two-column layout ───────────────────────────────────────────── */}
-        <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
-          {/* ── LEFT COLUMN ─────────────────────────────────────────────── */}
-          <div className="flex flex-col gap-10">
-            {/* Gallery */}
-            <ProductGallery images={allImages} productName={p.name} />
-
-            {/* Quick verdict bar */}
-            <div className="rounded-xl border border-border bg-surface-alt p-4 flex flex-wrap gap-5">
-              <div className="flex flex-col gap-0.5">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Rating</p>
-                <p className="text-lg font-extrabold text-accent">{p.creator_rating.toFixed(1)}/10</p>
-              </div>
-              {bestPrice != null && (
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Best Price</p>
-                  <p className="text-lg font-extrabold text-accent">{formatIndianPrice(bestPrice)}</p>
-                </div>
-              )}
-              {discount != null && (
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Discount</p>
-                  <p className="flex items-center gap-1 text-lg font-extrabold text-green-600">
-                    <TrendingDown size={16} /> {discount}% off
-                  </p>
-                </div>
-              )}
-              {launchPrice && (
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Launch Price</p>
-                  <p className="text-lg font-bold text-muted line-through">{formatIndianPrice(launchPrice)}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Pros & Cons */}
-            {(p.pros.length > 0 || p.cons.length > 0) && (
-              <section id="verdict" className="scroll-mt-32">
-                <h2 className="font-heading text-lg font-bold text-primary mb-4 flex items-center gap-2">
-                  <Star size={18} className="text-accent" />
-                  Verdict
-                </h2>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {p.pros.length > 0 && (
-                    <div className="rounded-xl border border-green-200 bg-green-50 p-4">
-                      <p className="text-xs font-bold uppercase tracking-wider text-green-700 mb-3">
-                        What we loved ✓
-                      </p>
-                      <ul className="flex flex-col gap-2.5">
-                        {p.pros.map((pro, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-green-900">
-                            <CheckCircle size={15} className="text-green-500 mt-0.5 shrink-0" />
-                            {pro}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {p.cons.length > 0 && (
-                    <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-                      <p className="text-xs font-bold uppercase tracking-wider text-red-700 mb-3">
-                        Watch out for ✗
-                      </p>
-                      <ul className="flex flex-col gap-2.5">
-                        {p.cons.map((con, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-red-900">
-                            <XCircle size={15} className="text-red-400 mt-0.5 shrink-0" />
-                            {con}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </section>
-            )}
-
-            {/* Creator's Review */}
-            {(p.description || youtubeId || p.youtube_short_url) && (
-              <section id="review" className="scroll-mt-32">
-                <h2 className="font-heading text-lg font-bold text-primary mb-4">
-                  Creator&apos;s Review
-                </h2>
-                {youtubeId && (
-                  <div className="aspect-video rounded-xl overflow-hidden mb-4 border border-border">
-                    <iframe
-                      src={`https://www.youtube-nocookie.com/embed/${youtubeId}`}
-                      title={`${p.name} Review`}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      className="h-full w-full"
-                    />
-                  </div>
-                )}
-                {p.description && (
-                  <p className="text-sm text-muted leading-relaxed">{p.description}</p>
-                )}
-                {p.youtube_short_url && (
-                  <div className={p.description || youtubeId ? 'mt-6' : ''}>
-                    <YouTubeShortEmbed url={p.youtube_short_url} title={p.name} />
-                  </div>
-                )}
-              </section>
-            )}
-
-            {p.benchmarks && (
-              <BenchmarkScores benchmarks={p.benchmarks} productName={p.name} />
-            )}
-
-            {/* Full Specifications */}
-            <section id="specs" className="scroll-mt-32">
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <h2 className="font-heading text-lg font-bold text-primary">Full Specifications</h2>
-                <SpecsCopyButton
-                  productName={p.name}
-                  specifications={p.specifications}
-                  template={p.category.spec_template}
-                />
-              </div>
-              <SpecsTable specifications={p.specifications} template={p.category.spec_template} />
-            </section>
-
-            {priceHistory.length >= 2 && (
-              <PriceHistoryChart points={priceHistory} productName={p.name} />
-            )}
-
-            {/* FAQ */}
-            {p.faqs.length > 0 && (
-              <section id="faq" className="scroll-mt-32">
-                <h2 className="font-heading text-lg font-bold text-primary mb-4">
-                  Ask Before You Buy
-                </h2>
-                <FAQAccordion faqs={p.faqs} />
-              </section>
-            )}
-
-            {cheaperAlternatives.length > 0 && bestPrice != null && (
-              <CheaperAlternativesStrip
-                alternatives={cheaperAlternatives}
-                currentPrice={bestPrice}
-                categoryName={p.category.name}
-              />
-            )}
-
-            {moreFromBrand.length > 0 && (
-              <div id="brand" className="scroll-mt-32">
-                <MoreFromBrandStrip
-                  brandName={p.brand_name}
-                  brandSlug={p.brand.slug}
-                  products={moreFromBrand}
-                />
-              </div>
-            )}
-
-            {/* Similar Products */}
-            {similarProducts.length > 0 && (
-              <section id="similar" className="scroll-mt-32">
-                <h2 className="font-heading text-lg font-bold text-primary mb-4">
-                  Similar Products
-                </h2>
-                <SimilarCompareStrip current={p} similar={similarProducts} />
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {similarProducts.map((s) => (
-                    <ProductCard key={s.id} product={s} />
-                  ))}
-                </div>
-              </section>
-            )}
-          </div>
-
-          {/* ── RIGHT COLUMN — sticky ──────────────────────────────────── */}
-          <div className="lg:sticky lg:top-20 flex flex-col gap-4 h-fit">
-            {/* Price summary card */}
+          <div className="flex flex-col gap-4 lg:sticky lg:top-20">
             <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <div>
@@ -432,7 +295,7 @@ export default async function ProductPage({
               </div>
 
               {discount != null && (
-                <div className="mb-3 flex items-center gap-1.5 rounded-lg bg-green-50 border border-green-200 px-3 py-1.5 text-xs font-semibold text-green-700">
+                <div className="flex items-center gap-1.5 rounded-lg bg-green-50 border border-green-200 px-3 py-1.5 text-xs font-semibold text-green-700">
                   <TrendingDown size={13} />
                   You save {discount}% vs launch price
                 </div>
@@ -442,7 +305,6 @@ export default async function ProductPage({
             {/* Sentinel for sticky bar — placed right here so bar appears when this scrolls out */}
             <div id="buy-section-anchor" />
 
-            {/* Store links */}
             <BuySection links={p.affiliate_links} productName={p.name} launchPrice={p.launch_price_inr} />
 
             {allDeals.length > 0 && (
@@ -456,15 +318,57 @@ export default async function ProductPage({
               categorySlug={p.category_slug}
               currentPrice={bestPrice}
             />
+          </div>
+        </div>
 
+        <KeySpecStrip highlights={specHighlights} className="mb-6" />
+
+        <FrequentComparesStrip productName={p.name} pairs={frequentComparePairs} />
+
+        {(p.pros.length > 0 || p.cons.length > 0) && (
+          <div className="mb-6" id="verdict">
+            <BottomLineVerdict
+              rating={p.creator_rating}
+              pros={p.pros}
+              cons={p.cons}
+              productName={p.name}
+            />
+          </div>
+        )}
+
+        {activeDeal && <ActiveDealBanner deal={activeDeal} productName={p.name} />}
+
+        <ProductSectionNav sections={navSections} />
+
+        {relatedGuides.length > 0 && (
+          <RelatedGuidesStrip guides={relatedGuides} productName={p.name} />
+        )}
+
+        {/* ── Two-column layout: deep content + secondary sidebar ─────────── */}
+        <div className="grid gap-8 lg:grid-cols-[1fr_340px] lg:items-start">
+          {/* ── LEFT COLUMN ─────────────────────────────────────────────── */}
+          <div className="flex flex-col gap-10">
+            <ProductDetailTabs tabs={detailTabs} />
+
+            <ProductRecommendationTabs
+              current={p}
+              similar={similarProducts}
+              moreFromBrand={moreFromBrand}
+              brandName={p.brand_name}
+              cheaperAlternatives={cheaperAlternatives}
+              currentPrice={bestPrice}
+              categoryName={p.category.name}
+            />
+          </div>
+
+          {/* ── RIGHT COLUMN — secondary, sticky ──────────────────────── */}
+          <div className="lg:sticky lg:top-20 flex flex-col gap-4 h-fit">
             <ShareBar url={shareUrl} title={p.name} text={shareText} />
 
-            {/* Compare */}
             <ProductComparePanel product={p} />
 
             <RecentlyViewedStrip excludeId={p.id} variant="compact" />
 
-            {/* Tags */}
             {p.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {p.tags.map((tag) => (

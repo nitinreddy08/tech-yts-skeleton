@@ -1,5 +1,4 @@
-import Link from 'next/link'
-import { ThumbsUp, ThumbsDown, ArrowDown } from 'lucide-react'
+import { CheckCircle, XCircle, ArrowDown } from 'lucide-react'
 import { siteConfig } from '@/lib/config'
 
 interface BottomLineVerdictProps {
@@ -78,17 +77,35 @@ export function BottomLineVerdict({ rating, pros, cons, productName }: BottomLin
         {meta.summary} {siteConfig.creator_name ? `${siteConfig.creator_name} rated ${productName} ${rating.toFixed(1)}/10.` : ''}
       </p>
 
-      <div className="grid sm:grid-cols-2 gap-3 mb-4">
-        {pros[0] && (
-          <div className="flex items-start gap-2 text-sm">
-            <ThumbsUp size={15} className="shrink-0 mt-0.5 opacity-70" />
-            <span>{pros[0]}</span>
+      <div className="grid sm:grid-cols-2 gap-4 mb-4">
+        {pros.length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider opacity-60 mb-2">
+              What we loved
+            </p>
+            <ul className="flex flex-col gap-2">
+              {pros.map((pro, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <CheckCircle size={15} className="shrink-0 mt-0.5 opacity-70" />
+                  <span>{pro}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
-        {cons[0] && (
-          <div className="flex items-start gap-2 text-sm">
-            <ThumbsDown size={15} className="shrink-0 mt-0.5 opacity-70" />
-            <span>{cons[0]}</span>
+        {cons.length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider opacity-60 mb-2">
+              Watch out for
+            </p>
+            <ul className="flex flex-col gap-2">
+              {cons.map((con, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <XCircle size={15} className="shrink-0 mt-0.5 opacity-70" />
+                  <span>{con}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>
