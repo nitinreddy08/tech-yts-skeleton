@@ -400,7 +400,7 @@ export const products: ProductDetail[] = [
     cons: ['OxygenOS has become closer to ColorOS', 'No wireless charging on base variant', 'Bulky due to large battery'],
     creator_rating: 8.8,
     youtube_video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    youtube_short_url: null,
+    youtube_short_url: 'https://www.youtube.com/shorts/dQw4w9WgXcQ',
     thumbnail_url: 'https://image01.oneplus.net/ebp/202412/24/1-m00-4d-e3-rb8bwmdn_xeawbgqaabxkxsafs4462.png',
     gallery_images: [],
     launch_price_inr: 69999,
@@ -411,7 +411,6 @@ export const products: ProductDetail[] = [
     is_published: true,
     tags: ['flagship', '5g', 'snapdragon', 'fast-charging'],
     benchmarks: { antutu: 2250000, geekbench_single: 3500, geekbench_multi: 9400 },
-    youtube_short_url: 'https://www.youtube.com/shorts/dQw4w9WgXcQ',
     created_at: '2026-04-01T00:00:00Z',
     updated_at: '2026-08-01T00:00:00Z',
     affiliate_links: affiliateLinks.filter(l => l.product_id === 'prod-oneplus-13'),
@@ -644,6 +643,15 @@ function productSummaryFromDetail(p: ProductDetail) {
   }
 }
 
+/**
+ * Deal timestamps are computed relative to module-load time rather than
+ * hardcoded absolute dates. A seeded "Deal of the Day" with a fixed
+ * `expires_at` silently goes stale the moment real time passes it — this demo
+ * data should always look freshly authored, on any day the app is run.
+ */
+const seedNow = Date.now()
+const hoursFromSeed = (h: number): string => new Date(seedNow + h * 3600_000).toISOString()
+
 export const deals: Deal[] = [
   {
     id: 'deal-op13-dotd',
@@ -654,10 +662,10 @@ export const deals: Deal[] = [
     deal_price_inr: 69999,
     store_name: 'Amazon',
     affiliate_url: 'https://amazon.in/dp/mock-op13',
-    starts_at: '2026-08-23T00:00:00Z',
-    expires_at: '2026-08-24T00:00:00Z',
+    starts_at: hoursFromSeed(-6),
+    expires_at: hoursFromSeed(18),
     is_active: true,
-    created_at: '2026-08-20T00:00:00Z',
+    created_at: hoursFromSeed(-6),
     product: productSummaryFromDetail(products.find(p => p.id === 'prod-oneplus-13')!),
   },
   {
@@ -669,10 +677,10 @@ export const deals: Deal[] = [
     deal_price_inr: 26990,
     store_name: 'Amazon',
     affiliate_url: 'https://amazon.in/dp/mock-wh1000',
-    starts_at: '2026-08-20T00:00:00Z',
-    expires_at: '2026-08-30T00:00:00Z',
+    starts_at: hoursFromSeed(-48),
+    expires_at: hoursFromSeed(24 * 7),
     is_active: true,
-    created_at: '2026-08-19T00:00:00Z',
+    created_at: hoursFromSeed(-72),
     product: productSummaryFromDetail(products.find(p => p.id === 'prod-sony-wh1000xm6')!),
   },
   {
@@ -684,10 +692,10 @@ export const deals: Deal[] = [
     deal_price_inr: 17999,
     store_name: 'Flipkart',
     affiliate_url: 'https://flipkart.com/mock-rn14',
-    starts_at: '2026-08-20T00:00:00Z',
-    expires_at: '2026-09-01T00:00:00Z',
+    starts_at: hoursFromSeed(-48),
+    expires_at: hoursFromSeed(24 * 10),
     is_active: true,
-    created_at: '2026-08-20T00:00:00Z',
+    created_at: hoursFromSeed(-48),
     product: productSummaryFromDetail(products.find(p => p.id === 'prod-redmi-note-14')!),
   },
   {
@@ -699,10 +707,10 @@ export const deals: Deal[] = [
     deal_price_inr: 75999,
     store_name: 'Samsung',
     affiliate_url: 'https://samsung.com/in/mock-s25',
-    starts_at: '2026-08-20T00:00:00Z',
-    expires_at: '2026-09-15T00:00:00Z',
+    starts_at: hoursFromSeed(-24),
+    expires_at: hoursFromSeed(24 * 25),
     is_active: true,
-    created_at: '2026-08-21T00:00:00Z',
+    created_at: hoursFromSeed(-24),
     product: productSummaryFromDetail(products.find(p => p.id === 'prod-samsung-s25')!),
   },
 ]

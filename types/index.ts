@@ -1,125 +1,40 @@
-// SpecTemplate and SpecField
-export interface SpecField {
-  key: string
-  label: string
-  type: 'text' | 'number' | 'select' | 'boolean' | 'multiselect'
-  unit?: string
-  options?: string[]
-  required?: boolean
-  defaultValue?: string | number | boolean
-  group?: string
-}
+/**
+ * types/index.ts
+ *
+ * Public type surface for the app. Domain entity types are **derived from the
+ * Zod schemas** in `@/lib/schemas` (the single source of truth) and re-exported
+ * here so the hundreds of existing `import { X } from '@/types'` call sites keep
+ * working unchanged. Types that don't yet have a schema (view-model and
+ * client-only shapes) are still declared inline below and will migrate as their
+ * feature is re-engineered.
+ */
 
-export interface SpecTemplate {
-  fields: SpecField[]
-}
+// ─── Schema-derived domain types (source of truth: lib/schemas) ──────────────
+export type {
+  SpecFieldType,
+  SpecField,
+  SpecTemplate,
+  Category,
+  Brand,
+  StockStatus,
+  AffiliateLink,
+  FAQ,
+  ProductBenchmarks,
+  ProductSummary,
+  ProductDetail,
+  ProductCreate,
+  ProductUpdate,
+  AffiliateLinkInput,
+  FaqInput,
+  DealType,
+  Deal,
+  DealInput,
+  DealUpdate,
+} from '@/lib/schemas'
 
-// Category and Brand
-export interface Category {
-  id: string
-  name: string
-  slug: string
-  icon: string
-  description: string | null
-  spec_template: SpecTemplate
-  display_order: number
-  created_at: string
-}
+import type { ProductSummary, ProductDetail, AffiliateLink, FAQ } from '@/lib/schemas'
 
-export interface Brand {
-  id: string
-  name: string
-  slug: string
-  logo_url: string | null
-}
-
-export type StockStatus = 'in_stock' | 'low_stock' | 'out_of_stock'
-
-// AffiliateLink
-export interface AffiliateLink {
-  id: string
-  product_id: string
-  store_name: string
-  store_icon: string | null
-  affiliate_url: string  // always /go/[id] on the client side
-  price_inr: number | null
-  is_best_price: boolean
-  last_updated: string
-  stock_status?: StockStatus
-}
-
-// FAQ
-export interface FAQ {
-  id: string
-  product_id: string
-  question: string
-  answer: string
-  display_order: number
-}
-
-// ProductSummary (for cards, lists)
-export interface ProductSummary {
-  id: string
-  name: string
-  slug: string
-  category_id: string
-  category_slug: string
-  brand_id: string
-  brand_name: string
-  thumbnail_url: string
-  creator_rating: number
-  current_price_inr: number | null
-  launch_price_inr: number | null
-  is_featured: boolean
-  is_deal_of_the_day: boolean
-  deal_badge_text: string | null
-  tags: string[]
-  youtube_video_url: string | null
-  created_at: string
-}
-
-export interface ProductBenchmarks {
-  antutu?: number
-  geekbench_single?: number
-  geekbench_multi?: number
-}
-
-// ProductDetail (full)
-export interface ProductDetail extends ProductSummary {
-  tagline: string | null
-  description: string | null
-  specifications: Record<string, string | number | boolean | null>
-  benchmarks?: ProductBenchmarks
-  pros: string[]
-  cons: string[]
-  youtube_short_url: string | null
-  gallery_images: string[]
-  is_published: boolean
-  updated_at: string
-  affiliate_links: AffiliateLink[]
-  faqs: FAQ[]
-  category: Category
-  brand: Brand
-}
-
-// Deal
-export interface Deal {
-  id: string
-  product_id: string
-  deal_type: 'deal_of_day' | 'price_drop' | 'upcoming_sale' | 'bank_offer' | 'sale_event' | 'coupon'
-  headline: string
-  original_price_inr: number | null
-  deal_price_inr: number | null
-  store_name: string
-  affiliate_url: string
-  starts_at: string | null
-  expires_at: string | null
-  is_active: boolean
-  created_at: string
-  product?: ProductSummary
-}
-
-// BestOfList
+// ─── BestOfList (schema migration pending — Cycle 3) ─────────────────────────
 export interface BestOfListItem {
   id: string
   list_id: string
@@ -142,7 +57,7 @@ export interface BestOfList {
   items: BestOfListItem[]
 }
 
-// ClickLog
+// ─── ClickLog (schema migration pending — Cycle 3) ───────────────────────────
 export interface ClickLog {
   id: string
   affiliate_link_id: string
@@ -154,7 +69,7 @@ export interface ClickLog {
   ip_hash: string | null
 }
 
-// Search
+// ─── Search (schema migration pending — Cycle 2) ─────────────────────────────
 export interface SearchResult {
   id: string
   name: string
@@ -167,7 +82,7 @@ export interface SearchResult {
   creator_rating?: number
 }
 
-// Comparison engine
+// ─── Comparison engine (client-only view models) ─────────────────────────────
 export interface CompareState {
   productIds: string[]
   products: ProductDetail[]
@@ -186,7 +101,7 @@ export interface SpecDiffRow {
   hasDiff: boolean
 }
 
-// Filtering and sorting
+// ─── Filtering and sorting ───────────────────────────────────────────────────
 export type SortOption = 'price_asc' | 'price_desc' | 'rating_desc' | 'newest' | 'popular'
 
 export interface ProductFilters {
@@ -196,7 +111,7 @@ export interface ProductFilters {
   specs?: Record<string, string | number | boolean>
 }
 
-// Admin form
+// ─── Admin form ──────────────────────────────────────────────────────────────
 export interface ProductFormData {
   name: string
   slug: string
