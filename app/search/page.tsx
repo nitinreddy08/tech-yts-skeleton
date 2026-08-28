@@ -5,7 +5,7 @@ import { Search, SearchX, Sparkles } from 'lucide-react'
 import { searchProductsFull } from '@/lib/data/search'
 import { getSearchSuggestions } from '@/lib/data/search-suggestions'
 import { fetchAllCategories } from '@/lib/data/categories'
-import { db } from '@/lib/mock/db'
+import { fetchFeaturedProducts } from '@/lib/data/products'
 import { SearchFilterBar } from '@/components/ui/SearchFilterBar'
 import { SearchResultCard } from '@/components/ui/SearchResultCard'
 import { RecentSearchesStrip } from '@/components/ui/RecentSearchesStrip'
@@ -57,15 +57,14 @@ export default async function SearchPage({
     sort,
   }
 
-  const [results, categories] = await Promise.all([
+  const [results, categories, featuredProducts] = await Promise.all([
     searchProductsFull(q, filters),
     fetchAllCategories(),
+    fetchFeaturedProducts(),
   ])
 
   // Popular / suggested products for empty-query state
-  const featured = db.products
-    .filter((p) => p.is_published && p.is_featured)
-    .slice(0, 8)
+  const featured = featuredProducts.slice(0, 8)
 
   const hasQuery = q.trim().length >= 2
   const hasBrowseFilters =
