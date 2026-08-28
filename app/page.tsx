@@ -7,7 +7,7 @@ import { getActiveDealMap } from '@/lib/data/product-deals'
 import { fetchActiveDeals } from '@/lib/data/deals'
 import { fetchBestOfLists } from '@/lib/data/best-of-lists'
 import { fetchAllCategories } from '@/lib/data/categories'
-import { db } from '@/lib/mock/db'
+import { productRepository } from '@/lib/repositories'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { MotionSection } from '@/components/ui/MotionSection'
@@ -36,24 +36,23 @@ function discountPercent(original: number, deal: number): number {
 }
 
 export default async function HomePage() {
-  const [featured, latest, deals, bestOfLists, categories, trending] = await Promise.all([
+  const [featured, latest, deals, bestOfLists, categories, trending, allPublished] = await Promise.all([
     fetchFeaturedProducts(),
     fetchLatestProducts(8),
     fetchActiveDeals(),
     fetchBestOfLists(),
     fetchAllCategories(),
     fetchTrendingProducts(4),
+    productRepository.list(),
   ])
 
   const dealOfDay = deals.find((d) => d.deal_type === 'deal_of_day') ?? null
   const hotDeals = deals.filter((d) => d.deal_type !== 'deal_of_day').slice(0, 4)
 
-  const productCounts = Object.fromEntries(
-    categories.map((cat) => [
-      cat.slug,
-      db.products.filter((p) => p.is_published && p.category_slug === cat.slug).length,
-    ])
-  )
+  const productCounts: Record<string, number> = {}
+  for (const p of allPublished) {
+    productCounts[p.category_slug] = (productCounts[p.category_slug] ?? 0) + 1
+  }
   const dealMap = getActiveDealMap()
 
   return (

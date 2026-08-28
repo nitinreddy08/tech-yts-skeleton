@@ -1,5 +1,20 @@
+/**
+ * lib/data/product-deals.ts
+ *
+ * Synchronous, render-time "does this product have a live deal" lookups used
+ * inline by many server components (ProductCard badges, offer panels, etc.).
+ * These stay synchronous by design — they're cheap in-memory lookups called
+ * from deep inside render trees, not data-fetch boundaries, so wrapping them
+ * in the async repository would mean threading a prefetched deal map through
+ * every consuming page for no real benefit.
+ *
+ * What *was* duplicated is now shared: "is this deal live" and "% saved" are
+ * the same `dealStatus`/`dealSavingsPercent` predicates `dealRepository` uses,
+ * imported from `lib/schemas/deal.ts` rather than reimplemented here.
+ */
 import { db } from '@/lib/mock/db'
-import type { Deal } from '@/types'
+import { isDealLive, dealSavingsPercent } from '@/lib/schemas'
+import type { Deal, DealType } from '@/types'
 
 export interface ProductDealBadge {
   dealId: string
@@ -12,23 +27,14 @@ export interface ProductDealBadge {
   expiresAt: string | null
 }
 
-function isActive(d: Deal): boolean {
-  const now = new Date()
-  return d.is_active && (d.expires_at == null || new Date(d.expires_at) > now)
-}
-
 function toBadge(d: Deal): ProductDealBadge {
-  const savings =
-    d.original_price_inr != null && d.deal_price_inr != null && d.original_price_inr > d.deal_price_inr
-      ? Math.round(((d.original_price_inr - d.deal_price_inr) / d.original_price_inr) * 100)
-      : null
   return {
     dealId: d.id,
     headline: d.headline,
     dealType: d.deal_type,
     dealPrice: d.deal_price_inr,
     originalPrice: d.original_price_inr,
-    savingsPercent: savings,
+    savingsPercent: dealSavingsPercent(d),
     storeName: d.store_name,
     expiresAt: d.expires_at,
   }
@@ -37,26 +43,26 @@ function toBadge(d: Deal): ProductDealBadge {
 export function getActiveDealMap(): Record<string, ProductDealBadge> {
   const map: Record<string, ProductDealBadge> = {}
   for (const deal of db.deals) {
-    if (!isActive(deal)) continue
+    if (!isDealLive(deal)) continue
     if (!map[deal.product_id]) map[deal.product_id] = toBadge(deal)
   }
   return map
 }
 
 export function getAllActiveDealsForProduct(productId: string): Deal[] {
-  return db.deals.filter((d) => d.product_id === productId && isActive(d))
+  return db.deals.filter((d) => d.product_id === productId && isDealLive(d))
 }
 
 export function getActiveDealForProduct(productId: string): ProductDealBadge | null {
-  const deal = db.deals.find((d) => d.product_id === productId && isActive(d))
+  const deal = db.deals.find((d) => d.product_id === productId && isDealLive(d))
   return deal ? toBadge(deal) : null
 }
 
 export function getFullActiveDeal(productId: string): Deal | null {
-  return db.deals.find((d) => d.product_id === productId && isActive(d)) ?? null
+  return db.deals.find((d) => d.product_id === productId && isDealLive(d)) ?? null
 }
 
-const DEAL_TYPE_LABELS: Record<Deal['deal_type'], string> = {
+const DEAL_TYPE_LABELS: Record<DealType, string> = {
   deal_of_day: 'Deal of Day',
   price_drop: 'Price Drop',
   upcoming_sale: 'Sale',
@@ -65,6 +71,6 @@ const DEAL_TYPE_LABELS: Record<Deal['deal_type'], string> = {
   coupon: 'Coupon',
 }
 
-export function dealTypeLabel(type: Deal['deal_type']): string {
+export function dealTypeLabel(type: DealType): string {
   return DEAL_TYPE_LABELS[type] ?? 'Deal'
 }

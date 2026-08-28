@@ -7,7 +7,7 @@
  * site and admin agree on what "live" means, and the same predicate ports to a
  * SQL `WHERE` clause.
  */
-import type { Deal, DealInput, DealUpdate, DealType, DealStatus } from '@/lib/schemas'
+import type { Deal, DealType, DealStatus } from '@/lib/schemas'
 import type { z } from 'zod'
 import type { dealInputSchema, dealUpdateSchema } from '@/lib/schemas/deal'
 
@@ -40,8 +40,9 @@ export interface DealRepository {
   /** All live deals for a product (used on product pages). */
   forProduct(productId: string): Promise<DealView[]>
 
-  create(input: DealInputRaw | DealInput): Promise<DealView>
-  update(id: string, input: DealUpdateRaw | DealUpdate): Promise<DealView>
+  /** Accepts `unknown` — see the matching note on ProductRepository.create. */
+  create(input: unknown): Promise<DealView>
+  update(id: string, input: unknown): Promise<DealView>
   remove(id: string): Promise<void>
   toggleActive(id: string): Promise<DealView>
 }

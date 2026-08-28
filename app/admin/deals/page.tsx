@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Suspense } from 'react'
-import { db } from '@/lib/mock/db'
+import { dealRepository, type DealView } from '@/lib/repositories'
+import type { DealType } from '@/lib/schemas'
 import { DealRowActions } from '@/components/admin/DealRowActions'
 import { AdminDealsFilter } from '@/components/admin/AdminDealsFilter'
 
@@ -14,11 +15,8 @@ export default async function AdminDealsPage({
   const q = ((sp.q as string) ?? '').trim().toLowerCase()
   const status = (sp.status as string) ?? ''
   const type = (sp.type as string) ?? ''
-  const now = new Date().toISOString()
 
-  let deals = [...db.deals].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  )
+  let deals = await dealRepository.list({ type: (type as DealType) || undefined })
 
   if (q) {
     deals = deals.filter(
@@ -28,10 +26,13 @@ export default async function AdminDealsPage({
         d.store_name.toLowerCase().includes(q)
     )
   }
-  if (type) deals = deals.filter((d) => d.deal_type === type)
 
-  const active = deals.filter((d) => d.is_active && (d.expires_at == null || d.expires_at > now))
-  const inactive = deals.filter((d) => !d.is_active || (d.expires_at != null && d.expires_at <= now))
+  // `status` is the derived lifecycle (active/scheduled/expired/inactive), not
+  // the raw `is_active` flag — a scheduled deal (starts_at in the future) is
+  // correctly excluded from "Active" here, which the old is_active-only check
+  // got wrong (it counted not-yet-started deals as active).
+  const active = deals.filter((d) => d.status === 'active')
+  const inactive = deals.filter((d) => d.status !== 'active')
 
   const showActive = status !== 'inactive'
   const showInactive = status !== 'active'
@@ -91,7 +92,7 @@ export default async function AdminDealsPage({
   )
 }
 
-function DealsTable({ deals }: { deals: (typeof db.deals) }) {
+function DealsTable({ deals }: { deals: DealView[] }) {
   return (
     <>
       <div className="hidden md:block rounded-xl border border-border bg-surface overflow-hidden">
@@ -124,7 +125,7 @@ function DealsTable({ deals }: { deals: (typeof db.deals) }) {
   )
 }
 
-function DealRow({ deal: d }: { deal: (typeof db.deals)[0] }) {
+function DealRow({ deal: d }: { deal: DealView }) {
   return (
     <tr className="hover:bg-surface-alt transition-colors">
       <td className="px-4 py-3">
@@ -144,13 +145,13 @@ function DealRow({ deal: d }: { deal: (typeof db.deals)[0] }) {
       <td className="px-4 py-3 text-muted">
         {d.expires_at ? new Date(d.expires_at).toLocaleDateString('en-IN') : '—'}
       </td>
-      <td className="px-4 py-3"><StatusBadge active={d.is_active} /></td>
+      <td className="px-4 py-3"><StatusBadge active={d.status === 'active'} /></td>
       <td className="px-4 py-3 text-right"><DealRowActions dealId={d.id} isActive={d.is_active} /></td>
     </tr>
   )
 }
 
-function DealCard({ deal: d }: { deal: (typeof db.deals)[0] }) {
+function DealCard({ deal: d }: { deal: DealView }) {
   return (
     <div className="rounded-xl border border-border bg-surface p-4 flex gap-3">
       <div className="relative h-14 w-14 shrink-0 rounded-lg border border-border bg-surface-alt overflow-hidden">
@@ -161,7 +162,7 @@ function DealCard({ deal: d }: { deal: (typeof db.deals)[0] }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <p className="font-medium text-primary text-sm line-clamp-2">{d.headline}</p>
-          <StatusBadge active={d.is_active} />
+          <StatusBadge active={d.status === 'active'} />
         </div>
         <p className="text-xs text-muted mt-1">{d.product?.name}</p>
         <DealPrices deal={d} />
@@ -173,7 +174,7 @@ function DealCard({ deal: d }: { deal: (typeof db.deals)[0] }) {
   )
 }
 
-function DealPrices({ deal: d }: { deal: (typeof db.deals)[0] }) {
+function DealPrices({ deal: d }: { deal: DealView }) {
   if (d.deal_price_inr == null) return null
   return (
     <p className="text-xs text-muted mt-0.5">

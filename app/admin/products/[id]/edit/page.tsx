@@ -1,14 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { db } from '@/lib/mock/db'
+import { productRepository } from '@/lib/repositories'
 import { fetchAllCategories, fetchAllBrands } from '@/lib/data/categories'
 import { ProductForm } from '@/components/admin/ProductForm'
 import { updateProduct } from '@/app/admin/products/actions'
-import type { ProductDetail } from '@/types'
-
-async function fetchProductById(id: string): Promise<ProductDetail | null> {
-  return db.products.find(p => p.id === id) ?? null
-}
 
 export default async function EditProductPage({
   params,
@@ -18,7 +13,7 @@ export default async function EditProductPage({
   const { id } = await params
 
   const [product, categories, brands] = await Promise.all([
-    fetchProductById(id),
+    productRepository.findById(id, { includeUnpublished: true }),
     fetchAllCategories(),
     fetchAllBrands(),
   ])

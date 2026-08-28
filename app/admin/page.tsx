@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { db } from '@/lib/mock/db'
+import { productRepository, dealRepository } from '@/lib/repositories'
+import { canPublish } from '@/lib/schemas'
 import { newsletterSubscribers } from '@/lib/mock/newsletter'
 import {
   Package,
@@ -29,10 +31,13 @@ function formatClickTime(iso: string): string {
 }
 
 export default async function AdminDashboard() {
-  const products = db.products
+  const [products, activeDeals, expiringDeals] = await Promise.all([
+    productRepository.listDetailed({ includeUnpublished: true }),
+    dealRepository.list({ liveOnly: true }),
+    dealRepository.list({ expiringWithinHours: 7 * 24 }),
+  ])
   const published = products.filter((p) => p.is_published)
   const drafts = products.filter((p) => !p.is_published)
-  const activeDeals = db.deals.filter((d) => d.is_active)
   const publishedLists = db.bestOfLists.filter((l) => l.is_published)
   const clicks = db.clickLogs
 
@@ -60,26 +65,18 @@ export default async function AdminDashboard() {
     .sort(([, a], [, b]) => b.count - a.count)
     .slice(0, 5)
 
-  // Needs attention
+  // Needs attention — reuses the same canPublish invariant the repository
+  // enforces before allowing is_published: true, so this list and the
+  // publish gate never disagree about what's "ready to go live".
   const needsAttention = products.filter(
     (p) =>
       !p.is_published ||
-      p.affiliate_links.length === 0 ||
-      !p.thumbnail_url
+      !canPublish({ thumbnail_url: p.thumbnail_url, affiliateLinkCount: p.affiliate_links.length })
   )
 
   const recentClicks = [...clicks]
     .sort((a, b) => new Date(b.clicked_at).getTime() - new Date(a.clicked_at).getTime())
     .slice(0, 8)
-
-  const now = new Date().toISOString()
-  const expiringDeals = db.deals.filter(
-    (d) =>
-      d.is_active &&
-      d.expires_at &&
-      d.expires_at > now &&
-      new Date(d.expires_at).getTime() - Date.now() < 7 * 86400000
-  )
 
   return (
     <div className="p-6 md:p-8 max-w-6xl">

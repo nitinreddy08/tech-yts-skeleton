@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Suspense } from 'react'
-import { db } from '@/lib/mock/db'
+import { productRepository } from '@/lib/repositories'
+import { fetchAllCategories } from '@/lib/data/categories'
 import { CsvImportForm } from '@/components/admin/CsvImportForm'
 import { ProductRowActions } from '@/components/admin/ProductRowActions'
 import { AdminProductFilters } from '@/components/admin/AdminProductFilters'
@@ -29,35 +30,23 @@ export default async function AdminProductsPage({
   const status = (params.status as string) ?? ''
   const category = (params.category as string) ?? ''
 
-  let filtered = [...db.products]
-
-  if (q) {
-    filtered = filtered.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.slug.toLowerCase().includes(q) ||
-        (p.brand?.name ?? '').toLowerCase().includes(q)
-    )
-  }
-
-  if (status === 'published') filtered = filtered.filter((p) => p.is_published)
-  if (status === 'draft') filtered = filtered.filter((p) => !p.is_published)
-
-  if (category) {
-    filtered = filtered.filter((p) => p.category?.slug === category)
-  }
-
-  const sorted = filtered.sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  const result = await productRepository.paginate(
+    {
+      search: q || undefined,
+      categorySlug: category || undefined,
+      publishStatus: status === 'published' || status === 'draft' ? status : undefined,
+      includeUnpublished: true,
+      sort: 'newest',
+    },
+    page,
+    PAGE_SIZE
   )
-
-  const from = (page - 1) * PAGE_SIZE
-  const products = sorted.slice(from, from + PAGE_SIZE)
-  const count = sorted.length
+  const products = result.data
+  const count = result.count
   const totalPages = Math.ceil(count / PAGE_SIZE)
 
   const filterParams = { q: q || undefined, status: status || undefined, category: category || undefined }
-  const categories = [...db.categories].sort((a, b) => a.display_order - b.display_order)
+  const categories = await fetchAllCategories()
 
   return (
     <div className="p-4 sm:p-8">

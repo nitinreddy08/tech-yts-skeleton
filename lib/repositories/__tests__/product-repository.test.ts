@@ -186,3 +186,54 @@ describe('ProductRepository — mutations', () => {
     expect(toggled.is_published).toBe(false)
   })
 })
+
+describe('ProductRepository — publish invariant (thumbnail + affiliate link required)', () => {
+  const validInput = {
+    name: 'Test Phone',
+    slug: 'test-phone',
+    category_id: 'cat-smartphones',
+    brand_id: 'brand-samsung',
+    creator_rating: 7,
+  }
+
+  it('rejects create with is_published: true and no thumbnail/links', async () => {
+    await expect(repo.create({ ...validInput, is_published: true })).rejects.toMatchObject({
+      code: 'VALIDATION',
+    })
+  })
+
+  it('allows create with is_published: true when thumbnail + link are present', async () => {
+    const created = await repo.create({
+      ...validInput,
+      is_published: true,
+      thumbnail_url: 'https://example.com/x.jpg',
+      affiliate_links: [{ store_name: 'Amazon', affiliate_url: 'https://amazon.in/dp/x' }],
+    })
+    expect(created.is_published).toBe(true)
+  })
+
+  it('rejects update that sets is_published: true on a product with no thumbnail', async () => {
+    const created = await repo.create(validInput) // unpublished, no thumbnail
+    await expect(repo.update(created.id, { is_published: true })).rejects.toMatchObject({
+      code: 'VALIDATION',
+    })
+  })
+
+  it('rejects update that clears the last affiliate link while staying published', async () => {
+    const s25 = await repo.findBySlug('samsung-galaxy-s25')
+    await expect(
+      repo.update(s25!.id, { affiliate_links: [] })
+    ).rejects.toMatchObject({ code: 'VALIDATION' })
+  })
+
+  it('rejects togglePublish from unpublished when thumbnail/links are missing', async () => {
+    const created = await repo.create(validInput)
+    await expect(repo.togglePublish(created.id)).rejects.toMatchObject({ code: 'VALIDATION' })
+  })
+
+  it('allows togglePublish to unpublish regardless of thumbnail/links', async () => {
+    const s25 = await repo.findBySlug('samsung-galaxy-s25')
+    const toggled = await repo.togglePublish(s25!.id)
+    expect(toggled.is_published).toBe(false)
+  })
+})

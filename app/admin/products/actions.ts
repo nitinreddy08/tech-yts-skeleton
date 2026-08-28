@@ -2,9 +2,8 @@
 
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
-import { db, newId, syncProductRelations } from '@/lib/mock/db'
+import { productRepository, isRepositoryError } from '@/lib/repositories'
 import { revalidateTag } from '@/lib/mock/revalidate'
-import type { ProductDetail, AffiliateLink, FAQ } from '@/types'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -20,23 +19,31 @@ function slugify(name: string): string {
 // ─── Simple actions ───────────────────────────────────────────────────────────
 
 export async function deleteProduct(productId: string): Promise<{ error?: string }> {
-  const idx = db.products.findIndex(p => p.id === productId)
-  if (idx === -1) return { error: 'Product not found' }
-  db.products.splice(idx, 1)
-  db.affiliateLinks = db.affiliateLinks.filter(l => l.product_id !== productId)
-  db.faqs = db.faqs.filter(f => f.product_id !== productId)
+  try {
+    await productRepository.remove(productId)
+  } catch (error) {
+    return { error: isRepositoryError(error) ? error.message : 'Failed to delete product' }
+  }
   revalidateTag('products')
   return {}
 }
 
+/**
+ * `currentState` is accepted for backward compatibility with existing call
+ * sites but unused — the repository flips whatever it actually has stored.
+ * A toggle that would publish a product missing a thumbnail/affiliate link is
+ * rejected by the repository's publish invariant (see lib/schemas/product.ts).
+ */
 export async function togglePublishProduct(
   productId: string,
-  currentState: boolean
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for call-site compatibility, see doc comment above
+  _currentState?: boolean
 ): Promise<{ error?: string }> {
-  const product = db.products.find(p => p.id === productId)
-  if (!product) return { error: 'Product not found' }
-  product.is_published = !currentState
-  product.updated_at = new Date().toISOString()
+  try {
+    await productRepository.togglePublish(productId)
+  } catch (error) {
+    return { error: isRepositoryError(error) ? error.message : 'Failed to toggle product' }
+  }
   revalidateTag('products')
   return {}
 }
@@ -111,7 +118,6 @@ export async function importProductsCsv(
   }
 
   const result: CsvImportResult = { inserted: 0, failed: [] }
-  const now = new Date().toISOString()
 
   for (let i = 0; i < rows.length; i++) {
     const rowNum = i + 2
@@ -124,259 +130,77 @@ export async function importProductsCsv(
     const d = parsed.data
     const slug = d.slug || slugify(d.name)
 
-    if (db.products.find(p => p.slug === slug)) {
-      result.failed.push({ row: rowNum, reason: `Slug "${slug}" already exists` })
-      continue
+    try {
+      await productRepository.create({
+        name: d.name,
+        slug,
+        category_id: d.category_id,
+        brand_id: d.brand_id,
+        tagline: d.tagline ?? null,
+        description: d.description ?? null,
+        creator_rating: d.creator_rating,
+        youtube_video_url: d.youtube_video_url ?? null,
+        thumbnail_url: d.thumbnail_url,
+        launch_price_inr: d.launch_price_inr ?? null,
+        current_price_inr: d.current_price_inr ?? null,
+        is_featured: d.is_featured,
+        is_deal_of_the_day: d.is_deal_of_the_day,
+        is_published: d.is_published,
+        tags: d.tags,
+      })
+      result.inserted++
+    } catch (error) {
+      const reason = isRepositoryError(error) ? error.message : 'Failed to import row'
+      result.failed.push({ row: rowNum, reason })
     }
-
-    const category = db.categories.find(c => c.id === d.category_id)
-    const brand = db.brands.find(b => b.id === d.brand_id)
-    if (!category || !brand) {
-      result.failed.push({ row: rowNum, reason: 'Invalid category_id or brand_id' })
-      continue
-    }
-
-    const id = newId()
-    const product: ProductDetail = {
-      id,
-      name: d.name,
-      slug,
-      category_id: category.id,
-      category_slug: category.slug,
-      brand_id: brand.id,
-      brand_name: brand.name,
-      tagline: d.tagline ?? null,
-      description: d.description ?? null,
-      specifications: {},
-      pros: [],
-      cons: [],
-      creator_rating: d.creator_rating,
-      youtube_video_url: d.youtube_video_url ?? null,
-      youtube_short_url: null,
-      thumbnail_url: d.thumbnail_url,
-      gallery_images: [],
-      launch_price_inr: d.launch_price_inr ?? null,
-      current_price_inr: d.current_price_inr ?? null,
-      is_featured: d.is_featured,
-      is_deal_of_the_day: d.is_deal_of_the_day,
-      deal_badge_text: null,
-      is_published: d.is_published,
-      tags: d.tags,
-      created_at: now,
-      updated_at: now,
-      affiliate_links: [],
-      faqs: [],
-      category,
-      brand,
-    }
-    db.products.push(product)
-    result.inserted++
   }
 
   if (result.inserted > 0) revalidateTag('products')
   return result
 }
 
-// ─── Zod schemas ──────────────────────────────────────────────────────────────
-
-const AffiliateLinkSchema = z.object({
-  store_name: z.string().min(1),
-  store_icon: z.string().nullable().optional(),
-  affiliate_url: z.string().url(),
-  price_inr: z.number().nullable().optional(),
-  is_best_price: z.boolean().optional().default(false),
-  last_updated: z.string().optional(),
-})
-
-const FAQSchema = z.object({
-  question: z.string().min(1),
-  answer: z.string().min(1),
-  display_order: z.number().int().default(0),
-})
-
-const ProductSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  slug: z
-    .string()
-    .min(1, 'Slug is required')
-    .regex(/^[a-z0-9-]+$/, 'Slug must be URL-safe (lowercase, numbers, hyphens)'),
-  category_id: z.string().min(1, 'Category is required'),
-  brand_id: z.string().min(1, 'Brand is required'),
-  tagline: z.string().nullable().optional(),
-  description: z.string().nullable().optional(),
-  specifications: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])),
-  pros: z.array(z.string()),
-  cons: z.array(z.string()),
-  creator_rating: z.number().min(0, 'Rating must be ≥ 0').max(10, 'Rating must be ≤ 10'),
-  youtube_video_url: z.string().nullable().optional(),
-  youtube_short_url: z.string().nullable().optional(),
-  thumbnail_url: z.string(),
-  gallery_images: z.array(z.string()),
-  launch_price_inr: z.number().nullable().optional(),
-  current_price_inr: z.number().nullable().optional(),
-  is_featured: z.boolean(),
-  is_deal_of_the_day: z.boolean(),
-  deal_badge_text: z.string().nullable().optional(),
-  is_published: z.boolean(),
-  tags: z.array(z.string()),
-  affiliate_links: z.array(AffiliateLinkSchema),
-  faqs: z.array(FAQSchema),
-})
+// ─── Create / Update ────────────────────────────────────────────────────────
 
 export type ProductActionState = {
   errors?: Record<string, string[]>
   message?: string
 }
 
-// ─── Create ───────────────────────────────────────────────────────────────────
+/** JSON payload shape ProductForm posts — validated by productRepository via Zod. */
+function parsePayload(formData: FormData): Record<string, unknown> {
+  const raw = JSON.parse(formData.get('payload') as string)
+  if (!raw.slug && raw.name) raw.slug = slugify(raw.name)
+  return raw
+}
+
+async function runProductAction(fn: () => Promise<unknown>): Promise<ProductActionState> {
+  try {
+    await fn()
+  } catch (error) {
+    if (isRepositoryError(error)) {
+      // ProductForm only ever renders `state.message` (it validates individual
+      // fields client-side via react-hook-form), so every repository error —
+      // including field-level ValidationErrors like the publish invariant —
+      // must surface through `message` to actually be visible.
+      return { errors: error.fieldErrors, message: error.message }
+    }
+    throw error
+  }
+  revalidateTag('products')
+  redirect('/admin/products')
+}
 
 export async function createProduct(
   _prev: ProductActionState,
   formData: FormData
 ): Promise<ProductActionState> {
-  const raw = JSON.parse(formData.get('payload') as string)
-  if (!raw.slug && raw.name) raw.slug = slugify(raw.name)
-
-  const parsed = ProductSchema.safeParse(raw)
-  if (!parsed.success) {
-    return { errors: parsed.error.flatten().fieldErrors as Record<string, string[]> }
-  }
-
-  const data = parsed.data
-
-  if (data.is_published) {
-    if (!data.thumbnail_url) return { message: 'Cannot publish: thumbnail is required.' }
-    if (!data.affiliate_links.length)
-      return { message: 'Cannot publish: at least one affiliate link is required.' }
-  }
-
-  if (db.products.find(p => p.slug === data.slug)) {
-    return { message: 'A product with this slug already exists.' }
-  }
-
-  const category = db.categories.find(c => c.id === data.category_id)
-  const brand = db.brands.find(b => b.id === data.brand_id)
-  if (!category || !brand) return { message: 'Invalid category or brand.' }
-
-  const id = newId()
-  const now = new Date().toISOString()
-  const { affiliate_links, faqs, ...productFields } = data
-
-  const product: ProductDetail = {
-    ...productFields,
-    id,
-    tagline: productFields.tagline ?? null,
-    description: productFields.description ?? null,
-    youtube_video_url: productFields.youtube_video_url ?? null,
-    youtube_short_url: productFields.youtube_short_url ?? null,
-    deal_badge_text: productFields.deal_badge_text ?? null,
-    launch_price_inr: productFields.launch_price_inr ?? null,
-    current_price_inr: productFields.current_price_inr ?? null,
-    category_id: category.id,
-    category_slug: category.slug,
-    brand_id: brand.id,
-    brand_name: brand.name,
-    created_at: now,
-    updated_at: now,
-    affiliate_links: [],
-    faqs: [],
-    category,
-    brand,
-  }
-  db.products.push(product)
-
-  for (const l of affiliate_links) {
-    db.affiliateLinks.push({
-      ...(l as any),
-      id: newId(),
-      product_id: id,
-      last_updated: l.last_updated ?? now,
-    } as AffiliateLink)
-  }
-  for (const [i, f] of faqs.entries()) {
-    db.faqs.push({
-      ...(f as any),
-      id: newId(),
-      product_id: id,
-      display_order: f.display_order ?? i,
-    } as FAQ)
-  }
-  syncProductRelations(id)
-  revalidateTag('products')
-  redirect('/admin/products')
+  return runProductAction(() => productRepository.create(parsePayload(formData)))
 }
-
-// ─── Update ───────────────────────────────────────────────────────────────────
 
 export async function updateProduct(
   productId: string,
   _prev: ProductActionState,
   formData: FormData
 ): Promise<ProductActionState> {
-  const raw = JSON.parse(formData.get('payload') as string)
-  if (!raw.slug && raw.name) raw.slug = slugify(raw.name)
-
-  const parsed = ProductSchema.safeParse(raw)
-  if (!parsed.success) {
-    return { errors: parsed.error.flatten().fieldErrors as Record<string, string[]> }
-  }
-
-  const data = parsed.data
-
-  if (data.is_published) {
-    if (!data.thumbnail_url) return { message: 'Cannot publish: thumbnail is required.' }
-    if (!data.affiliate_links.length)
-      return { message: 'Cannot publish: at least one affiliate link is required.' }
-  }
-
-  const idx = db.products.findIndex(p => p.id === productId)
-  if (idx === -1) return { message: 'Product not found.' }
-
-  // Slug clash with another product
-  const clash = db.products.find(p => p.slug === data.slug && p.id !== productId)
-  if (clash) return { message: 'A product with this slug already exists.' }
-
-  const category = db.categories.find(c => c.id === data.category_id) ?? db.products[idx].category
-  const brand = db.brands.find(b => b.id === data.brand_id) ?? db.products[idx].brand
-
-  const { affiliate_links, faqs, ...productFields } = data
-  const now = new Date().toISOString()
-
-  db.products[idx] = {
-    ...db.products[idx],
-    ...productFields,
-    category,
-    brand,
-    category_slug: category.slug,
-    brand_name: brand.name,
-    updated_at: now,
-    affiliate_links: [],
-    faqs: [],
-  }
-
-  // Replace affiliate_links
-  db.affiliateLinks = db.affiliateLinks.filter(l => l.product_id !== productId)
-  for (const l of affiliate_links) {
-    db.affiliateLinks.push({
-      ...(l as any),
-      id: newId(),
-      product_id: productId,
-      last_updated: (l as any).last_updated ?? now,
-    } as AffiliateLink)
-  }
-
-  // Replace faqs
-  db.faqs = db.faqs.filter(f => f.product_id !== productId)
-  for (const [i, f] of faqs.entries()) {
-    db.faqs.push({
-      ...(f as any),
-      id: newId(),
-      product_id: productId,
-      display_order: f.display_order ?? i,
-    } as FAQ)
-  }
-
-  syncProductRelations(productId)
-  revalidateTag('products')
-  redirect('/admin/products')
+  return runProductAction(() => productRepository.update(productId, parsePayload(formData)))
 }

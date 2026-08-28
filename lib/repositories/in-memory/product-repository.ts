@@ -9,14 +9,14 @@ import { db, newId, type db as DbType } from '@/lib/mock/db'
 import {
   productCreateSchema,
   productUpdateSchema,
+  canPublish,
   type ProductDetail,
-  type ProductSummary,
   type AffiliateLink,
   type FAQ,
 } from '@/lib/schemas'
 import { paginate, type Paginated } from '@/lib/schemas/common'
 import { parseOrThrow } from '../validate'
-import { ConflictError, ForeignKeyError, NotFoundError } from '../errors'
+import { ConflictError, ForeignKeyError, NotFoundError, ValidationError } from '../errors'
 import type {
   ProductRepository,
   ProductQuery,
@@ -44,6 +44,7 @@ function relevanceScore(p: ProductDetail, q: string): number {
   if (name === q) return 100
   if (name.startsWith(q)) return 80
   if (name.includes(q)) return 60
+  if (p.slug.includes(q)) return 55
   if (p.tags.some((t) => t.toLowerCase() === q)) return 50
   if (p.brand_name.toLowerCase().includes(q)) return 40
   if (p.tags.some((t) => t.toLowerCase().includes(q))) return 30
@@ -117,7 +118,9 @@ export function createInMemoryProductRepository(store: Store = db): ProductRepos
     let rows = store.products
       .map((row) => assembleProductDetail(store, row))
       .filter((p) => {
-        if (!q.includeUnpublished && !p.is_published) return false
+        if (q.publishStatus === 'published' && !p.is_published) return false
+        else if (q.publishStatus === 'draft' && p.is_published) return false
+        else if (!q.publishStatus && !q.includeUnpublished && !p.is_published) return false
         if (q.categorySlug && p.category_slug !== q.categorySlug) return false
         if (brandSlugSet && !brandSlugSet.has(p.brand.slug)) return false
         if (brandIdSet && !brandIdSet.has(p.brand_id)) return false
@@ -195,6 +198,12 @@ export function createInMemoryProductRepository(store: Store = db): ProductRepos
 
       if (store.products.some((p) => p.slug === data.slug)) {
         throw new ConflictError(`A product with slug "${data.slug}" already exists`)
+      }
+
+      if (data.is_published && !canPublish({ thumbnail_url: data.thumbnail_url, affiliateLinkCount: data.affiliate_links.length })) {
+        throw new ValidationError('Cannot publish: a thumbnail and at least one affiliate link are required', {
+          is_published: ['Add a thumbnail and at least one affiliate link before publishing'],
+        })
       }
 
       const id = newId()
@@ -278,6 +287,20 @@ export function createInMemoryProductRepository(store: Store = db): ProductRepos
           })()
         : existing.brand
 
+      // Resolve the state this update would leave the product in *before*
+      // mutating anything, so a failed publish invariant leaves no partial write.
+      const finalIsPublished = data.is_published ?? existing.is_published
+      const finalThumbnail = data.thumbnail_url ?? existing.thumbnail_url
+      const finalLinkCount =
+        data.affiliate_links !== undefined
+          ? data.affiliate_links.length
+          : store.affiliateLinks.filter((l) => l.product_id === id).length
+      if (finalIsPublished && !canPublish({ thumbnail_url: finalThumbnail, affiliateLinkCount: finalLinkCount })) {
+        throw new ValidationError('Cannot publish: a thumbnail and at least one affiliate link are required', {
+          is_published: ['Add a thumbnail and at least one affiliate link before publishing'],
+        })
+      }
+
       // Replace child collections only when the caller provided them.
       if (data.affiliate_links !== undefined) {
         store.affiliateLinks = store.affiliateLinks.filter((l) => l.product_id !== id)
@@ -302,6 +325,7 @@ export function createInMemoryProductRepository(store: Store = db): ProductRepos
         )
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- discarding already-handled fields
       const { affiliate_links: _a, faqs: _f, category_id: _c, brand_id: _b, ...scalar } = data
       store.products[idx] = {
         ...existing,
@@ -327,7 +351,17 @@ export function createInMemoryProductRepository(store: Store = db): ProductRepos
 
     async togglePublish(id) {
       const idx = requireRowIndex(id)
-      store.products[idx].is_published = !store.products[idx].is_published
+      const willPublish = !store.products[idx].is_published
+      if (willPublish) {
+        const linkCount = store.affiliateLinks.filter((l) => l.product_id === id).length
+        if (!canPublish({ thumbnail_url: store.products[idx].thumbnail_url, affiliateLinkCount: linkCount })) {
+          throw new ValidationError(
+            'Cannot publish: a thumbnail and at least one affiliate link are required',
+            { is_published: ['Add a thumbnail and at least one affiliate link before publishing'] }
+          )
+        }
+      }
+      store.products[idx].is_published = willPublish
       store.products[idx].updated_at = new Date().toISOString()
       return assembleProductDetail(store, store.products[idx])
     },

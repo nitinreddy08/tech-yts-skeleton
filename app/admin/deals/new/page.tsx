@@ -1,12 +1,9 @@
 import Link from 'next/link'
-import { db } from '@/lib/mock/db'
+import { productRepository } from '@/lib/repositories'
 import { DealForm } from '@/components/admin/DealForm'
 
 export default async function NewDealPage() {
-  const products = db.products
-    .filter(p => p.is_published)
-    .map(p => ({ id: p.id, name: p.name }))
-    .sort((a, b) => a.name.localeCompare(b.name))
+  const products = await productRepository.publishedOptions()
 
   return (
     <div className="mx-auto max-w-3xl p-8">

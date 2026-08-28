@@ -6,7 +6,7 @@ import { getSpecFiltersForCategory, parseSpecFiltersFromParams } from '@/lib/uti
 import { getProductClickCounts } from '@/lib/data/trending'
 import { getActiveDealMap } from '@/lib/data/product-deals'
 import { generateCategoryMetadata, generateBreadcrumbJsonLd, generateCategoryItemListJsonLd } from '@/lib/utils/seo'
-import { db } from '@/lib/mock/db'
+import { productRepository } from '@/lib/repositories'
 import { CategoryProductResults } from '@/components/ui/CategoryProductResults'
 import { CategoryPopularTags } from '@/components/ui/CategoryPopularTags'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -55,28 +55,27 @@ export default async function CategoryPage({
   const cat = await fetchCategoryBySlug(category)
   if (!cat) notFound()
 
-  const allProductsWithSpecs = db.products
-    .filter((p) => p.is_published && p.category_slug === category)
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      category_id: p.category_id,
-      category_slug: p.category_slug,
-      brand_id: p.brand_id,
-      brand_name: p.brand_name,
-      thumbnail_url: p.thumbnail_url,
-      creator_rating: p.creator_rating,
-      current_price_inr: p.current_price_inr,
-      launch_price_inr: p.launch_price_inr,
-      is_featured: p.is_featured,
-      is_deal_of_the_day: p.is_deal_of_the_day,
-      deal_badge_text: p.deal_badge_text,
-      tags: p.tags,
-      youtube_video_url: p.youtube_video_url,
-      created_at: p.created_at,
-      specifications: p.specifications,
-    }))
+  const categoryProducts = await productRepository.listDetailed({ categorySlug: category })
+  const allProductsWithSpecs = categoryProducts.map((p) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    category_id: p.category_id,
+    category_slug: p.category_slug,
+    brand_id: p.brand_id,
+    brand_name: p.brand_name,
+    thumbnail_url: p.thumbnail_url,
+    creator_rating: p.creator_rating,
+    current_price_inr: p.current_price_inr,
+    launch_price_inr: p.launch_price_inr,
+    is_featured: p.is_featured,
+    is_deal_of_the_day: p.is_deal_of_the_day,
+    deal_badge_text: p.deal_badge_text,
+    tags: p.tags,
+    youtube_video_url: p.youtube_video_url,
+    created_at: p.created_at,
+    specifications: p.specifications,
+  }))
 
   const allProducts: ProductSummary[] = allProductsWithSpecs
 

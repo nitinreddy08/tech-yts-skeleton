@@ -11,12 +11,7 @@
  * but the signatures already match a networked backend so callers never have to
  * be rewritten from sync to async later.
  */
-import type {
-  ProductSummary,
-  ProductDetail,
-  ProductCreate,
-  ProductUpdate,
-} from '@/lib/schemas'
+import type { ProductSummary, ProductDetail } from '@/lib/schemas'
 import type { z } from 'zod'
 import type { productCreateSchema, productUpdateSchema } from '@/lib/schemas/product'
 import type { Paginated } from '@/lib/schemas/common'
@@ -53,6 +48,13 @@ export interface ProductQuery {
   featured?: boolean
   /** Include unpublished rows (admin only). Defaults to false. */
   includeUnpublished?: boolean
+  /**
+   * Admin tri-state filter: 'published' or 'draft' narrows to exactly that
+   * state (overriding `includeUnpublished`); omitted means "no publish-state
+   * filter" — combine with `includeUnpublished` to decide whether drafts show
+   * up at all.
+   */
+  publishStatus?: 'published' | 'draft'
   sort?: ProductSort
   /** Cap the number of rows (applied after sort, before pagination). */
   limit?: number
@@ -79,8 +81,14 @@ export interface ProductRepository {
   /** `{id, name}` options for admin dropdowns. */
   publishedOptions(): Promise<{ id: string; name: string }[]>
 
-  create(input: ProductCreateInput | ProductCreate): Promise<ProductDetail>
-  update(id: string, input: ProductUpdateInput | ProductUpdate): Promise<ProductDetail>
+  /**
+   * Accepts `unknown` deliberately: this is the validation boundary. Callers
+   * may pass a typed `ProductCreateInput`/`ProductCreate` for convenience, but
+   * raw JSON from an HTTP body is just as welcome — `parseOrThrow` is what
+   * actually decides whether it's valid, not the TypeScript type checker.
+   */
+  create(input: unknown): Promise<ProductDetail>
+  update(id: string, input: unknown): Promise<ProductDetail>
   remove(id: string): Promise<void>
   togglePublish(id: string): Promise<ProductDetail>
 }

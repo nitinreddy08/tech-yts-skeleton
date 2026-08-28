@@ -226,6 +226,17 @@ export const productUpdateSchema = z.object({
   faqs: z.array(faqInputSchema).optional(),
 })
 
+/**
+ * A published product must have a thumbnail and at least one place to buy it —
+ * otherwise a Visitor lands on a page with no image and no way to purchase.
+ * This is enforced by the repository on every path that can set
+ * `is_published: true` (create, update, and toggle-publish alike), not just
+ * the admin form, so it can't be bypassed by hitting the API directly.
+ */
+export function canPublish(p: { thumbnail_url?: string | null; affiliateLinkCount: number }): boolean {
+  return !!p.thumbnail_url && p.affiliateLinkCount > 0
+}
+
 // ─── Inferred types (the single source of truth for `@/types`) ──────────────
 
 export type SpecFieldType = z.infer<typeof specFieldTypeSchema>

@@ -1,8 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { db } from '@/lib/mock/db'
+import { dealRepository, productRepository } from '@/lib/repositories'
 import { DealForm } from '@/components/admin/DealForm'
-import type { Deal } from '@/types'
 
 export default async function EditDealPage({
   params,
@@ -11,13 +10,11 @@ export default async function EditDealPage({
 }) {
   const { id } = await params
 
-  const deal = db.deals.find(d => d.id === id)
+  const [deal, products] = await Promise.all([
+    dealRepository.findById(id),
+    productRepository.publishedOptions(),
+  ])
   if (!deal) notFound()
-
-  const products = db.products
-    .filter(p => p.is_published)
-    .map(p => ({ id: p.id, name: p.name }))
-    .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
     <div className="mx-auto max-w-3xl p-8">
@@ -29,7 +26,7 @@ export default async function EditDealPage({
         <h1 className="text-xl font-bold text-white">Edit Deal</h1>
       </div>
 
-      <DealForm deal={deal as Deal} products={products} />
+      <DealForm deal={deal} products={products} />
     </div>
   )
 }
