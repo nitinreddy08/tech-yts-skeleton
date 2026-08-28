@@ -12,6 +12,9 @@ import {
   dealSchema,
   affiliateLinkSchema,
   faqSchema,
+  bestOfListSchema,
+  clickLogSchema,
+  newsletterSubscriberSchema,
 } from '@/lib/schemas'
 import {
   categories,
@@ -20,6 +23,9 @@ import {
   deals,
   affiliateLinks,
   faqs,
+  bestOfLists,
+  clickLogs,
+  newsletterSubscribers,
 } from '@/lib/mock/db'
 
 describe('seed data conforms to schemas', () => {
@@ -50,4 +56,21 @@ describe('seed data conforms to schemas', () => {
     if (!res.success) console.error(res.error.flatten())
     expect(res.success).toBe(true)
   })
+
+  it.each(bestOfLists.map((l) => [l.slug, l] as const))('best-of list %s', (_slug, l) => {
+    const res = bestOfListSchema.safeParse(l)
+    if (!res.success) console.error(res.error.flatten())
+    expect(res.success).toBe(true)
+  })
+
+  it.each(clickLogs.map((c) => [c.id, c] as const))('click log %s', (_id, c) => {
+    expect(clickLogSchema.safeParse(c).success).toBe(true)
+  })
+
+  it.each(newsletterSubscribers.map((s) => [s.email, s] as const))(
+    'newsletter subscriber %s',
+    (_email, s) => {
+      expect(newsletterSubscriberSchema.safeParse(s).success).toBe(true)
+    }
+  )
 })

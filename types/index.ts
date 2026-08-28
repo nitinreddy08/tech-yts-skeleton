@@ -37,6 +37,8 @@ export type {
   BestOfListUpdate,
   ClickLog,
   ClickLogInput,
+  NewsletterSubscriber,
+  NewsletterSubscribeInput,
 } from '@/lib/schemas'
 
 import type { ProductDetail, AffiliateLink, FAQ } from '@/lib/schemas'

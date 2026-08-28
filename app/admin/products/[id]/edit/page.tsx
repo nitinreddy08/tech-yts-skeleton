@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { productRepository } from '@/lib/repositories'
-import { fetchAllCategories, fetchAllBrands } from '@/lib/data/categories'
+import { fetchAllCategories } from '@/lib/data/categories'
+import { fetchAllBrands } from '@/lib/data/brands'
 import { ProductForm } from '@/components/admin/ProductForm'
 import { updateProduct } from '@/app/admin/products/actions'
 

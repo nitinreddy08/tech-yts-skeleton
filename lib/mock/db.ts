@@ -19,6 +19,7 @@ import type {
   AffiliateLink,
   FAQ,
   ClickLog,
+  NewsletterSubscriber,
 } from '@/types'
 import { isDealLive } from '@/lib/schemas'
 
@@ -802,6 +803,14 @@ export const clickLogs: ClickLog[] = [
   { id: 'cl-seed-9', affiliate_link_id: 'al-mba-apple', product_id: 'prod-macbook-air-m3', store_name: 'Apple Store', clicked_at: '2026-08-20T11:00:00Z', user_agent: null, referrer: null, ip_hash: null },
 ]
 
+// ─── Newsletter subscribers ────────────────────────────────────────────────────
+
+export const newsletterSubscribers: NewsletterSubscriber[] = [
+  { id: 'sub-seed-1', email: 'rahul.sharma@gmail.com', subscribed_at: '2026-08-01T10:00:00Z' },
+  { id: 'sub-seed-2', email: 'priya@outlook.com', subscribed_at: '2026-08-15T14:30:00Z' },
+  { id: 'sub-seed-3', email: 'techdeals@yahoo.in', subscribed_at: '2026-08-20T09:15:00Z' },
+]
+
 // ─── Mutable store & helpers ──────────────────────────────────────────────────
 
 /** Mutable copies so Server Actions can mutate them at runtime */
@@ -814,6 +823,7 @@ export const db = {
   deals: [...deals],
   bestOfLists: [...bestOfLists],
   clickLogs: [...clickLogs],
+  newsletterSubscribers: [...newsletterSubscribers],
 }
 
 /** Simple UUID generator (no external dep needed) */

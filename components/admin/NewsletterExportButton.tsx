@@ -1,7 +1,7 @@
 'use client'
 
 import { Download } from 'lucide-react'
-import type { NewsletterSubscriber } from '@/lib/mock/newsletter'
+import type { NewsletterSubscriber } from '@/types'
 
 export function NewsletterExportButton({ subscribers }: { subscribers: NewsletterSubscriber[] }) {
   function exportCsv() {

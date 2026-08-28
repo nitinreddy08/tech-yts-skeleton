@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { fetchAllCategories, fetchAllBrands } from '@/lib/data/categories'
+import { fetchAllCategories } from '@/lib/data/categories'
+import { fetchAllBrands } from '@/lib/data/brands'
 import { ProductForm } from '@/components/admin/ProductForm'
 import { createProduct } from '@/app/admin/products/actions'
 

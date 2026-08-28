@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { newsletterSubscribers } from '@/lib/mock/newsletter'
+import { newsletterRepository } from '@/lib/repositories'
 import { AdminNewsletterFilter } from '@/components/admin/AdminNewsletterFilter'
 import { NewsletterExportButton } from '@/components/admin/NewsletterExportButton'
 
@@ -21,15 +21,10 @@ export default async function AdminNewsletterPage({
   const sp = await searchParams
   const q = ((sp.q as string) ?? '').trim().toLowerCase()
 
-  let subscribers = [...newsletterSubscribers].sort(
-    (a, b) => new Date(b.subscribed_at).getTime() - new Date(a.subscribed_at).getTime()
-  )
-
-  if (q) {
-    subscribers = subscribers.filter((s) => s.email.toLowerCase().includes(q))
-  }
-
-  const totalCount = newsletterSubscribers.length
+  const [subscribers, totalCount] = await Promise.all([
+    newsletterRepository.list({ search: q || undefined }),
+    newsletterRepository.count(),
+  ])
 
   return (
     <div className="p-4 sm:p-8">

@@ -1,7 +1,12 @@
 import Link from 'next/link'
-import { productRepository, dealRepository, bestOfListRepository, clickLogRepository } from '@/lib/repositories'
+import {
+  productRepository,
+  dealRepository,
+  bestOfListRepository,
+  clickLogRepository,
+  newsletterRepository,
+} from '@/lib/repositories'
 import { canPublish } from '@/lib/schemas'
-import { newsletterSubscribers } from '@/lib/mock/newsletter'
 import {
   Package,
   MousePointerClick,
@@ -30,12 +35,13 @@ function formatClickTime(iso: string): string {
 }
 
 export default async function AdminDashboard() {
-  const [products, activeDeals, expiringDeals, publishedLists, clicks] = await Promise.all([
+  const [products, activeDeals, expiringDeals, publishedLists, clicks, newsletterCount] = await Promise.all([
     productRepository.listDetailed({ includeUnpublished: true }),
     dealRepository.list({ liveOnly: true }),
     dealRepository.list({ expiringWithinHours: 7 * 24 }),
     bestOfListRepository.list(),
     clickLogRepository.list(),
+    newsletterRepository.count(),
   ])
   const published = products.filter((p) => p.is_published)
   const drafts = products.filter((p) => !p.is_published)
@@ -131,7 +137,7 @@ export default async function AdminDashboard() {
         <div className="rounded-xl border border-border bg-surface p-5">
           <Mail size={18} className="text-accent mb-2" />
           <p className="text-xs text-muted">Newsletter</p>
-          <p className="text-2xl font-bold text-primary mt-0.5">{newsletterSubscribers.length}</p>
+          <p className="text-2xl font-bold text-primary mt-0.5">{newsletterCount}</p>
           <Link href="/admin/newsletter" className="text-[10px] text-accent hover:underline mt-1 inline-block">
             View subscribers →
           </Link>

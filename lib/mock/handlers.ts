@@ -14,7 +14,14 @@
 
 import { http, HttpResponse } from 'msw'
 import { db } from './db'
-import { productRepository, dealRepository, bestOfListRepository, clickLogRepository } from '@/lib/repositories'
+import {
+  productRepository,
+  dealRepository,
+  bestOfListRepository,
+  clickLogRepository,
+  categoryRepository,
+  brandRepository,
+} from '@/lib/repositories'
 import { repositoryErrorResponse } from './http-error'
 import type { DealType } from '@/lib/schemas'
 
@@ -24,20 +31,20 @@ const BASE = '/api/mock'
 
 export const categoryHandlers = [
   // GET /api/mock/categories
-  http.get(`${BASE}/categories`, () => {
-    return HttpResponse.json(db.categories)
+  http.get(`${BASE}/categories`, async () => {
+    return HttpResponse.json(await categoryRepository.list())
   }),
 
   // GET /api/mock/categories/:slug
-  http.get(`${BASE}/categories/:slug`, ({ params }) => {
-    const cat = db.categories.find(c => c.slug === params.slug)
+  http.get(`${BASE}/categories/:slug`, async ({ params }) => {
+    const cat = await categoryRepository.findBySlug(params.slug as string)
     if (!cat) return new HttpResponse(null, { status: 404 })
     return HttpResponse.json(cat)
   }),
 
   // GET /api/mock/categories/by-id/:id
-  http.get(`${BASE}/categories/by-id/:id`, ({ params }) => {
-    const cat = db.categories.find(c => c.id === params.id)
+  http.get(`${BASE}/categories/by-id/:id`, async ({ params }) => {
+    const cat = await categoryRepository.findById(params.id as string)
     if (!cat) return new HttpResponse(null, { status: 404 })
     return HttpResponse.json(cat)
   }),
@@ -47,8 +54,8 @@ export const categoryHandlers = [
 
 export const brandHandlers = [
   // GET /api/mock/brands
-  http.get(`${BASE}/brands`, () => {
-    return HttpResponse.json([...db.brands].sort((a, b) => a.name.localeCompare(b.name)))
+  http.get(`${BASE}/brands`, async () => {
+    return HttpResponse.json(await brandRepository.list())
   }),
 ]
 

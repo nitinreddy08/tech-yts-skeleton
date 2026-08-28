@@ -11,6 +11,7 @@ import {
   deals,
   bestOfLists,
   clickLogs,
+  newsletterSubscribers,
 } from '@/lib/mock/db'
 
 export function makeStore() {
@@ -23,6 +24,7 @@ export function makeStore() {
     deals: structuredClone(deals),
     bestOfLists: structuredClone(bestOfLists),
     clickLogs: structuredClone(clickLogs),
+    newsletterSubscribers: structuredClone(newsletterSubscribers),
   }
 }
 
