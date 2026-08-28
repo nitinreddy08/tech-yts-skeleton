@@ -7,8 +7,6 @@ import { siteConfig } from '@/lib/config'
 import { SearchBar } from '@/components/ui/SearchBar'
 import { useCompareOptional } from '@/components/providers/CompareProvider'
 import { buildCompareUrl } from '@/lib/utils/compare-url'
-import { SavedNavLink } from '@/components/ui/SavedNavLink'
-import { AlertsNavLink } from '@/components/ui/AlertsNavLink'
 import { MyStuffNavLink } from '@/components/ui/MyStuffNavLink'
 import { SiteLogoMark } from '@/components/ui/SiteLogo'
 import { loadWishlist } from '@/lib/utils/wishlist'
@@ -315,21 +313,8 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
         <div className="mx-auto flex max-w-7xl items-center px-4">
           <Top10Dropdown lists={bestOfLists} />
           <CompareDropdown categories={categories} />
-          <NavLink href="/deals">
-            <span className="inline-flex items-center gap-1.5">
-              <Zap size={14} className="text-accent" />
-              Deals
-              {activeDealCount > 0 && (
-                <span className="rounded-full bg-accent/10 text-accent px-1.5 py-0.5 text-[10px] font-bold">
-                  {activeDealCount}
-                </span>
-              )}
-            </span>
-          </NavLink>
           <NavLink href="/search">Search</NavLink>
-          <SavedNavLink className="px-3 py-3 text-sm font-medium whitespace-nowrap -mb-px" />
-          <AlertsNavLink className="px-3 py-3 text-sm font-medium whitespace-nowrap -mb-px" />
-          <MyStuffNavLink className="px-3 py-3 text-sm font-medium whitespace-nowrap -mb-px hidden xl:inline-flex" />
+          <MyStuffNavLink className="px-3 py-3 text-sm font-medium whitespace-nowrap -mb-px" />
           <div className="ml-auto flex items-center">
             {categories.map((cat) => (
               <CategoryLink key={cat.slug} category={cat} />
@@ -476,10 +461,7 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
               </Link>
 
               <div className="rounded-lg px-3 py-3">
-                <SavedNavLink className="text-sm font-semibold" />
-              </div>
-              <div className="rounded-lg px-3 py-3">
-                <AlertsNavLink className="text-sm font-semibold" />
+                <MyStuffNavLink className="text-sm font-semibold" />
               </div>
             </div>
           </div>

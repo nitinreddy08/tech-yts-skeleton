@@ -54,16 +54,12 @@ const SOCIAL_ICON_MAP: Record<string, React.ComponentType<{ className?: string }
 }
 
 const QUICK_LINKS = [
-  { href: '/', label: 'Home' },
   { href: '/deals', label: 'Deals & Offers' },
   { href: '/compare', label: 'Compare Products' },
   { href: '/brands', label: 'All Brands' },
   { href: '/tags', label: 'Browse Tags' },
   { href: '/search', label: 'Search' },
   { href: '/my', label: 'My Stuff' },
-  { href: '/saved', label: 'Saved' },
-  { href: '/alerts', label: 'Price Alerts' },
-  { href: '/feed.xml', label: 'Deals RSS Feed' },
 ]
 
 const LEGAL_LINKS = [
