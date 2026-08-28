@@ -1,0 +1,169 @@
+/**
+ * Verdict Design System 1.0 — token layer
+ *
+ * Drop-in CSS custom properties. Not yet imported by the app — see
+ * DESIGN_SYSTEM.md "Implementation status." When wiring this in, this file
+ * replaces the :root color/shadow/radius block in app/globals.css, and the
+ * @theme inline block there should mirror the semantic tokens the same way
+ * it already mirrors --color-primary etc.
+ */
+
+:root {
+  /* ---------- Primary — Signal Violet ---------- */
+  --primary-50:  #F5F1FE;
+  --primary-100: #E7DFFB;
+  --primary-200: #D0BFF7;
+  --primary-300: #AF93F0;
+  --primary-400: #8D65EC;
+  --primary-500: #723EEA;
+  --primary-600: #5722D3;
+  --primary-700: #4B24A8;
+  --primary-800: #3E2183;
+  --primary-900: #301C5F;
+  --primary-950: #21143D;
+
+  /* ---------- Secondary — Deal Amber ---------- */
+  --secondary-50:  #FFF7EB;
+  --secondary-100: #FEEACD;
+  --secondary-200: #FDD69B;
+  --secondary-300: #FBC16A;
+  --secondary-400: #F9B043;
+  --secondary-500: #F7A222;
+  --secondary-600: #DD8A0E;
+  --secondary-700: #B3710F;
+  --secondary-800: #8A590F;
+  --secondary-900: #6B460F;
+  --secondary-950: #4E340E;
+
+  /* ---------- Neutrals — Graphite ---------- */
+  --neutral-0:    #FFFFFF;
+  --neutral-50:   #FEFDFE;
+  --neutral-100:  #F9F9FB;
+  --neutral-200:  #F1F0F5;
+  --neutral-300:  #E7E4EC;
+  --neutral-400:  #D9D6E0;
+  --neutral-500:  #C4C0CE;
+  --neutral-600:  #AAA5B6;
+  --neutral-700:  #908A9E;
+  --neutral-800:  #767184;
+  --neutral-900:  #585365;
+  --neutral-950:  #3A3546;
+  --neutral-1000: #18151E;
+  --neutral-dark: #0E0C13;
+
+  /* ---------- Status ---------- */
+  --error-50:  #FEECEC; --error-100: #FBD0D1; --error-200: #F7ABAE;
+  --error-300: #F2888B; --error-400: #EC6569; --error-500: #E74B51;
+  --error-600: #D9262C; --error-700: #B0272B; --error-800: #892428;
+  --error-900: #652022; --error-950: #43191A;
+
+  --warning-50:  #FFFAEB; --warning-100: #FDEFC3; --warning-200: #FBE193;
+  --warning-300: #F7D56E; --warning-400: #F3C949; --warning-500: #EFBE2A;
+  --warning-600: #D3A417; --warning-700: #AA8518; --warning-800: #816718;
+  --warning-900: #625018; --warning-950: #463A16;
+
+  --success-50:  #EDFCF5; --success-100: #D4F7E7; --success-200: #ABEDCE;
+  --success-300: #83E2B6; --success-400: #5CD69D; --success-500: #33CC85;
+  --success-600: #30A66F; --success-700: #2B825A; --success-800: #266447;
+  --success-900: #1F4734; --success-950: #173025;
+
+  --info-50:  #F0F3FE; --info-100: #D9DEFC; --info-200: #B5BFF8;
+  --info-300: #8C9CF2; --info-400: #6C80EF; --info-500: #5168EC;
+  --info-600: #2C47DD; --info-700: #273DB9; --info-800: #273791;
+  --info-900: #222D6D; --info-950: #1C234A;
+
+  /* ---------- Category accents ---------- */
+  --category-smartphones: #723EEA;
+  --category-laptops:     #30A69E;
+  --category-audio:       #DA4E99;
+  --category-tablets:     #30AEE8;
+  --category-wearables:   #EE7C2B;
+  --category-gaming:      #E24236;
+
+  /* ---------- Semantic tokens (light) ---------- */
+  --bg-default:              var(--neutral-0);
+  --bg-soft:                 var(--neutral-100);
+  --bg-elevated:              var(--neutral-0);
+  --text-primary:            var(--neutral-1000);
+  --text-secondary:          var(--neutral-800);
+  --text-link:                var(--primary-600);
+  --border-default:          var(--neutral-500);
+  --border-focus:             var(--primary-500);
+  --interactive-primary:      var(--primary-700);
+  --interactive-primary-hover: var(--primary-800);
+  --surface-deal:             var(--secondary-50);
+
+  /* ---------- Typography ---------- */
+  --font-heading: var(--font-geist-sans, system-ui, sans-serif);
+  --font-body:    var(--font-inter, system-ui, sans-serif);
+
+  --text-xs:  0.625rem; /* 10px */
+  --text-sm:  0.75rem;  /* 12px */
+  --text-base: 0.875rem; /* 14px */
+  --text-md:  1rem;      /* 16px — default body */
+  --text-lg:  1.125rem;  /* 18px */
+  --text-xl:  1.25rem;   /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 2rem;      /* 32px */
+  --text-4xl: 2.5rem;    /* 40px */
+  --text-5xl: 3rem;      /* 48px */
+  --text-6xl: 3.5rem;    /* 56px */
+  --text-7xl: 4rem;      /* 64px */
+
+  --leading-tight: 1.1;
+  --leading-snug:  1.25;
+  --leading-normal: 1.5;
+
+  /* ---------- Spacing (4px base) ---------- */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-13: 52px; --space-16: 64px; --space-20: 80px;
+  --space-24: 96px;
+
+  /* ---------- Radius ---------- */
+  --radius-none: 0;
+  --radius-sm:   4px;
+  --radius-md:   8px;   /* default — buttons, inputs, dropdowns */
+  --radius-lg:   16px;  /* product/content cards */
+  --radius-xl:   24px;
+  --radius-2xl:  28px;
+  --radius-3xl:  40px;  /* hero containers */
+  --radius-full: 9999px; /* pills, toggles, badges, score ring */
+
+  /* ---------- Shadows (tinted to brand ink rgb(24 21 30)) ---------- */
+  --shadow-xs: 0 1px 2px 0 rgba(24,21,30,0.05);
+  --shadow-sm: 0 2px 4px 0 rgba(24,21,30,0.08), 0 1px 2px 0 rgba(24,21,30,0.06);
+  --shadow-md: 0 4px 8px 0 rgba(24,21,30,0.08), 0 2px 4px 0 rgba(24,21,30,0.06);
+  --shadow-lg: 0 8px 16px 0 rgba(24,21,30,0.08), 0 4px 8px 0 rgba(24,21,30,0.06);
+  --shadow-xl: 0 16px 32px 0 rgba(24,21,30,0.10), 0 8px 16px 0 rgba(24,21,30,0.08);
+}
+
+/* ---------- Semantic tokens (dark) ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg-default:     var(--neutral-dark);
+    --bg-soft:        var(--neutral-950);
+    --bg-elevated:     var(--neutral-900);
+    --text-primary:   var(--neutral-0);
+    --text-secondary: var(--neutral-600);
+    --text-link:       var(--primary-300);
+    --border-default: var(--neutral-800);
+    --border-focus:    var(--primary-400);
+    --interactive-primary:      var(--primary-500);
+    --interactive-primary-hover: var(--primary-400);
+    --surface-deal:    var(--secondary-950);
+  }
+}
+:root[data-theme='dark'] {
+  --bg-default:     var(--neutral-dark);
+  --bg-soft:        var(--neutral-950);
+  --bg-elevated:     var(--neutral-900);
+  --text-primary:   var(--neutral-0);
+  --text-secondary: var(--neutral-600);
+  --text-link:       var(--primary-300);
+  --border-default: var(--neutral-800);
+  --border-focus:    var(--primary-400);
+  --interactive-primary:      var(--primary-500);
+  --interactive-primary-hover: var(--primary-400);
+  --surface-deal:    var(--secondary-950);
+}
