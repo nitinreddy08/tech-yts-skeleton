@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { X, GitCompare, Star, ArrowRight } from 'lucide-react'
@@ -11,6 +10,7 @@ import type { ProductDealBadge } from '@/lib/data/product-deals'
 import { DealRibbon } from '@/components/ui/ActiveDealBanner'
 import { Badge } from '@/components/ui/Badge'
 import { buttonVariants } from '@/components/ui/Button'
+import { useDialog } from '@/lib/hooks/useDialog'
 
 interface ProductQuickViewProps {
   product: ProductSummary
@@ -22,36 +22,31 @@ export function ProductQuickView({ product, activeDeal, onClose }: ProductQuickV
   const compare = useCompareOptional()
   const inCompare = compare?.isInCompare(product.id) ?? false
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => {
-      document.body.style.overflow = ''
-      window.removeEventListener('keydown', onKey)
-    }
-  }, [onClose])
+  // Focus trap, Escape, scroll lock and focus restore.
+  const dialogRef = useDialog<HTMLDivElement>(true, onClose)
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={`Quick view: ${product.name}`}
-        className="relative w-full sm:max-w-lg bg-surface rounded-t-2xl sm:rounded-2xl border border-border shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto"
+        className="relative w-full sm:max-w-lg bg-surface rounded-t-2xl sm:rounded-2xl border border-border shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto outline-none"
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-3 right-3 z-10 rounded-full bg-surface/90 border border-border p-2 hover:bg-surface-alt"
+          className="absolute top-2 right-2 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-surface/90 border border-border hover:bg-surface-alt"
           aria-label="Close"
         >
           <X size={18} />
         </button>
 
         <div className="relative aspect-square bg-surface-alt">
-          {activeDeal && <DealRibbon deal={activeDeal} className="top-3 right-12" />}
+          {activeDeal && <DealRibbon deal={activeDeal} className="top-3 right-14" />}
           {product.thumbnail_url ? (
             <Image src={product.thumbnail_url} alt={product.name} fill sizes="400px" className="object-contain p-8" />
           ) : null}
@@ -63,7 +58,7 @@ export function ProductQuickView({ product, activeDeal, onClose }: ProductQuickV
 
           <div className="flex items-center gap-3 mt-3">
             <span className="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1 text-xs font-bold text-white">
-              <Star size={12} className="fill-white" />
+              <Star size={12} className="fill-white" aria-hidden />
               {product.creator_rating.toFixed(1)}/10
             </span>
             {product.current_price_inr != null && (
@@ -86,17 +81,19 @@ export function ProductQuickView({ product, activeDeal, onClose }: ProductQuickV
               href={`/${product.category_slug}/${product.slug}`}
               className={buttonVariants({ variant: 'primary', className: 'flex-1' })}
             >
-              Full Review <ArrowRight size={14} />
+              View full review <ArrowRight size={14} aria-hidden />
             </Link>
             {compare && (
               <button
                 type="button"
                 onClick={() => compare.toggleProduct(product)}
-                className={`rounded-lg border px-4 py-3 text-sm font-semibold transition-colors ${
+                aria-pressed={inCompare}
+                className={`inline-flex h-12 items-center gap-1.5 rounded-md border px-4 text-sm font-semibold transition-colors ${
                   inCompare ? 'border-accent bg-accent/10 text-accent' : 'border-border text-primary hover:border-accent'
                 }`}
               >
-                <GitCompare size={16} />
+                <GitCompare size={16} aria-hidden />
+                {inCompare ? 'Added' : 'Compare'}
               </button>
             )}
           </div>

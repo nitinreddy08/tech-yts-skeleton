@@ -44,30 +44,37 @@ export function RecentSearchesStrip({ currentQuery = '', className = '' }: Recen
   return (
     <section className={className} aria-label="Your recent searches">
       <div className="flex items-center gap-2 mb-2">
-        <Clock size={14} className="text-muted shrink-0" />
+        <Clock size={14} className="text-muted shrink-0" aria-hidden />
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">
           Your recent searches
         </h2>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <ul className="flex flex-wrap gap-2">
         {visible.map((term) => (
-          <Link
+          // Link and remove button are siblings (a button inside a link is
+          // invalid HTML), and the remove button is always visible so it
+          // works on touch screens too.
+          <li
             key={term}
-            href={`/search?q=${encodeURIComponent(term)}`}
-            className="group inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-primary hover:border-accent hover:text-accent transition-colors"
+            className="inline-flex h-9 items-center rounded-full border border-neutral-500 bg-surface text-sm font-medium text-primary transition-colors hover:border-accent"
           >
-            {term}
+            <Link
+              href={`/search?q=${encodeURIComponent(term)}`}
+              className="relative flex h-full items-center pl-4 pr-1 hover:text-accent after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']"
+            >
+              {term}
+            </Link>
             <button
               type="button"
               onClick={(e) => handleRemove(e, term)}
-              className="rounded-full p-0.5 text-muted opacity-0 group-hover:opacity-100 hover:bg-surface-alt hover:text-primary transition-all"
+              className="relative flex h-full w-9 items-center justify-center rounded-r-full text-muted hover:text-primary after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']"
               aria-label={`Remove "${term}" from recent searches`}
             >
-              <X size={12} />
+              <X size={14} aria-hidden />
             </button>
-          </Link>
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   )
 }

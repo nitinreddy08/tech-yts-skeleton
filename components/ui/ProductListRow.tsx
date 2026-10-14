@@ -2,11 +2,12 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Package, GitCompare, Check, Eye } from 'lucide-react'
+import { Package, GitCompare, Check } from 'lucide-react'
 import { formatIndianPrice } from '@/lib/utils/format'
 import { useCompareOptional } from '@/components/providers/CompareProvider'
 import { SaveButton } from '@/components/ui/SaveButton'
-import { ScoreRing } from '@/components/ui/ScoreRing'
+import { RatingBadge } from '@/components/ui/RatingBadge'
+import { Button } from '@/components/ui/Button'
 import { DealRibbon } from '@/components/ui/ActiveDealBanner'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import type { ProductSummary } from '@/types'
@@ -57,7 +58,7 @@ export function ProductListRow({ product, activeDeal }: ProductListRowProps) {
           </h3>
         </Link>
         <div className="flex flex-wrap items-center gap-3 mt-auto pt-2">
-          <ScoreRing score={product.creator_rating} size={40} />
+          <RatingBadge score={product.creator_rating} showVerdict />
           {product.current_price_inr != null ? (
             <p className="text-base font-bold text-accent">{formatIndianPrice(product.current_price_inr)}</p>
           ) : (
@@ -66,27 +67,25 @@ export function ProductListRow({ product, activeDeal }: ProductListRowProps) {
         </div>
       </div>
 
-      <div className="flex flex-col items-end justify-between gap-2 shrink-0">
-        <SaveButton product={product} className="p-1.5" size={16} />
+      <div className="flex shrink-0 flex-col items-end justify-between gap-2">
+        <SaveButton product={product} size={16} />
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleCompare}
             disabled={!compare}
             aria-pressed={inCompare}
-            className={`flex items-center gap-1 text-[10px] font-medium transition-colors ${
-              inCompare ? 'text-accent' : 'text-muted hover:text-primary'
+            className={`inline-flex h-11 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              inCompare ? 'border-accent bg-accent/5 text-accent' : 'border-border text-muted hover:border-accent hover:text-accent'
             }`}
           >
-            {inCompare ? <Check size={12} /> : <GitCompare size={12} />}
-            {inCompare ? 'Added' : 'Compare'}
+            {inCompare ? <Check size={14} aria-hidden /> : <GitCompare size={14} aria-hidden />}
+            <span className="hidden sm:inline">{inCompare ? 'Added' : 'Compare'}</span>
+            <span className="sr-only sm:hidden">{inCompare ? 'Added to compare' : 'Add to compare'}</span>
           </button>
-          <Link
-            href={`/${product.category_slug}/${product.slug}`}
-            className="inline-flex items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-[10px] font-semibold text-white hover:bg-accent/90"
-          >
-            <Eye size={12} /> View
-          </Link>
+          <Button href={`/${product.category_slug}/${product.slug}`} size="auto" className="h-11 px-4 text-sm">
+            View<span className="sr-only"> {product.name}</span>
+          </Button>
         </div>
       </div>
     </article>

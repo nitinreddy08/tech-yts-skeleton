@@ -9,6 +9,8 @@ import { useCompareOptional } from '@/components/providers/CompareProvider'
 import { ProductQuickView } from '@/components/ui/ProductQuickView'
 import { DealRibbon } from '@/components/ui/ActiveDealBanner'
 import { SaveButton } from '@/components/ui/SaveButton'
+import { RatingBadge } from '@/components/ui/RatingBadge'
+import { Badge } from '@/components/ui/Badge'
 import type { ProductDealBadge } from '@/lib/data/product-deals'
 import type { ProductSummary } from '@/types'
 
@@ -18,9 +20,27 @@ interface ProductCardProps {
   activeDeal?: ProductDealBadge | null
   rank?: number
   pickReason?: string
+  /** Wraps the first match of this text in the title with <mark> (search results). */
+  highlight?: string
+  /** Shows the category next to the brand (useful when results span categories). */
+  showCategory?: boolean
 }
 
-export function ProductCard({ product, showDealBadge = true, activeDeal, rank, pickReason }: ProductCardProps) {
+function Highlight({ text, query }: { text: string; query?: string }) {
+  const q = query?.trim()
+  if (!q) return <>{text}</>
+  const idx = text.toLowerCase().indexOf(q.toLowerCase())
+  if (idx === -1) return <>{text}</>
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="rounded-sm bg-accent/15 px-0.5 text-accent not-italic">{text.slice(idx, idx + q.length)}</mark>
+      {text.slice(idx + q.length)}
+    </>
+  )
+}
+
+export function ProductCard({ product, showDealBadge = true, activeDeal, rank, pickReason, highlight, showCategory = false }: ProductCardProps) {
   const compare = useCompareOptional()
   const inCompare = compare?.isInCompare(product.id) ?? false
   const [quickView, setQuickView] = useState(false)
@@ -28,15 +48,14 @@ export function ProductCard({ product, showDealBadge = true, activeDeal, rank, p
   const showBadge = showDealBadge && (product.is_deal_of_the_day || !!product.deal_badge_text)
   const badgeText = product.deal_badge_text ?? 'Deal'
   const showLiveDeal = !!activeDeal
+  const href = `/${product.category_slug}/${product.slug}`
 
   function handleCompare(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
-    if (!compare) return
-    if (!inCompare && compare.products.length >= 4) {
-      return
-    }
-    compare.toggleProduct(product)
+    // The provider owns the 4-product / same-category rules and shows a toast
+    // explaining a refusal, so always hand the click to it.
+    compare?.toggleProduct(product)
   }
 
   return (
@@ -50,7 +69,7 @@ export function ProductCard({ product, showDealBadge = true, activeDeal, rank, p
 
       {showLiveDeal && activeDeal && <DealRibbon deal={activeDeal} />}
 
-      <div className={`absolute top-2 z-10 ${rank !== undefined ? 'right-2' : 'left-2'}`}>
+      <div className={`absolute top-1 z-10 ${rank !== undefined ? 'right-1' : 'left-1'}`}>
         <SaveButton product={product} />
       </div>
 
@@ -60,11 +79,11 @@ export function ProductCard({ product, showDealBadge = true, activeDeal, rank, p
         </div>
       )}
 
-      <Link href={`/${product.category_slug}/${product.slug}`} className="block aspect-square relative overflow-hidden bg-surface-alt">
+      <Link href={href} className="block aspect-square relative overflow-hidden bg-surface-alt" tabIndex={-1} aria-hidden>
         {product.thumbnail_url ? (
           <Image
             src={product.thumbnail_url}
-            alt={product.name}
+            alt=""
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-contain p-4 transition-transform group-hover:scale-105"
@@ -76,11 +95,19 @@ export function ProductCard({ product, showDealBadge = true, activeDeal, rank, p
         )}
       </Link>
 
-      <div className="flex flex-col gap-2 p-6">
-        <p className="text-xs text-muted">{product.brand_name}</p>
-        <Link href={`/${product.category_slug}/${product.slug}`}>
-          <h3 className="line-clamp-2 text-sm font-semibold text-primary leading-snug hover:text-accent transition-colors">
-            {product.name}
+      <div className="flex flex-1 flex-col gap-2 p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="truncate text-xs text-muted">{product.brand_name}</p>
+          {showCategory && (
+            <Badge variant="category" category={product.category_slug} size="sm" className="hidden shrink-0 capitalize sm:inline-flex">
+              {product.category_slug}
+            </Badge>
+          )}
+        </div>
+        {/* The one real link into the product: image and title share it. */}
+        <Link href={href} className="after:absolute after:inset-0 after:content-[''] focus-visible:after:outline-2">
+          <h3 className="line-clamp-2 text-sm font-semibold text-primary leading-snug group-hover:text-accent transition-colors">
+            <Highlight text={product.name} query={highlight} />
           </h3>
         </Link>
 
@@ -88,12 +115,7 @@ export function ProductCard({ product, showDealBadge = true, activeDeal, rank, p
           <p className="text-xs text-muted">{pickReason}</p>
         )}
 
-        <div className="flex items-center gap-1.5">
-          <div className="inline-flex items-center justify-center rounded-xl bg-primary px-3 py-2 text-xs font-bold text-white">
-            {product.creator_rating.toFixed(1)}
-          </div>
-          <span className="text-xs text-muted">/10</span>
-        </div>
+        <RatingBadge score={product.creator_rating} showVerdict />
 
         {product.current_price_inr !== null && (
           <p className="text-base font-bold text-accent">
@@ -101,34 +123,34 @@ export function ProductCard({ product, showDealBadge = true, activeDeal, rank, p
           </p>
         )}
 
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-auto pt-2">
+        {/* Sits above the stretched title link so the two actions stay tappable. */}
+        <div className="relative z-10 mt-auto flex items-center gap-2 pt-2">
           <button
             type="button"
             onClick={(e) => { e.preventDefault(); setQuickView(true) }}
-            className="flex items-center gap-1 text-xs text-muted hover:text-primary transition-colors"
+            aria-label={`Quick view ${product.name}`}
+            title="Quick view"
+            className="flex h-11 min-w-0 flex-1 items-center justify-center rounded-lg border border-border text-muted hover:border-accent hover:text-accent transition-colors sm:w-11 sm:flex-none"
           >
-            <Eye size={14} /> Quick view
+            <Eye size={18} aria-hidden />
           </button>
           <button
             type="button"
             onClick={handleCompare}
             disabled={!compare}
             aria-pressed={inCompare}
-            className={`flex items-center gap-1 text-xs transition-colors ${
+            aria-label={`${inCompare ? 'Remove from' : 'Add to'} compare: ${product.name}`}
+            title={inCompare ? 'Added to compare' : 'Compare'}
+            className={`flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
               inCompare
-                ? 'text-accent font-semibold'
-                : 'text-muted hover:text-primary'
+                ? 'border-accent bg-accent/5 text-accent'
+                : 'border-border text-muted hover:border-accent hover:text-accent'
             }`}
           >
-            {inCompare ? <Check size={14} /> : <GitCompare size={14} />}
-            {inCompare ? 'Added' : 'Compare'}
+            {inCompare ? <Check size={16} aria-hidden /> : <GitCompare size={16} aria-hidden />}
+            {/* Label from sm up; below that the 2-column cards only have room for the icon. */}
+            <span className="hidden truncate sm:inline">{inCompare ? 'Added' : 'Compare'}</span>
           </button>
-          <Link
-            href={`/${product.category_slug}/${product.slug}`}
-            className="ml-auto text-xs font-medium text-accent hover:underline"
-          >
-            View Details
-          </Link>
         </div>
       </div>
     </div>

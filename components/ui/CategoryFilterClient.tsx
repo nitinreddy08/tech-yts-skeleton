@@ -1,19 +1,17 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useId, useState, useTransition } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { SlidersHorizontal, X, Search } from 'lucide-react'
 import type { SpecFilterDef } from '@/lib/utils/spec-filters'
 import { specFilterParamKey } from '@/lib/utils/spec-filters'
 import { Chip } from '@/components/ui/Chip'
 import { Badge } from '@/components/ui/Badge'
-
-const PRICE_RANGES = [
-  { label: 'Under ₹20K', min: 0, max: 20000 },
-  { label: '₹20K–50K', min: 20000, max: 50000 },
-  { label: '₹50K–80K', min: 50000, max: 80000 },
-  { label: 'Over ₹80K', min: 80000, max: 999999 },
-]
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { priceBandsFor, priceRangeLabel } from '@/lib/constants/price-bands'
+import { useDialog } from '@/lib/hooks/useDialog'
 
 const RATINGS = [
   { label: '9+ Excellent', value: 9 },
@@ -47,6 +45,10 @@ export function CategoryFilterClient({
   const router = useRouter()
   const sp = useSearchParams()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [pending, startTransition] = useTransition()
+  const uid = useId()
+  const drawerRef = useDialog<HTMLDivElement>(drawerOpen, () => setDrawerOpen(false))
+  const priceBands = priceBandsFor(categorySlug)
   const [searchInput, setSearchInput] = useState(sp.get('q') ?? '')
 
   const activeBrands = sp.get('brands')?.split(',').filter(Boolean) ?? []
@@ -62,9 +64,7 @@ export function CategoryFilterClient({
     if (val) activeSpecs[def.key] = val
   })
 
-  const activePriceRange = PRICE_RANGES.find(
-    (r) => r.min === activeMinPrice && r.max === activeMaxPrice
-  )
+  const hasPriceFilter = activeMinPrice != null || activeMaxPrice != null
 
   const push = useCallback(
     (updates: Record<string, string | null>) => {
@@ -73,7 +73,11 @@ export function CategoryFilterClient({
         if (v == null || v === '') params.delete(k)
         else params.set(k, v)
       }
-      router.push(`/${categorySlug}?${params.toString()}`)
+      // replace (not push): toggling a filter shouldn't add a back-button
+      // entry per click. The transition drives the "updating" indicator.
+      startTransition(() => {
+        router.replace(`/${categorySlug}?${params.toString()}`, { scroll: false })
+      })
     },
     [sp, router, categorySlug]
   )
@@ -104,7 +108,9 @@ export function CategoryFilterClient({
 
   function clearAll() {
     setSearchInput('')
-    router.push(`/${categorySlug}`)
+    startTransition(() => {
+      router.replace(`/${categorySlug}`, { scroll: false })
+    })
   }
 
   function submitSearch(e: React.FormEvent) {
@@ -118,9 +124,9 @@ export function CategoryFilterClient({
   activeBrands.forEach((b) =>
     activeChips.push({ label: b, onRemove: () => toggleBrand(b) })
   )
-  if (activePriceRange) {
+  if (hasPriceFilter) {
     activeChips.push({
-      label: activePriceRange.label,
+      label: priceRangeLabel(categorySlug, activeMinPrice, activeMaxPrice),
       onRemove: () => push({ minPrice: null, maxPrice: null }),
     })
   }
@@ -155,32 +161,32 @@ export function CategoryFilterClient({
     <div className="flex flex-col gap-5">
       {/* In-category search */}
       <form onSubmit={submitSearch}>
-        <label htmlFor="cat-search" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">
+        <label htmlFor={`${uid}-search`} className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">
           Search in category
         </label>
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-          <input
-            id="cat-search"
+          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden />
+          <Input
+            id={`${uid}-search`}
             type="search"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Filter by name…"
-            className="w-full rounded-lg border border-border bg-surface pl-9 pr-3 py-2 text-sm text-primary placeholder:text-muted/50 focus:border-accent focus:ring-1 focus:ring-accent outline-none"
+            placeholder="Name or keyword…"
+            className="pl-9 text-base sm:text-sm"
           />
         </div>
       </form>
 
       {/* Sort */}
       <div>
-        <label htmlFor="cat-sort" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">
+        <label htmlFor={`${uid}-sort`} className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">
           Sort
         </label>
         <select
-          id="cat-sort"
+          id={`${uid}-sort`}
           value={activeSort}
           onChange={(e) => push({ sort: e.target.value === 'rating_desc' ? null : e.target.value })}
-          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-primary"
+          className="h-11 w-full rounded-md border border-neutral-500 bg-surface px-3 text-sm text-primary"
         >
           {SORT_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
@@ -198,6 +204,7 @@ export function CategoryFilterClient({
                 key={`${def.key}-${opt.value}`}
                 onClick={() => toggleSpec(def.key, opt.value)}
                 active={activeSpecs[def.key] === opt.value}
+                aria-pressed={activeSpecs[def.key] === opt.value}
               >
                 {opt.label}
               </Chip>
@@ -210,11 +217,12 @@ export function CategoryFilterClient({
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Price Range</p>
         <div className="flex flex-wrap gap-1.5">
-          {PRICE_RANGES.map((r) => (
+          {priceBands.map((r) => (
             <Chip
               key={r.label}
               onClick={() => togglePriceRange(r.min, r.max)}
               active={activeMinPrice === r.min && activeMaxPrice === r.max}
+              aria-pressed={activeMinPrice === r.min && activeMaxPrice === r.max}
             >
               {r.label}
             </Chip>
@@ -226,14 +234,14 @@ export function CategoryFilterClient({
       {availableBrands.length > 0 && (
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Brand</p>
-          <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
+          <div className="flex flex-col max-h-48 overflow-y-auto">
             {availableBrands.map((brand) => (
-              <label key={brand} className="flex cursor-pointer items-center gap-2 text-sm text-primary">
+              <label key={brand} className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-primary">
                 <input
                   type="checkbox"
                   checked={activeBrands.includes(brand)}
                   onChange={() => toggleBrand(brand)}
-                  className="accent-accent rounded"
+                  className="h-5 w-5 accent-accent rounded"
                 />
                 {brand}
               </label>
@@ -247,7 +255,7 @@ export function CategoryFilterClient({
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Min Rating</p>
         <div className="flex flex-wrap gap-1.5">
           {RATINGS.map((r) => (
-            <Chip key={r.value} onClick={() => toggleRating(r.value)} active={activeRating === r.value}>
+            <Chip key={r.value} onClick={() => toggleRating(r.value)} active={activeRating === r.value} aria-pressed={activeRating === r.value}>
               {r.label}
             </Chip>
           ))}
@@ -255,34 +263,48 @@ export function CategoryFilterClient({
       </div>
 
       {hasFilters && (
-        <button
-          type="button"
-          onClick={clearAll}
-          className="w-full rounded-lg border border-border py-2 text-sm font-medium text-muted hover:text-primary transition-colors"
-        >
+        <Button variant="secondary" size="auto" onClick={clearAll} className="h-11 w-full text-sm">
           Clear all filters
-        </button>
+        </Button>
       )}
     </div>
   )
 
+  const sortControl = (id: string, className: string) => (
+    <select
+      id={id}
+      aria-label="Sort products"
+      value={activeSort}
+      onChange={(e) => push({ sort: e.target.value === 'rating_desc' ? null : e.target.value })}
+      className={className}
+    >
+      {SORT_OPTIONS.map((o) => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
+  )
+
   return (
     <>
-      {/* Sticky mobile toolbar */}
-      <div className="sticky top-[var(--navbar-height,64px)] z-20 -mx-4 px-4 py-3 bg-surface/95 backdrop-blur border-b border-border lg:hidden mb-4">
+      {/* Subtle progress bar while a filter change is loading */}
+      {pending && (
+        <div role="status" className="fixed inset-x-0 top-0 z-[80] h-0.5 animate-pulse bg-accent">
+          <span className="sr-only">Updating results</span>
+        </div>
+      )}
+
+      {/* Sticky mobile toolbar: filters + sort are both one tap away */}
+      <div className="sticky top-[var(--navbar-height)] z-20 -mx-4 px-4 py-2 bg-surface/95 backdrop-blur border-b border-border lg:hidden">
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setDrawerOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-primary"
-          >
-            <SlidersHorizontal size={14} />
+          <Button variant="secondary" size="auto" onClick={() => setDrawerOpen(true)} className="h-11 shrink-0 px-3 text-sm">
+            <SlidersHorizontal size={14} aria-hidden />
             Filters
             {activeChips.length > 0 && (
               <Badge variant="accent" size="sm">{activeChips.length}</Badge>
             )}
-          </button>
-          <p className="ml-auto text-xs text-muted">
+          </Button>
+          {sortControl(`${uid}-sort-mobile`, 'h-11 min-w-0 flex-1 rounded-md border border-neutral-500 bg-surface px-2 text-sm text-primary')}
+          <p className="shrink-0 text-xs text-muted" aria-live="polite">
             <span className="font-semibold text-primary">{resultCount}</span> of {totalCount}
           </p>
         </div>
@@ -296,16 +318,17 @@ export function CategoryFilterClient({
               key={chip.label}
               type="button"
               onClick={chip.onRemove}
-              className="inline-flex items-center gap-1 rounded-full bg-accent/10 text-accent px-3 py-1 text-xs font-medium hover:bg-accent/20 transition-colors"
+              aria-label={`Remove filter: ${chip.label}`}
+              className="relative inline-flex h-9 items-center gap-1.5 rounded-full bg-accent/10 px-3.5 text-sm font-medium text-accent hover:bg-accent/20 transition-colors after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']"
             >
               {chip.label}
-              <X size={12} />
+              <X size={12} aria-hidden />
             </button>
           ))}
           <button
             type="button"
             onClick={clearAll}
-            className="text-xs text-muted hover:text-primary underline"
+            className="inline-flex min-h-11 items-center px-2 text-sm text-muted underline hover:text-primary"
           >
             Clear all
           </button>
@@ -313,11 +336,11 @@ export function CategoryFilterClient({
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:block w-56 shrink-0">
-        <div className="sticky top-24 rounded-xl border border-border bg-surface p-4">
+      <aside className="hidden lg:block w-56 shrink-0" aria-label="Filters">
+        <div className="sticky top-[calc(var(--navbar-height)_+_1rem)] max-h-[calc(100vh-var(--navbar-height)-2rem)] overflow-y-auto rounded-xl border border-border bg-surface p-4">
           <p className="text-sm font-semibold text-primary mb-4">
             Filters
-            <span className="ml-2 text-xs font-normal text-muted">
+            <span className="ml-2 text-xs font-normal text-muted" aria-live="polite">
               {resultCount} of {totalCount}
             </span>
           </p>
@@ -325,39 +348,40 @@ export function CategoryFilterClient({
         </div>
       </aside>
 
-      {/* Mobile drawer */}
-      {drawerOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setDrawerOpen(false)}
-            aria-hidden
-          />
-          <div className="absolute inset-y-0 right-0 w-full max-w-sm bg-surface shadow-xl flex flex-col">
-            <div className="flex items-center justify-between border-b border-border px-4 py-4">
-              <h2 className="font-semibold text-primary">Filters</h2>
-              <button
-                type="button"
-                onClick={() => setDrawerOpen(false)}
-                className="rounded-lg p-2 hover:bg-surface-alt"
-                aria-label="Close filters"
-              >
-                <X size={20} />
-              </button>
+      {/* Mobile drawer — portaled above the fixed bars, with dialog semantics */}
+      {drawerOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[70] lg:hidden">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setDrawerOpen(false)} aria-hidden />
+            <div
+              ref={drawerRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Filters"
+              tabIndex={-1}
+              className="absolute inset-y-0 right-0 flex w-full max-w-sm flex-col bg-surface shadow-xl outline-none"
+            >
+              <div className="flex items-center justify-between border-b border-border px-4 h-14 shrink-0">
+                <h2 className="font-semibold text-primary">Filters</h2>
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(false)}
+                  className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-surface-alt"
+                  aria-label="Close filters"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">{filterPanel}</div>
+              <div className="border-t border-border p-4">
+                <Button size="md" onClick={() => setDrawerOpen(false)} className="w-full">
+                  Show {resultCount} result{resultCount !== 1 ? 's' : ''}
+                </Button>
+              </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">{filterPanel}</div>
-            <div className="border-t border-border p-4">
-              <button
-                type="button"
-                onClick={() => setDrawerOpen(false)}
-                className="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-white"
-              >
-                Show {resultCount} result{resultCount !== 1 ? 's' : ''}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   )
 }

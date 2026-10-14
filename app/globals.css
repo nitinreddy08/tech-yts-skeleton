@@ -197,6 +197,14 @@ body {
   padding-bottom: calc(var(--layer-tabbar) + var(--layer-compare) + var(--layer-buy));
 }
 
+/* Page <main> elements are `mx-auto max-w-*` flex items. Auto margins stop a flex
+   item from stretching, so it shrinks to its content — and a wide child (a
+   scrollable chip row, a table) can push the whole page past the viewport.
+   Force full width; the max-w-* utility still caps it. */
+#main-content > main {
+  width: 100%;
+}
+
 /* Visible keyboard focus everywhere. :where() keeps specificity at zero so
    components with their own focus treatment (outline-none + ring) still win. */
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {

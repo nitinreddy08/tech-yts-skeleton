@@ -13,6 +13,7 @@ import { CategoryPopularTags } from '@/components/ui/CategoryPopularTags'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { CategoryFilterClient } from '@/components/ui/CategoryFilterClient'
 import { CategoryBudgetChips } from '@/components/ui/CategoryBudgetChips'
+import { FilterBarSkeleton } from '@/components/ui/LoadingSkeleton'
 import { SearchX, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -140,10 +141,12 @@ export default async function CategoryPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(categoryItemListLd) }}
       />
     <main className="mx-auto max-w-7xl px-4 py-8">
-      <nav className="mb-5 flex items-center gap-1.5 text-xs text-muted" aria-label="Breadcrumb">
-        <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-        <ChevronRight size={12} />
-        <span className="text-primary font-medium">{cat.name}</span>
+      <nav className="mb-5" aria-label="Breadcrumb">
+        <ol className="flex items-center gap-1.5 text-xs text-muted">
+          <li><Link href="/" className="hover:text-primary transition-colors">Home</Link></li>
+          <li aria-hidden><ChevronRight size={12} /></li>
+          <li aria-current="page" className="font-medium text-primary">{cat.name}</li>
+        </ol>
       </nav>
 
       {/* Page header */}
@@ -159,8 +162,8 @@ export default async function CategoryPage({
         </p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        <Suspense fallback={null}>
+      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+        <Suspense fallback={<FilterBarSkeleton />}>
           <CategoryFilterClient
             categorySlug={cat.slug}
             availableBrands={availableBrands}
@@ -172,7 +175,7 @@ export default async function CategoryPage({
 
         <div className="flex-1 min-w-0">
           <CategoryPopularTags categoryName={cat.name} tags={popularTags} />
-          <Suspense fallback={null}>
+          <Suspense fallback={<div className="mb-6 h-9 max-w-md shimmer rounded-full" aria-hidden />}>
             <CategoryBudgetChips categorySlug={cat.slug} />
           </Suspense>
           {products.length === 0 ? (

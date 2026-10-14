@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { LayoutGrid, List } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { ProductListRow } from '@/components/ui/ProductListRow'
 import type { ProductSummary } from '@/types'
@@ -40,13 +41,13 @@ export function CategoryProductResults({ products, dealMap }: CategoryProductRes
 
   return (
     <>
-      <div className="flex items-center justify-end gap-1 mb-4">
+      <div role="group" aria-label="Layout" className="flex items-center justify-end gap-1 mb-4">
         <span className="text-xs text-muted mr-2 hidden sm:inline">View</span>
         <button
           type="button"
           onClick={() => switchView('grid')}
           aria-pressed={view === 'grid'}
-          className={`rounded-lg p-2 transition-colors ${
+          className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${
             view === 'grid' ? 'bg-accent text-white' : 'border border-border text-muted hover:text-primary'
           }`}
           aria-label="Grid view"
@@ -57,7 +58,7 @@ export function CategoryProductResults({ products, dealMap }: CategoryProductRes
           type="button"
           onClick={() => switchView('list')}
           aria-pressed={view === 'list'}
-          className={`rounded-lg p-2 transition-colors ${
+          className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${
             view === 'list' ? 'bg-accent text-white' : 'border border-border text-muted hover:text-primary'
           }`}
           aria-label="List view"
@@ -82,13 +83,12 @@ export function CategoryProductResults({ products, dealMap }: CategoryProductRes
 
       {hasMore && (
         <div className="mt-8 text-center">
-          <button
-            type="button"
-            onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
-            className="rounded-full border border-border bg-surface px-6 py-2.5 text-sm font-semibold text-primary hover:border-accent hover:text-accent transition-colors"
-          >
+          <p className="mb-3 text-xs text-muted" aria-live="polite">
+            Showing {visible.length} of {products.length}
+          </p>
+          <Button variant="secondary" onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}>
             Load more ({products.length - visibleCount} remaining)
-          </button>
+          </Button>
         </div>
       )}
     </>

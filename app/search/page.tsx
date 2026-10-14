@@ -1,14 +1,22 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Search, SearchX, Sparkles } from 'lucide-react'
 import { searchProductsFull } from '@/lib/data/search'
 import { getSearchSuggestions } from '@/lib/data/search-suggestions'
 import { fetchAllCategories } from '@/lib/data/categories'
 import { fetchFeaturedProducts } from '@/lib/data/products'
 import { SearchFilterBar } from '@/components/ui/SearchFilterBar'
+import { FilterBarSkeleton } from '@/components/ui/LoadingSkeleton'
 import { SearchResultCard } from '@/components/ui/SearchResultCard'
 import { RecentSearchesStrip } from '@/components/ui/RecentSearchesStrip'
+import { ProductCard } from '@/components/ui/ProductCard'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Chip } from '@/components/ui/Chip'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { getActiveDealMap } from '@/lib/data/product-deals'
+import { priceRangeLabel } from '@/lib/constants/price-bands'
+import { POPULAR_SEARCHES } from '@/lib/constants/popular-searches'
 import type { Metadata } from 'next'
 import type { SearchFilters } from '@/lib/data/search'
 
@@ -66,7 +74,9 @@ export default async function SearchPage({
   // Popular / suggested products for empty-query state
   const featured = featuredProducts.slice(0, 8)
 
-  const hasQuery = q.trim().length >= 2
+  const trimmedQ = q.trim()
+  const hasQuery = trimmedQ.length >= 2
+  const tooShort = trimmedQ.length === 1
   const hasBrowseFilters =
     sort !== 'relevance' ||
     !!category ||
@@ -77,40 +87,72 @@ export default async function SearchPage({
   const showResults = (hasQuery || showCatalog) && results.length > 0
   const hasResults = results.length > 0
   const suggestions = hasQuery && !hasResults ? await getSearchSuggestions(q) : []
+  const dealMap = getActiveDealMap()
+
+  const SORT_TITLES: Record<string, string> = {
+    newest: 'Newest reviews',
+    popular: 'Popular products',
+    rating_desc: 'Top rated',
+    price_asc: 'Lowest price',
+    price_desc: 'Highest price',
+  }
+  const categoryName = categories.find((c) => c.slug === category)?.name
+  const catalogTitle = [
+    categoryName ?? (SORT_TITLES[sort ?? ''] ? undefined : 'All products'),
+    SORT_TITLES[sort ?? ''],
+    minPrice != null || maxPrice != null ? priceRangeLabel('', minPrice ?? null, maxPrice ?? null) : undefined,
+    minRating != null ? `${minRating}+ rated` : undefined,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
-      {/* ── Page header ─────────────────────────────────────────────── */}
+      {/* ── Page header: heading + an editable search box ───────────── */}
       <div className="mb-6">
-        {hasQuery ? (
-          <h1 className="font-heading text-2xl font-bold text-primary">
-            {q}
-          </h1>
-        ) : showCatalog ? (
-          <h1 className="font-heading text-2xl font-bold text-primary">
-            {sort === 'newest'
-              ? 'Newest Reviews'
-              : sort === 'popular'
-                ? 'Popular Products'
-                : sort === 'rating_desc'
-                  ? 'Top Rated'
-                  : sort === 'price_asc'
-                    ? 'Lowest Price'
-                    : sort === 'price_desc'
-                      ? 'Highest Price'
-                      : 'Browse Products'}
-          </h1>
-        ) : (
-          <h1 className="font-heading text-2xl font-bold text-primary flex items-center gap-2">
-            <Search size={22} className="text-accent" />
-            Search
-          </h1>
+        <h1 className="font-heading text-2xl font-bold text-primary">
+          {hasQuery ? (
+            <>Results for &ldquo;{trimmedQ}&rdquo;</>
+          ) : showCatalog ? (
+            catalogTitle
+          ) : (
+            <span className="flex items-center gap-2">
+              <Search size={22} className="text-accent" aria-hidden />
+              Search
+            </span>
+          )}
+        </h1>
+
+        {/* Plain GET form: works without JS and keeps any active filters. */}
+        <form action="/search" method="get" role="search" className="mt-4 flex max-w-2xl gap-2">
+          {category && <input type="hidden" name="category" value={category} />}
+          {minPrice != null && <input type="hidden" name="minPrice" value={minPrice} />}
+          {maxPrice != null && <input type="hidden" name="maxPrice" value={maxPrice} />}
+          {minRating != null && <input type="hidden" name="minRating" value={minRating} />}
+          {sort && sort !== 'relevance' && <input type="hidden" name="sort" value={sort} />}
+          <label htmlFor="page-search" className="sr-only">Search products</label>
+          <Input
+            id="page-search"
+            name="q"
+            type="search"
+            defaultValue={q}
+            placeholder="Search phones, laptops, earbuds…"
+            className="flex-1 text-base sm:text-sm"
+            autoComplete="off"
+            aria-describedby={tooShort ? 'search-hint' : undefined}
+          />
+          <Button type="submit" size="auto" className="h-11 px-5 text-sm">Search</Button>
+        </form>
+        {tooShort && (
+          <p id="search-hint" role="status" className="mt-2 text-sm text-muted">
+            Type at least 2 characters to search.
+          </p>
         )}
       </div>
 
       {/* ── Filter bar — client island ────────────────────────────── */}
       <div className="mb-6 space-y-4">
-        <Suspense fallback={null}>
+        <Suspense fallback={<FilterBarSkeleton />}>
           <SearchFilterBar
             categories={categories.map((c) => ({
               slug: c.slug,
@@ -133,67 +175,56 @@ export default async function SearchPage({
         </div>
       )}
 
-      {/* ── No results ──────────────────────────────────────────────── */}
+      {/* ── Filters/browse mode with nothing to show ────────────────── */}
+      {showCatalog && !hasResults && (
+        <EmptyState
+          icon={SearchX}
+          heading="No products match these filters"
+          description="Try a wider price range, a lower rating, or a different category."
+          action={{ label: 'Clear filters', href: '/search' }}
+        />
+      )}
+
+      {/* ── No results for a query ──────────────────────────────────── */}
       {hasQuery && !hasResults && (
-        <div className="flex flex-col items-center gap-6 py-16 text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-surface-alt">
-            <SearchX size={36} className="text-muted" />
-          </div>
-          <div>
-            <p className="text-lg font-semibold text-primary">
-              No results for &ldquo;{q}&rdquo;
-            </p>
-            <p className="mt-1 text-sm text-muted">
-              Try different keywords, or browse a category below.
-            </p>
-          </div>
+        <div className="flex flex-col items-center gap-6 py-12 text-center">
+          <EmptyState
+            icon={SearchX}
+            heading={`No results for “${trimmedQ}”`}
+            description="Check the spelling, try fewer or different keywords, or browse a category below."
+          />
 
           {suggestions.length > 0 && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">
-                Did you mean
-              </p>
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Did you mean</h2>
               <div className="flex flex-wrap justify-center gap-2">
                 {suggestions.map((s) => (
-                  <Link
-                    key={s}
-                    href={`/search?q=${encodeURIComponent(s)}`}
-                    className="rounded-full border border-accent/30 bg-accent/5 px-4 py-1.5 text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
-                  >
+                  <Chip key={s} size="md" href={`/search?q=${encodeURIComponent(s)}`}>
                     {s}
-                  </Link>
+                  </Chip>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Category suggestions */}
-          <div className="flex flex-wrap justify-center gap-2">
-            {categories.map((c) => (
-              <Link
-                key={c.slug}
-                href={`/${c.slug}`}
-                className="rounded-full border border-border bg-surface px-4 py-1.5 text-sm text-primary hover:border-accent hover:text-accent transition-colors"
-              >
-                {c.icon} {c.name}
-              </Link>
-            ))}
+          <div>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Browse a category</h2>
+            <div className="flex flex-wrap justify-center gap-2">
+              {categories.map((c) => (
+                <Chip key={c.slug} size="md" href={`/${c.slug}`}>
+                  <span aria-hidden>{c.icon}</span> {c.name}
+                </Chip>
+              ))}
+            </div>
           </div>
 
-          {/* Popular searches */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-2">
-              Popular searches
-            </p>
-            <div className="flex flex-wrap justify-center gap-1.5">
-              {['flagship', '5g', 'budget', 'gaming', 'anc', 'ultrabook'].map((tag) => (
-                <Link
-                  key={tag}
-                  href={`/search?q=${encodeURIComponent(tag)}`}
-                  className="rounded-full border border-border bg-surface-alt px-3 py-1 text-xs text-muted hover:text-accent hover:border-accent transition-colors"
-                >
-                  #{tag}
-                </Link>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Popular searches</h2>
+            <div className="flex flex-wrap justify-center gap-2">
+              {POPULAR_SEARCHES.slice(0, 6).map((term) => (
+                <Chip key={term} href={`/search?q=${encodeURIComponent(term)}`}>
+                  {term}
+                </Chip>
               ))}
             </div>
           </div>
@@ -203,96 +234,43 @@ export default async function SearchPage({
       {/* ── Empty query — landing state ──────────────────────────────── */}
       {!hasQuery && !showCatalog && (
         <div className="flex flex-col gap-10">
-          {/* Browse by category */}
           <section>
-            <h2 className="font-heading text-base font-semibold text-primary mb-4 flex items-center gap-2">
-              Browse by Category
-            </h2>
+            <h2 className="mb-4 font-heading text-base font-semibold text-primary">Browse by category</h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {categories.map((c) => (
                 <Link
                   key={c.slug}
                   href={`/${c.slug}`}
-                  className="flex flex-col items-center gap-2 rounded-xl border border-border bg-surface p-5 text-center hover:border-accent hover:shadow-sm transition-all"
+                  className="flex min-h-11 flex-col items-center gap-2 rounded-xl border border-border bg-surface p-5 text-center transition-all hover:border-accent hover:shadow-sm"
                 >
-                  <span className="text-3xl">{c.icon}</span>
+                  <span className="text-3xl" aria-hidden>{c.icon}</span>
                   <span className="text-sm font-medium text-primary">{c.name}</span>
                 </Link>
               ))}
             </div>
           </section>
 
-          {/* Featured products as inspiration */}
           {featured.length > 0 && (
             <section>
-              <h2 className="font-heading text-base font-semibold text-primary mb-4 flex items-center gap-2">
-                <Sparkles size={16} className="text-accent" />
-                Popular Right Now
+              <h2 className="mb-4 flex items-center gap-2 font-heading text-base font-semibold text-primary">
+                <Sparkles size={16} className="text-accent" aria-hidden />
+                Popular right now
               </h2>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                 {featured.map((p) => (
-                  <Link
-                    key={p.id}
-                    href={`/${p.category_slug}/${p.slug}`}
-                    className="group flex flex-col rounded-xl border border-border bg-surface p-3 hover:shadow-md hover:border-accent/30 transition-all"
-                  >
-                    <div className="relative mb-3 aspect-square overflow-hidden rounded-lg bg-surface-alt">
-                      {p.thumbnail_url && (
-                        <Image
-                          src={p.thumbnail_url}
-                          alt={p.name}
-                          fill
-                          sizes="200px"
-                          className="object-contain p-3 transition-transform group-hover:scale-105"
-                        />
-                      )}
-                    </div>
-                    <p className="text-[10px] text-muted">{p.brand_name}</p>
-                    <p className="text-sm font-semibold text-primary leading-tight line-clamp-2">
-                      {p.name}
-                    </p>
-                    {p.current_price_inr != null && (
-                      <p className="mt-1 text-sm font-bold text-accent">
-                        {new Intl.NumberFormat('en-IN', {
-                          style: 'currency',
-                          currency: 'INR',
-                          maximumFractionDigits: 0,
-                        }).format(p.current_price_inr)}
-                      </p>
-                    )}
-                  </Link>
+                  <ProductCard key={p.id} product={p} activeDeal={dealMap[p.id]} />
                 ))}
               </div>
             </section>
           )}
 
-          {/* Popular tag shortcuts */}
           <section>
-            <h2 className="font-heading text-base font-semibold text-primary mb-3">
-              Popular Searches
-            </h2>
+            <h2 className="mb-3 font-heading text-base font-semibold text-primary">Popular searches</h2>
             <div className="flex flex-wrap gap-2">
-              {[
-                'flagship',
-                '5g',
-                'budget',
-                'gaming',
-                'anc headphones',
-                'ultrabook',
-                'fast charging',
-                'camera phone',
-                '200mp',
-                'apple',
-                'samsung',
-                'oneplus',
-              ].map((tag) => (
-                <Link
-                  key={tag}
-                  href={`/search?q=${encodeURIComponent(tag)}`}
-                  className="rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-muted hover:border-accent hover:text-accent hover:bg-surface-alt transition-colors"
-                >
-                  {tag}
-                </Link>
+              {POPULAR_SEARCHES.map((term) => (
+                <Chip key={term} href={`/search?q=${encodeURIComponent(term)}`}>
+                  {term}
+                </Chip>
               ))}
             </div>
           </section>

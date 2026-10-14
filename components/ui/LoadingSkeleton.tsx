@@ -182,3 +182,13 @@ export function ComparePageSkeleton() {
     </main>
   )
 }
+
+/** Placeholder for the category filter sidebar / mobile toolbar while its client island loads. */
+export function FilterBarSkeleton() {
+  return (
+    <>
+      <div className="mb-4 h-14 shimmer rounded-lg lg:hidden" aria-hidden />
+      <div className="hidden h-96 w-56 shrink-0 shimmer rounded-xl lg:block" aria-hidden />
+    </>
+  )
+}
