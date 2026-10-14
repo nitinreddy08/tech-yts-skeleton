@@ -34,7 +34,7 @@ export function SaveButton({ product, className = '', size = 18 }: SaveButtonPro
       }}
       aria-pressed={saved}
       aria-label={saved ? 'Remove from saved' : 'Save product'}
-      className={`rounded-lg border border-border p-2 transition-colors hover:border-accent ${
+      className={`inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border transition-colors hover:border-accent ${
         saved ? 'bg-accent/10 text-accent' : 'bg-surface text-muted hover:text-primary'
       } ${className}`}
     >

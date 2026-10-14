@@ -1,12 +1,12 @@
-import { ShoppingCart, Trophy, Clock, TrendingDown, ExternalLink, AlertTriangle, PackageCheck, PackageX } from 'lucide-react'
+import { ShoppingCart, Clock, TrendingDown, ExternalLink, AlertTriangle, PackageCheck, PackageX } from 'lucide-react'
 import { formatIndianPrice } from '@/lib/utils/format'
 import { relativePriceTime, hasStalePrices, getNewestPriceUpdate } from '@/lib/utils/price-trust'
+import { getBestOffer, isPurchasable } from '@/lib/utils/best-offer'
 import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
 import { EmiHint } from '@/components/ui/EmiHint'
 import { Badge } from '@/components/ui/Badge'
 import { buttonVariants } from '@/components/ui/Button'
 import { Eyebrow } from '@/components/ui/Eyebrow'
-import { cn } from '@/lib/utils/cn'
 import type { AffiliateLink, StockStatus } from '@/types'
 
 interface BuySectionProps {
@@ -25,159 +25,191 @@ function StockBadge({ status }: { status: StockStatus }) {
   const { label, variant, icon: Icon } = STOCK_BADGE[status]
   return (
     <Badge variant={variant} size="sm">
-      <Icon size={10} />
+      <Icon size={10} aria-hidden />
       {label}
     </Badge>
   )
 }
 
+/**
+ * The single buy module on the product page: the best in-stock price, one
+ * primary "Buy at {store}" action, and the other stores underneath. The price
+ * used to be repeated in a separate card above this; it now lives only here.
+ * `id="buy-box"` is the anchor the sticky buy bar and "See best prices" use.
+ */
 export function BuySection({ links, productName, launchPrice }: BuySectionProps) {
-  const sorted = [...links].sort(
-    (a, b) => (a.price_inr ?? Infinity) - (b.price_inr ?? Infinity)
-  )
+  if (links.length === 0) return null
 
-  if (sorted.length === 0) return null
+  const best = getBestOffer(links)
+  const bestLink = best.link
+  const bestPrice = best.price
+  const others = [...links]
+    .filter((l) => l.id !== bestLink?.id)
+    .sort((a, b) => {
+      // Purchasable stores first, then by price.
+      const stock = Number(isPurchasable(b)) - Number(isPurchasable(a))
+      return stock || (a.price_inr ?? Infinity) - (b.price_inr ?? Infinity)
+    })
 
-  const prices = sorted.map((l) => l.price_inr).filter((p): p is number => p != null)
-  const bestPrice = prices.length ? Math.min(...prices) : null
-  const highestPrice = prices.length ? Math.max(...prices) : null
-  const bestLink = sorted.find((l) => l.price_inr === bestPrice)
+  const availablePrices = best.available.map((l) => l.price_inr).filter((p): p is number => p != null)
+  const highestPrice = availablePrices.length ? Math.max(...availablePrices) : null
   const maxSavings =
-    highestPrice != null && bestPrice != null && highestPrice > bestPrice
-      ? highestPrice - bestPrice
+    highestPrice != null && bestPrice != null && highestPrice > bestPrice ? highestPrice - bestPrice : null
+  const belowLaunchPct =
+    launchPrice != null && bestPrice != null && launchPrice > bestPrice
+      ? Math.round(((launchPrice - bestPrice) / launchPrice) * 100)
       : null
-  const stale = hasStalePrices(sorted)
-  const newestUpdate = getNewestPriceUpdate(sorted)
+  const stale = hasStalePrices(links)
+  const newestUpdate = getNewestPriceUpdate(links)
+  const lastSeenPrice = bestPrice ?? (links.map((l) => l.price_inr).filter((p): p is number => p != null).sort((a, b) => a - b)[0] ?? null)
 
   return (
-    <div className="rounded-xl border border-border bg-surface overflow-hidden shadow-sm">
-      <div className="px-5 pt-5 pb-3 border-b border-border bg-surface-alt/50">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-sm font-semibold text-primary">Where to Buy</h2>
-            <p className="text-xs text-muted mt-0.5 flex items-center gap-1 flex-wrap">
-              {sorted.length} store{sorted.length !== 1 ? 's' : ''} compared
-              {newestUpdate && (
+    <section id="buy-box" aria-labelledby="buy-box-title" className="scroll-mt-28 rounded-xl border border-border bg-surface overflow-hidden shadow-sm">
+      <div className="p-5 bg-surface-alt/50">
+        <h2 id="buy-box-title" className="sr-only">Price and where to buy {productName}</h2>
+
+        {bestLink && bestPrice != null ? (
+          <>
+            <Eyebrow>Best price · {bestLink.store_name}</Eyebrow>
+            <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <p className="text-3xl font-extrabold leading-none text-accent">{formatIndianPrice(bestPrice)}</p>
+              {belowLaunchPct != null && launchPrice != null && (
                 <>
-                  <span aria-hidden>·</span>
-                  <Clock size={10} className="inline" />
-                  {relativePriceTime(newestUpdate)}
+                  <p className="text-sm text-muted line-through">{formatIndianPrice(launchPrice)}</p>
+                  <Badge variant="success" size="sm">
+                    <TrendingDown size={10} aria-hidden />
+                    {belowLaunchPct}% below launch
+                  </Badge>
                 </>
               )}
+            </div>
+            <EmiHint priceInr={bestPrice} className="mt-1" />
+
+            <AffiliateOutboundLink
+              href={`/go/${bestLink.id}`}
+              linkId={bestLink.id}
+              storeName={bestLink.store_name}
+              productName={productName}
+              priceInr={bestLink.price_inr}
+              className={buttonVariants({ variant: 'primary', size: 'md', className: 'mt-4 w-full' })}
+            >
+              <ShoppingCart size={16} aria-hidden />
+              Buy at {bestLink.store_name}
+              <ExternalLink size={13} className="opacity-70" aria-hidden />
+              <span className="sr-only"> (opens in a new tab)</span>
+            </AffiliateOutboundLink>
+            <p className="mt-2 text-center text-xs text-muted">
+              Affiliate link — we may earn a commission at no extra cost to you.
+            </p>
+          </>
+        ) : (
+          <div role="status">
+            <Badge variant="neutral" size="sm">
+              <PackageX size={10} aria-hidden />
+              Out of stock everywhere
+            </Badge>
+            <p className="mt-3 text-sm text-muted">
+              {lastSeenPrice != null ? (
+                <>
+                  Last seen at <span className="font-semibold text-primary">{formatIndianPrice(lastSeenPrice)}</span>.{' '}
+                </>
+              ) : null}
+              None of the stores we track have it right now — set a price alert below and check back soon.
             </p>
           </div>
-          {bestPrice != null && (
-            <div className="text-right shrink-0">
-              <Eyebrow>Best price</Eyebrow>
-              <p className="text-xl font-bold text-accent">{formatIndianPrice(bestPrice)}</p>
-              <EmiHint priceInr={bestPrice} className="mt-0.5 text-right" />
-            </div>
+        )}
+
+        {maxSavings != null && maxSavings > 0 && bestLink && (
+          <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-success-700">
+            <TrendingDown size={14} aria-hidden />
+            Save up to {formatIndianPrice(maxSavings)} by choosing {bestLink.store_name}
+          </p>
+        )}
+
+        <p className="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted">
+          {links.length} store{links.length !== 1 ? 's' : ''} compared
+          {newestUpdate && (
+            <>
+              <span aria-hidden>·</span>
+              <Clock size={11} aria-hidden />
+              {relativePriceTime(newestUpdate)}
+            </>
           )}
-        </div>
+        </p>
 
         {stale && (
           <div className="mt-3 flex items-start gap-2 rounded-lg bg-warning-50 px-3 py-2 text-xs text-warning-700">
-            <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-            Some prices may be outdated — tap &quot;Check price&quot; to confirm on the store.
+            <AlertTriangle size={14} className="mt-0.5 shrink-0" aria-hidden />
+            Some prices may be outdated — open the store to confirm before you buy.
           </div>
-        )}
-
-        {maxSavings != null && maxSavings > 0 && (
-          <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-success-50 px-3 py-2 text-xs font-semibold text-success-700">
-            <TrendingDown size={14} />
-            Save up to {formatIndianPrice(maxSavings)} by choosing {bestLink?.store_name}
-          </div>
-        )}
-
-        {launchPrice != null && bestPrice != null && launchPrice > bestPrice && (
-          <p className="text-xs text-muted mt-2">
-            {Math.round(((launchPrice - bestPrice) / launchPrice) * 100)}% below launch price (
-            {formatIndianPrice(launchPrice)})
-          </p>
         )}
       </div>
 
-      <div className="divide-y divide-border">
-        {sorted.map((link) => {
-          const isBest = link.id === bestLink?.id
-          const savingsVsHighest =
-            link.price_inr != null && highestPrice != null && highestPrice > link.price_inr
-              ? highestPrice - link.price_inr
-              : null
-          const stockStatus: StockStatus = link.stock_status ?? 'in_stock'
-          const isOutOfStock = stockStatus === 'out_of_stock'
+      {others.length > 0 && (
+        <div className="border-t border-border">
+          <h3 className="px-5 pt-4 text-xs font-semibold uppercase tracking-wider text-muted">
+            {bestLink ? 'Also available at' : 'Stores'}
+          </h3>
+          <ul className="divide-y divide-border">
+            {others.map((link) => {
+              const stockStatus: StockStatus = link.stock_status ?? 'in_stock'
+              const unavailable = !isPurchasable(link)
+              const premium =
+                link.price_inr != null && bestPrice != null && link.price_inr > bestPrice
+                  ? link.price_inr - bestPrice
+                  : null
 
-          return (
-            <div
-              key={link.id}
-              className={cn(
-                'px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 transition-colors',
-                isBest ? 'bg-accent/5' : 'hover:bg-surface-alt/50'
-              )}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-bold text-primary">{link.store_name}</span>
-                  {isBest && (
-                    <Badge variant="success" size="sm">
-                      <Trophy size={10} /> Best Price
-                    </Badge>
-                  )}
-                  <StockBadge status={stockStatus} />
-                </div>
-                <p className="mt-1 flex items-center gap-1 text-[11px] text-muted">
-                  <Clock size={10} />
-                  Updated {relativePriceTime(link.last_updated)}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between sm:justify-end gap-4">
-                <div className="text-left sm:text-right">
-                  {link.price_inr != null ? (
-                    <p className={cn('text-lg font-bold', isBest ? 'text-accent' : 'text-primary')}>
-                      {formatIndianPrice(link.price_inr)}
+              return (
+                <li key={link.id} className="flex flex-col gap-3 px-5 py-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-bold text-primary">{link.store_name}</span>
+                      <StockBadge status={stockStatus} />
+                    </div>
+                    <p className="mt-1 flex items-center gap-1 text-xs text-muted">
+                      <Clock size={11} aria-hidden />
+                      {relativePriceTime(link.last_updated)}
                     </p>
-                  ) : (
-                    <p className="text-sm text-muted">Price varies</p>
-                  )}
-                  {savingsVsHighest != null && savingsVsHighest > 0 && !isBest && (
-                    <p className="text-[10px] text-muted">
-                      +{formatIndianPrice(savingsVsHighest)} vs best
-                    </p>
-                  )}
-                </div>
+                  </div>
 
-                {isOutOfStock ? (
-                  <span
-                    className={buttonVariants({ variant: 'secondary', size: 'sm', className: 'opacity-60 pointer-events-none' })}
-                    aria-disabled="true"
-                  >
-                    <ShoppingCart size={14} />
-                    Unavailable
-                  </span>
-                ) : (
-                  <AffiliateOutboundLink
-                    href={`/go/${link.id}`}
-                    linkId={link.id}
-                    storeName={link.store_name}
-                    productName={productName}
-                    priceInr={link.price_inr}
-                    className={buttonVariants({ variant: isBest ? 'primary' : 'secondary', size: 'sm' })}
-                  >
-                    <ShoppingCart size={14} />
-                    Check price
-                    <ExternalLink size={12} className="opacity-60" />
-                  </AffiliateOutboundLink>
-                )}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="text-left">
+                      {link.price_inr != null ? (
+                        <p className="text-lg font-bold text-primary">{formatIndianPrice(link.price_inr)}</p>
+                      ) : (
+                        <p className="text-sm text-muted">Price varies</p>
+                      )}
+                      {premium != null && <p className="text-xs text-muted">+{formatIndianPrice(premium)} vs best</p>}
+                    </div>
 
-      <p className="px-5 py-3 text-[10px] text-muted border-t border-border bg-surface-alt/30">
-        Affiliate links for {productName}. We may earn a commission at no extra cost to you.
-      </p>
-    </div>
+                    {unavailable ? (
+                      <span
+                        className={buttonVariants({ variant: 'secondary', size: 'sm', className: 'pointer-events-none opacity-60' })}
+                        aria-disabled="true"
+                      >
+                        Unavailable
+                      </span>
+                    ) : (
+                      <AffiliateOutboundLink
+                        href={`/go/${link.id}`}
+                        linkId={link.id}
+                        storeName={link.store_name}
+                        productName={productName}
+                        priceInr={link.price_inr}
+                        className={buttonVariants({ variant: 'secondary', size: 'sm' })}
+                      >
+                        View at {link.store_name}
+                        <ExternalLink size={12} className="opacity-60" aria-hidden />
+                        <span className="sr-only"> (opens in a new tab)</span>
+                      </AffiliateOutboundLink>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
+    </section>
   )
 }

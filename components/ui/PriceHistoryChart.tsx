@@ -1,4 +1,5 @@
 import { TrendingDown, TrendingUp, Minus } from 'lucide-react'
+import { Badge } from '@/components/ui/Badge'
 import { formatIndianPrice } from '@/lib/utils/format'
 import { priceTrend, type PricePoint } from '@/lib/utils/price-history'
 
@@ -36,21 +37,24 @@ export function PriceHistoryChart({ points, productName }: PriceHistoryChartProp
     <section className="rounded-xl border border-border bg-surface p-5">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <h2 className="font-heading text-sm font-bold text-primary">Price history</h2>
-          <p className="text-xs text-muted mt-0.5">Last 90 days — {productName}</p>
+          <h2 className="flex items-center gap-2 font-heading text-sm font-bold text-primary">
+            Price trend
+            <Badge variant="neutral" size="sm">Illustrative</Badge>
+          </h2>
+          <p className="text-xs text-muted mt-0.5">Estimated path from launch price to today — {productName}</p>
         </div>
         <div className="text-right">
           <p className="text-lg font-bold text-accent">{formatIndianPrice(latest)}</p>
           <p
             className={`text-xs font-semibold flex items-center justify-end gap-1 ${
-              trend === 'down' ? 'text-green-700' : trend === 'up' ? 'text-red-600' : 'text-muted'
+              trend === 'down' ? 'text-success-700' : trend === 'up' ? 'text-error-700' : 'text-muted'
             }`}
           >
             {trend === 'down' && <TrendingDown size={12} />}
             {trend === 'up' && <TrendingUp size={12} />}
             {trend === 'flat' && <Minus size={12} />}
             {changePct > 0 ? '+' : ''}
-            {changePct}% vs 90d ago
+            {changePct}% since launch
           </p>
         </div>
       </div>
@@ -78,14 +82,15 @@ export function PriceHistoryChart({ points, productName }: PriceHistoryChartProp
             strokeLinejoin="round"
           />
         </svg>
-        <div className="flex justify-between text-[10px] text-muted mt-1">
+        <div className="flex justify-between text-xs text-muted mt-1">
           <span>Low {formatIndianPrice(min)}</span>
           <span>High {formatIndianPrice(max)}</span>
         </div>
       </div>
 
-      <p className="text-[10px] text-muted mt-3">
-        Tracked across Amazon, Flipkart & more. Prices update daily.
+      <p className="text-xs text-muted mt-3">
+        Modelled from the launch and current price — not a record of daily store prices. For today&apos;s
+        real price, check the stores above.
       </p>
     </section>
   )

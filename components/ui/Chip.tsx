@@ -7,8 +7,10 @@ export type ChipSize = 'sm' | 'md' | 'auto'
  *  need custom sizing (e.g. a popularity-weighted tag cloud) but still
  *  want the shared border/color/radius treatment. */
 const SIZE_CLASSES: Record<ChipSize, string> = {
-  md: 'h-9 px-4 text-sm',
-  sm: 'h-[30px] px-3 text-xs',
+  // `after:` pseudo-element adds invisible vertical hit-slop so the touch
+  // target reaches 44px without making the pill itself visually chunky.
+  md: "relative h-9 px-4 text-sm after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']",
+  sm: "relative h-[30px] px-3 text-xs after:absolute after:inset-x-0 after:-inset-y-[7px] after:content-['']",
   auto: '',
 }
 

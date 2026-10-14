@@ -184,7 +184,7 @@
 
 html {
   /* In-page anchors and skip-link targets must clear the sticky header. */
-  scroll-padding-top: calc(var(--navbar-height) + 8px);
+  scroll-padding-top: calc(var(--navbar-height) + 4.5rem);
 }
 
 body {

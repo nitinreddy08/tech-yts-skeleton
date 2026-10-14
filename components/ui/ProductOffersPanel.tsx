@@ -4,6 +4,7 @@ import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
 import { formatIndianPrice } from '@/lib/utils/format'
 import { dealTypeLabel } from '@/lib/data/product-deals'
 import { Eyebrow } from '@/components/ui/Eyebrow'
+import { buttonVariants } from '@/components/ui/Button'
 import type { Deal } from '@/types'
 
 const TYPE_ICONS: Record<Deal['deal_type'], typeof Tag> = {
@@ -45,7 +46,7 @@ export function ProductOffersPanel({ deals, productName }: ProductOffersPanelPro
                   </Eyebrow>
                   <p className="text-sm font-medium text-primary">{deal.headline}</p>
                   {deal.deal_price_inr != null && (
-                    <p className="text-xs text-accent font-semibold mt-0.5">
+                    <p className="mt-0.5 text-sm font-semibold text-accent">
                       {formatIndianPrice(deal.deal_price_inr)}
                       {deal.original_price_inr != null && (
                         <span className="text-muted line-through ml-2 font-normal">
@@ -62,16 +63,16 @@ export function ProductOffersPanel({ deals, productName }: ProductOffersPanelPro
                 storeName={deal.store_name}
                 productName={productName}
                 priceInr={deal.deal_price_inr}
-                className="shrink-0 inline-flex items-center rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white hover:bg-accent/90"
+                className={buttonVariants({ variant: 'secondary', size: 'sm', className: 'shrink-0 w-full sm:w-auto' })}
               >
-                Get offer
+                Get offer<span className="sr-only"> at {deal.store_name}</span>
               </AffiliateOutboundLink>
             </li>
           )
         })}
       </ul>
-      <p className="px-5 py-2 text-[10px] text-muted border-t border-border">
-        <Link href="/deals" className="text-accent hover:underline">Browse all deals →</Link>
+      <p className="border-t border-border px-5 text-xs text-muted">
+        <Link href="/deals" className="inline-flex min-h-11 items-center text-accent hover:underline">Browse all deals →</Link>
       </p>
     </section>
   )

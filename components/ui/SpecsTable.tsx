@@ -34,10 +34,10 @@ export function SpecsTable({ specifications, template }: SpecsTableProps) {
           <tbody>
             {visibleFields.map((field, i) => (
               <tr key={field.key} className={i % 2 === 0 ? 'bg-surface' : 'bg-surface-alt'}>
-                <td className="w-2/5 px-4 py-3 font-medium text-muted">
+                <th scope="row" className="w-2/5 px-4 py-3 text-left font-medium text-muted">
                   {field.label}
                   {field.unit && <span className="ml-1 text-xs text-muted">({field.unit})</span>}
-                </td>
+                </th>
                 <td className="px-4 py-3 text-primary">{formatValue(specifications[field.key])}</td>
               </tr>
             ))}
@@ -59,10 +59,10 @@ export function SpecsTable({ specifications, template }: SpecsTableProps) {
               <tbody>
                 {fields.map((field, i) => (
                   <tr key={field.key} className={i % 2 === 0 ? 'bg-surface' : 'bg-surface-alt'}>
-                    <td className="w-2/5 px-4 py-3 font-medium text-muted">
+                    <th scope="row" className="w-2/5 px-4 py-3 text-left font-medium text-muted">
                       {field.label}
                       {field.unit && <span className="ml-1 text-xs text-muted">({field.unit})</span>}
-                    </td>
+                    </th>
                     <td className="px-4 py-3 text-primary">{formatValue(specifications[field.key])}</td>
                   </tr>
                 ))}

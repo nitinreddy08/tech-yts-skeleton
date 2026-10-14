@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { PlayCircle, Gauge, ListChecks, HelpCircle, type LucideIcon } from 'lucide-react'
+import { TabList, TabPanel } from '@/components/ui/Tabs'
 
 export interface DetailTab {
   id: string
@@ -21,38 +22,28 @@ const TAB_ICONS: Record<string, LucideIcon> = {
  * scroll — content stays server-rendered, only visibility toggles. */
 export function ProductDetailTabs({ tabs }: { tabs: DetailTab[] }) {
   const [active, setActive] = useState(tabs[0]?.id ?? '')
+  const prefix = useId()
 
   if (tabs.length === 0) return null
 
   return (
     <section id="details" className="scroll-mt-32">
-      <div className="flex gap-2 overflow-x-auto scrollbar-none border-b border-border mb-6">
-        {tabs.map((tab) => {
-          const isActive = active === tab.id
-          const Icon = TAB_ICONS[tab.id]
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActive(tab.id)}
-              aria-current={isActive}
-              className={`shrink-0 inline-flex items-center gap-1.5 border-b-2 px-1 pb-3 text-sm font-semibold transition-colors ${
-                isActive
-                  ? 'border-accent text-primary'
-                  : 'border-transparent text-muted hover:text-primary'
-              }`}
-            >
-              {Icon && <Icon size={15} />}
-              {tab.label}
-            </button>
-          )
+      <TabList
+        label="Product details"
+        idPrefix={prefix}
+        active={active}
+        onChange={setActive}
+        className="mb-6"
+        tabs={tabs.map((t) => {
+          const Icon = TAB_ICONS[t.id]
+          return { id: t.id, label: t.label, icon: Icon ? <Icon size={15} aria-hidden /> : undefined }
         })}
-      </div>
+      />
 
       {tabs.map((tab) => (
-        <div key={tab.id} className={tab.id === active ? 'block' : 'hidden'}>
+        <TabPanel key={tab.id} idPrefix={prefix} id={tab.id} active={tab.id === active}>
           {tab.content}
-        </div>
+        </TabPanel>
       ))}
     </section>
   )

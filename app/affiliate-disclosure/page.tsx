@@ -14,7 +14,7 @@ export default function AffiliateDisclosurePage() {
     <LegalPageShell title="Affiliate Disclosure">
       <p>
         {siteConfig.site_name} participates in affiliate programs with Amazon, Flipkart, and other
-        retailers. When you click a &quot;Check price&quot; or &quot;Buy&quot; button and complete a
+        retailers. When you click a &quot;Buy at&quot; or &quot;View at&quot; button and complete a
         purchase, we may earn a commission at no additional cost to you.
       </p>
       <h2 className="font-heading text-lg font-bold text-primary pt-2">Editorial independence</h2>

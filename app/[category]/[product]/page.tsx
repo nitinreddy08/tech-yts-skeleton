@@ -5,7 +5,8 @@ import { PriceAlertButton } from '@/components/ui/PriceAlertButton'
 import { ProductSectionNav } from '@/components/ui/ProductSectionNav'
 import { SaveButton } from '@/components/ui/SaveButton'
 import { ShareBar } from '@/components/ui/ShareBar'
-import { extractYouTubeId, formatIndianPrice } from '@/lib/utils/format'
+import { extractYouTubeId } from '@/lib/utils/format'
+import { getBestOffer } from '@/lib/utils/best-offer'
 import { ProductGallery } from '@/components/ui/ProductGallery'
 import { BuySection } from '@/components/ui/BuySection'
 import { SpecsTable } from '@/components/ui/SpecsTable'
@@ -18,8 +19,7 @@ import { ProductComparePanel } from '@/components/ui/ProductComparePanel'
 import { KeySpecStrip } from '@/components/ui/KeySpecStrip'
 import { RecentlyViewedTracker } from '@/components/ui/RecentlyViewedTracker'
 import { RecentlyViewedStrip } from '@/components/ui/RecentlyViewedStrip'
-import { getActiveDealForProduct, getAllActiveDealsForProduct } from '@/lib/data/product-deals'
-import { ActiveDealBanner } from '@/components/ui/ActiveDealBanner'
+import { getAllActiveDealsForProduct } from '@/lib/data/product-deals'
 import { getSpecHighlights } from '@/lib/utils/spec-highlights'
 import { generatePriceHistory } from '@/lib/utils/price-history'
 import { getRelatedGuidesForProduct } from '@/lib/data/related-guides'
@@ -35,12 +35,12 @@ import { FrequentComparesStrip } from '@/components/ui/FrequentComparesStrip'
 import { ProductOffersPanel } from '@/components/ui/ProductOffersPanel'
 import { YouTubeShortEmbed } from '@/components/ui/YouTubeShortEmbed'
 import { BenchmarkScores } from '@/components/ui/BenchmarkScores'
-import { EmiHint } from '@/components/ui/EmiHint'
 import { PriceHistoryChart } from '@/components/ui/PriceHistoryChart'
 import { ProductDetailTabs, type DetailTab } from '@/components/ui/ProductDetailTabs'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { ProductRecommendationTabs } from '@/components/ui/ProductRecommendationTabs'
-import { ChevronRight, TrendingDown } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
+import { Chip } from '@/components/ui/Chip'
 import type { Metadata } from 'next'
 
 export const revalidate = 60
@@ -87,20 +87,12 @@ export default async function ProductPage({
   const youtubeId = p.youtube_video_url ? extractYouTubeId(p.youtube_video_url) : null
   const allImages = [...(p.thumbnail_url ? [p.thumbnail_url] : []), ...p.gallery_images]
 
-  const sortedLinks = [...p.affiliate_links].sort(
-    (a, b) => (a.price_inr ?? Infinity) - (b.price_inr ?? Infinity)
-  )
-  const bestPrice = sortedLinks.find((l) => l.price_inr != null)?.price_inr ?? null
-  const launchPrice = p.launch_price_inr
-  const discount =
-    bestPrice && launchPrice && launchPrice > bestPrice
-      ? Math.round(((launchPrice - bestPrice) / launchPrice) * 100)
-      : null
+  // Stock-aware: an out-of-stock store never counts as the "best" price.
+  const bestPrice = getBestOffer(p.affiliate_links).price
 
   const shareUrl = `${SITE_URL}/${p.category_slug}/${p.slug}`
   const shareText = `${p.name} — ${p.creator_rating.toFixed(1)}/10 creator rating. See best prices in India.`
   const specHighlights = getSpecHighlights(p.category_slug, p.category.spec_template, p.specifications)
-  const activeDeal = getActiveDealForProduct(p.id)
   const allDeals = getAllActiveDealsForProduct(p.id)
   const faqLd = generateFaqJsonLd(p.faqs)
   const videoLd = p.youtube_video_url
@@ -118,6 +110,7 @@ export default async function ProductPage({
   })
 
   const navSections: { id: string; label: string }[] = []
+  if (p.affiliate_links.length > 0) navSections.push({ id: 'buy-box', label: 'Prices' })
   if (p.pros.length > 0 || p.cons.length > 0) navSections.push({ id: 'verdict', label: 'Verdict' })
   navSections.push({ id: 'details', label: 'Details' })
   if (similarProducts.length > 0 || moreFromBrand.length > 0 || cheaperAlternatives.length > 0) {
@@ -138,6 +131,7 @@ export default async function ProductPage({
                 title={`${p.name} Review`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
+                loading="lazy"
                 className="h-full w-full"
               />
             </div>
@@ -232,80 +226,61 @@ export default async function ProductPage({
       <RecentlyViewedTracker product={productSummary} />
 
       <main className="mx-auto max-w-7xl px-4 py-6">
-        {/* ── Breadcrumb ─────────────────────────────────────────────────── */}
-        <nav className="mb-5 flex items-center gap-1.5 text-xs text-muted" aria-label="Breadcrumb">
-          <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-          <ChevronRight size={12} />
-          <Link
-            href={`/${p.category_slug}`}
-            className="hover:text-primary transition-colors capitalize"
-          >
-            {p.category.name}
-          </Link>
-          <ChevronRight size={12} />
-          <span className="truncate max-w-xs text-primary font-medium">{p.name}</span>
-        </nav>
+        {/* ── Breadcrumb + save ─────────────────────────────────────────── */}
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <nav aria-label="Breadcrumb" className="min-w-0">
+            <ol className="flex items-center gap-1.5 text-xs text-muted">
+              <li className="shrink-0">
+                <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+              </li>
+              <li aria-hidden className="shrink-0"><ChevronRight size={12} /></li>
+              <li className="shrink-0">
+                <Link href={`/${p.category_slug}`} className="hover:text-primary transition-colors capitalize">
+                  {p.category.name}
+                </Link>
+              </li>
+              <li aria-hidden className="shrink-0"><ChevronRight size={12} /></li>
+              <li aria-current="page" className="min-w-0 truncate font-medium text-primary">{p.name}</li>
+            </ol>
+          </nav>
+          <SaveButton product={productSummary} className="shrink-0" />
+        </div>
 
-        {/* ── Title block ───────────────────────────────────────────────── */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
+        {/* ── Title block: name on the left, the creator's score on the right ── */}
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div className="min-w-0">
             <Eyebrow>
               <Link href={`/brand/${p.brand.slug}`} className="hover:text-accent transition-colors">
                 {p.brand_name}
               </Link>
             </Eyebrow>
-            <h1 className="font-heading text-2xl font-bold text-primary mt-0.5 leading-tight">
+            <h1 className="font-heading text-2xl font-bold text-primary mt-0.5 leading-tight sm:text-3xl">
               {p.name}
             </h1>
             {p.tagline && <p className="mt-1 text-sm text-muted">{p.tagline}</p>}
             <ReviewUpdatedBadge updatedAt={p.updated_at} className="mt-2" />
-            {/* Use-case badges */}
             <div className="mt-3">
               <UseCaseBadges tags={p.tags} specifications={p.specifications} />
             </div>
           </div>
 
-          {/* Score ring — desktop top-right, mobile below title */}
-          <div className="shrink-0 sm:ml-6 flex flex-col items-end gap-2">
-            <SaveButton product={productSummary} />
-            <ScoreRing score={p.creator_rating} size={88} label="Creator Rating" />
-          </div>
+          {/* The one score on the page: ring + verdict word + "Creator Rating". */}
+          {p.pros.length > 0 || p.cons.length > 0 ? (
+            <a href="#verdict" className="shrink-0 rounded-xl p-1" aria-label={`Creator rating ${p.creator_rating.toFixed(1)} out of 10 — jump to the verdict`}>
+              <ScoreRing score={p.creator_rating} size={80} label="Creator Rating" />
+            </a>
+          ) : (
+            <div className="shrink-0 p-1">
+              <ScoreRing score={p.creator_rating} size={80} label="Creator Rating" />
+            </div>
+          )}
         </div>
 
-        {/* ── Hero: gallery + buy box, above the fold on every viewport ──── */}
-        <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1fr_340px] lg:items-start mb-6">
+        {/* ── Hero: gallery + the single buy box, above the fold ─────────── */}
+        <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1fr_380px] lg:items-start mb-6">
           <ProductGallery images={allImages} productName={p.name} />
 
-          <div className="flex flex-col gap-4 lg:sticky lg:top-20">
-            <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  {bestPrice != null && (
-                    <p className="text-2xl font-extrabold text-accent">
-                      {formatIndianPrice(bestPrice)}
-                    </p>
-                  )}
-                  {launchPrice && bestPrice && launchPrice > bestPrice && (
-                    <p className="text-sm text-muted line-through">
-                      {formatIndianPrice(launchPrice)}
-                    </p>
-                  )}
-                  {bestPrice != null && <EmiHint priceInr={bestPrice} className="mt-1" />}
-                </div>
-                <ScoreRing score={p.creator_rating} size={64} />
-              </div>
-
-              {discount != null && (
-                <div className="flex items-center gap-1.5 rounded-lg bg-green-50 border border-green-200 px-3 py-1.5 text-xs font-semibold text-green-700">
-                  <TrendingDown size={13} />
-                  You save {discount}% vs launch price
-                </div>
-              )}
-            </div>
-
-            {/* Sentinel for sticky bar — placed right here so bar appears when this scrolls out */}
-            <div id="buy-section-anchor" />
-
+          <div className="flex flex-col gap-4">
             <BuySection links={p.affiliate_links} productName={p.name} launchPrice={p.launch_price_inr} />
 
             {allDeals.length > 0 && (
@@ -337,8 +312,6 @@ export default async function ProductPage({
           </div>
         )}
 
-        {activeDeal && <ActiveDealBanner deal={activeDeal} productName={p.name} />}
-
         <ProductSectionNav sections={navSections} />
 
         {relatedGuides.length > 0 && (
@@ -363,7 +336,7 @@ export default async function ProductPage({
           </div>
 
           {/* ── RIGHT COLUMN — secondary, sticky ──────────────────────── */}
-          <div className="lg:sticky lg:top-20 flex flex-col gap-4 h-fit">
+          <div className="lg:sticky lg:top-[calc(var(--navbar-height)_+_4.5rem)] flex flex-col gap-4 h-fit">
             <ShareBar url={shareUrl} title={p.name} text={shareText} />
 
             <ProductComparePanel product={p} />
@@ -373,13 +346,9 @@ export default async function ProductPage({
             {p.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {p.tags.map((tag) => (
-                  <Link
-                    key={tag}
-                    href={`/tag/${tagSlug(tag)}`}
-                    className="rounded-full border border-border bg-surface-alt px-2.5 py-1 text-xs text-muted hover:text-primary hover:border-primary transition-colors"
-                  >
+                  <Chip key={tag} href={`/tag/${tagSlug(tag)}`}>
                     #{tag}
-                  </Link>
+                  </Chip>
                 ))}
               </div>
             )}
@@ -387,11 +356,10 @@ export default async function ProductPage({
         </div>
       </main>
 
-      {/* Sticky buy bar — appears when right column scrolls out of view */}
+      {/* Sticky buy bar — slides up once the buy box has scrolled out of view */}
       <StickyBuyBar
         productName={p.name}
         thumbnailUrl={p.thumbnail_url}
-        bestPrice={bestPrice}
         links={p.affiliate_links}
       />
     </>

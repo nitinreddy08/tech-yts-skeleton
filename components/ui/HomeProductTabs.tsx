@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { TrendingUp, Star, Clock } from 'lucide-react'
 import { ProductCard } from '@/components/ui/ProductCard'
+import { TabList, TabPanel } from '@/components/ui/Tabs'
 import type { ProductSummary } from '@/types'
 import type { ProductDealBadge } from '@/lib/data/product-deals'
 
@@ -34,6 +35,7 @@ export function HomeProductTabs({ trending, featured, latest, dealMap }: HomePro
 
   const [active, setActive] = useState(tabs[0]?.key)
   const activeTab = tabs.find((t) => t.key === active) ?? tabs[0]
+  const prefix = useId()
 
   if (!activeTab) return null
 
@@ -42,33 +44,26 @@ export function HomeProductTabs({ trending, featured, latest, dealMap }: HomePro
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <h2 className="font-heading text-2xl font-bold text-primary">Top Picks</h2>
-          <div className="flex gap-1 rounded-full border border-border bg-surface-alt p-1">
-            {tabs.map((tab) => {
-              const Icon = tab.icon
-              const isActive = tab.key === activeTab.key
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActive(tab.key)}
-                  className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
-                    isActive ? 'bg-surface text-accent shadow-sm' : 'text-muted hover:text-primary'
-                  }`}
-                  aria-pressed={isActive}
-                >
-                  <Icon size={14} />
-                  {tab.label}
-                </button>
-              )
+          <TabList
+            label="Product picks"
+            idPrefix={prefix}
+            variant="segmented"
+            active={activeTab.key}
+            onChange={setActive}
+            tabs={tabs.map((t) => {
+              const Icon = t.icon
+              return { id: t.key, label: t.label, icon: <Icon size={14} aria-hidden /> }
             })}
-          </div>
+          />
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {activeTab.products.slice(0, 8).map((p) => (
-            <ProductCard key={p.id} product={p} activeDeal={dealMap[p.id]} />
-          ))}
-        </div>
+        <TabPanel idPrefix={prefix} id={activeTab.key} active>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {activeTab.products.slice(0, 8).map((p) => (
+              <ProductCard key={p.id} product={p} activeDeal={dealMap[p.id]} />
+            ))}
+          </div>
+        </TabPanel>
       </div>
     </section>
   )

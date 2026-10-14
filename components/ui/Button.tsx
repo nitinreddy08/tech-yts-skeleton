@@ -19,7 +19,8 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
   md: 'h-12 px-6 text-md',
-  sm: 'h-[38px] px-6 text-base',
+  // 44px: the minimum comfortable touch target (was 38px).
+  sm: 'h-11 px-5 text-base',
   // No height/padding/text-size of its own — for compact contexts (a card
   // footer CTA) that need custom sizing but still want the shared
   // color/radius/transition treatment.

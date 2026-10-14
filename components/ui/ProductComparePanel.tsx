@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { GitCompare, Check, Plus } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { Chip } from '@/components/ui/Chip'
 import { useCompare } from '@/components/providers/CompareProvider'
 import { buildCompareUrl } from '@/lib/utils/compare-url'
 import type { ProductSummary } from '@/types'
@@ -16,28 +18,24 @@ export function ProductComparePanel({ product }: ProductComparePanelProps) {
   const atLimit = products.length >= 4 && !added
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-3">
-      <button
-        type="button"
+    <div className="rounded-xl border border-border bg-surface p-4 flex flex-col gap-1">
+      {/* Secondary on purpose: comparing is a side quest, buying is the primary action. */}
+      <Button
+        variant="secondary"
+        size="auto"
         onClick={() => toggleProduct(product)}
         disabled={atLimit}
         aria-pressed={added}
-        className={`flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition-colors w-full ${
-          added
-            ? 'bg-accent/10 text-accent border border-accent/30'
-            : atLimit
-              ? 'bg-surface-alt text-muted cursor-not-allowed'
-              : 'bg-primary text-white hover:bg-primary/90'
-        }`}
+        className={`h-11 w-full px-4 text-sm font-semibold ${added ? 'border-accent bg-accent/5 text-accent hover:bg-accent/10' : ''}`}
       >
-        {added ? <Check size={16} /> : <GitCompare size={16} />}
+        {added ? <Check size={16} aria-hidden /> : <GitCompare size={16} aria-hidden />}
         {added ? 'Added to Compare' : atLimit ? 'Compare list full (4 max)' : 'Add to Compare'}
-      </button>
+      </Button>
 
       {products.length >= 2 && (
         <Link
           href={buildCompareUrl(products.map((p) => p.slug))}
-          className="text-center text-xs font-semibold text-accent hover:underline"
+          className="flex min-h-11 items-center justify-center text-sm font-semibold text-accent hover:underline"
         >
           Compare {products.length} products now →
         </Link>
@@ -57,7 +55,6 @@ export function SimilarCompareStrip({ current, similar }: SimilarCompareStripPro
   if (similar.length === 0) return null
 
   const topSimilar = similar.slice(0, 3)
-  const allSlugs = [current.slug, ...topSimilar.map((s) => s.slug)].join(',')
 
   function addAll() {
     if (!isInCompare(current.id)) toggleProduct(current)
@@ -79,40 +76,23 @@ export function SimilarCompareStrip({ current, similar }: SimilarCompareStripPro
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={addAll}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white hover:bg-accent/90"
-          >
-            <Plus size={14} />
+          <Button size="auto" onClick={addAll} className="h-11 px-4 text-sm">
+            <Plus size={14} aria-hidden />
             Add all to compare
-          </button>
-          <Link
-            href={`/compare?products=${allSlugs}`}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-primary hover:border-accent transition-colors"
-          >
+          </Button>
+          <Button variant="secondary" size="auto" href={buildCompareUrl([current.slug, ...topSimilar.map((s) => s.slug)])} className="h-11 px-4 text-sm">
             View comparison
-          </Link>
+          </Button>
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
         {topSimilar.map((s) => {
           const added = isInCompare(s.id)
           return (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => toggleProduct(s)}
-              aria-pressed={added}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                added
-                  ? 'bg-accent text-white'
-                  : 'border border-border bg-surface text-primary hover:border-accent'
-              }`}
-            >
-              {added ? <Check size={12} /> : <Plus size={12} />}
+            <Chip key={s.id} size="md" active={added} onClick={() => toggleProduct(s)} aria-pressed={added}>
+              {added ? <Check size={12} aria-hidden /> : <Plus size={12} aria-hidden />}
               vs {s.name.split(' ').slice(0, 3).join(' ')}
-            </button>
+            </Chip>
           )
         })}
       </div>

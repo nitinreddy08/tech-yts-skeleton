@@ -30,8 +30,8 @@ export function KeySpecStrip({ highlights, className = '' }: KeySpecStripProps) 
                 {h.icon}
               </span>
             )}
-            <p className="text-[10px] font-medium text-muted leading-tight truncate">{h.label}</p>
-            <p className="text-xs font-bold text-primary mt-0.5 leading-snug line-clamp-2">{h.value}</p>
+            <p className="text-[11px] font-medium text-muted leading-tight truncate">{h.label}</p>
+            <p className="text-[13px] font-bold text-primary mt-0.5 leading-snug line-clamp-2">{h.value}</p>
           </div>
         ))}
       </div>

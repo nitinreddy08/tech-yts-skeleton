@@ -32,15 +32,16 @@ export function ProductSectionNav({ sections }: { sections: Section[] }) {
 
   return (
     <nav
-      className="sticky top-[var(--navbar-height,56px)] z-30 -mx-4 px-4 py-2 mb-6 bg-surface/95 backdrop-blur border-b border-border lg:top-20"
+      className="sticky top-[var(--navbar-height)] z-30 -mx-4 px-4 py-1.5 mb-6 bg-surface/95 backdrop-blur border-b border-border"
       aria-label="Page sections"
     >
-      <div className="flex gap-2 overflow-x-auto scrollbar-none">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar">
         {sections.map((s) => (
           <a
             key={s.id}
             href={`#${s.id}`}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+            aria-current={active === s.id ? 'location' : undefined}
+            className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-semibold transition-colors ${
               active === s.id
                 ? 'bg-accent text-white'
                 : 'bg-surface-alt text-muted hover:text-primary border border-border'

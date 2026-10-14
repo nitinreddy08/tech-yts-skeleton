@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
 import useEmblaCarousel from 'embla-carousel-react'
 import { ChevronLeft, ChevronRight, Expand, X } from 'lucide-react'
+import { useDialog } from '@/lib/hooks/useDialog'
 
 interface ProductGalleryProps {
   images: string[]
@@ -27,23 +28,23 @@ function GalleryLightbox({
     setIndex(startIndex)
   }, [startIndex])
 
+  // Focus trap, Escape-to-close, scroll lock and focus restore.
+  const dialogRef = useDialog<HTMLDivElement>(true, onClose)
+
   useEffect(() => {
-    document.body.style.overflow = 'hidden'
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
       if (e.key === 'ArrowLeft') setIndex((i) => Math.max(0, i - 1))
       if (e.key === 'ArrowRight') setIndex((i) => Math.min(images.length - 1, i + 1))
     }
     window.addEventListener('keydown', onKey)
-    return () => {
-      document.body.style.overflow = ''
-      window.removeEventListener('keydown', onKey)
-    }
-  }, [images.length, onClose])
+    return () => window.removeEventListener('keydown', onKey)
+  }, [images.length])
 
   return (
     <div
-      className="fixed inset-0 z-[60] bg-black/90 flex flex-col"
+      ref={dialogRef}
+      tabIndex={-1}
+      className="fixed inset-0 z-[70] bg-black/90 flex flex-col outline-none"
       role="dialog"
       aria-modal="true"
       aria-label={`${productName} image gallery`}
@@ -55,7 +56,7 @@ function GalleryLightbox({
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg p-2 text-white hover:bg-white/10 transition-colors"
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-white hover:bg-white/10 transition-colors"
           aria-label="Close gallery"
         >
           <X size={24} />
@@ -185,7 +186,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
           <button
             type="button"
             onClick={() => setLightboxOpen(true)}
-            className="absolute top-3 right-3 rounded-lg bg-black/50 p-2 text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+            className="absolute top-3 right-3 flex h-11 w-11 items-center justify-center rounded-lg bg-black/50 text-white backdrop-blur-sm transition-opacity focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
             aria-label="Open fullscreen gallery"
           >
             <Expand size={16} />
@@ -198,7 +199,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                 type="button"
                 onClick={scrollPrev}
                 disabled={selected === 0}
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-surface/90 border border-border p-2 shadow-sm text-primary hover:bg-surface disabled:opacity-30 transition-opacity"
+                className="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface/90 border border-border shadow-sm text-primary hover:bg-surface disabled:opacity-30 transition-opacity"
                 aria-label="Previous image"
               >
                 <ChevronLeft size={18} />
@@ -207,7 +208,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                 type="button"
                 onClick={scrollNext}
                 disabled={selected === images.length - 1}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-surface/90 border border-border p-2 shadow-sm text-primary hover:bg-surface disabled:opacity-30 transition-opacity"
+                className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface/90 border border-border shadow-sm text-primary hover:bg-surface disabled:opacity-30 transition-opacity"
                 aria-label="Next image"
               >
                 <ChevronRight size={18} />
@@ -218,7 +219,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
         {/* Thumbnails — all visible, no truncation (Baymard) */}
         {images.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             {images.map((src, i) => (
               <button
                 key={i}
