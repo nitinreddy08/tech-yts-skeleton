@@ -23,15 +23,15 @@ export function CategoryDiscoveryGrid({ categories, productCounts }: CategoryDis
               href={`/${cat.slug}`}
               className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-surface p-5 hover:border-accent/40 hover:shadow-md transition-all text-center"
             >
-              <span className="text-3xl" role="img" aria-hidden>
+              <span className="text-3xl" aria-hidden>
                 {cat.icon}
               </span>
               <span className="text-sm font-semibold text-primary group-hover:text-accent transition-colors">
                 {cat.name}
               </span>
-              <span className="text-xs text-muted">
-                {productCounts[cat.slug] ?? 0} reviewed
-              </span>
+              {(productCounts[cat.slug] ?? 0) > 0 && (
+                <span className="text-xs text-muted">{productCounts[cat.slug]} reviewed</span>
+              )}
             </Link>
           ))}
         </div>

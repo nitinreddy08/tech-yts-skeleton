@@ -31,6 +31,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${geist.variable} ${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-surface text-primary">
+        <noscript>
+          {/* Scroll-reveal sections start hidden in the server HTML; without JS they'd stay invisible. */}
+          <style>{'.motion-section{opacity:1!important;transform:none!important}'}</style>
+        </noscript>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}

@@ -18,7 +18,9 @@ import { TrustStrip } from '@/components/ui/TrustStrip'
 import { HomeProductTabs } from '@/components/ui/HomeProductTabs'
 import { RecentlyViewedStrip } from '@/components/ui/RecentlyViewedStrip'
 import { DealCountdown } from '@/components/ui/DealCountdown'
-import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
+import { DealBuyLink } from '@/components/ui/DealBuyLink'
+import { Badge } from '@/components/ui/Badge'
+import { buttonVariants } from '@/components/ui/Button'
 import { formatIndianPrice } from '@/lib/utils/format'
 import { siteConfig } from '@/lib/config'
 import { Package } from 'lucide-react'
@@ -56,10 +58,10 @@ export default async function HomePage() {
       <section className="bg-surface-alt border-b border-border py-8 md:py-10 px-4">
         <div className="mx-auto max-w-7xl">
           <div className="mb-5 text-center lg:text-left">
-            <h1 className="font-heading text-2xl md:text-3xl font-bold text-primary">
-              {siteConfig.site_name}
+            <h1 className="font-heading text-2xl md:text-3xl font-bold text-primary text-balance">
+              {siteConfig.hero_heading}
             </h1>
-            <p className="text-muted mt-1">{siteConfig.tagline}</p>
+            <p className="text-muted mt-1 max-w-2xl mx-auto lg:mx-0">{siteConfig.hero_subheading}</p>
           </div>
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="w-full lg:w-[58%] shrink-0">
@@ -68,10 +70,10 @@ export default async function HomePage() {
             <div className="flex-1 min-w-0 rounded-xl border border-border bg-surface shadow-sm p-5">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-heading text-lg font-bold text-primary flex items-center gap-2">
-                  <Zap size={18} className="text-accent" /> Today&apos;s Hot Deals
+                  <Zap size={18} className="text-accent" aria-hidden /> Today&apos;s Hot Deals
                 </h2>
-                <Link href="/deals" className="text-xs text-accent hover:underline flex items-center gap-0.5">
-                  View all <ArrowRight size={12} />
+                <Link href="/deals" className="inline-flex min-h-11 items-center gap-0.5 text-sm text-accent hover:underline">
+                  View all <ArrowRight size={14} aria-hidden />
                 </Link>
               </div>
               {hotDeals.length > 0 ? (
@@ -81,14 +83,12 @@ export default async function HomePage() {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="rounded-xl border border-border bg-surface-alt p-3 flex flex-col gap-2">
-                      <div className="h-24 w-full rounded-lg shimmer" />
-                      <div className="h-3 w-3/4 rounded shimmer" />
-                      <div className="h-3 w-1/2 rounded shimmer" />
-                    </div>
-                  ))}
+                <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-surface-alt px-4 py-10 text-center">
+                  <p className="text-sm font-medium text-primary">No hot deals right now</p>
+                  <p className="text-sm text-muted">New price drops and bank offers land here as they go live.</p>
+                  <Link href="/deals" className="inline-flex min-h-11 items-center text-sm font-semibold text-accent hover:underline">
+                    Browse all offers →
+                  </Link>
                 </div>
               )}
             </div>
@@ -105,7 +105,7 @@ export default async function HomePage() {
       {dealOfDay && dealOfDay.product && (
         <MotionSection>
           <div className="mx-auto max-w-7xl px-4 py-12">
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-accent/10 via-surface to-surface-alt border border-accent/15 p-6 md:p-10">
+            <div className="relative overflow-hidden rounded-2xl border border-secondary-200 bg-secondary-50 p-6 md:p-10">
               <div className="flex flex-col md:flex-row gap-8 items-center">
                 <div className="relative h-44 w-44 shrink-0 rounded-2xl bg-surface border border-border overflow-hidden">
                   {dealOfDay.product.thumbnail_url && (
@@ -119,9 +119,9 @@ export default async function HomePage() {
                   )}
                 </div>
                 <div className="flex-1 text-center md:text-left">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1 text-xs font-bold text-white mb-3">
-                    <Zap size={12} /> Deal of the Day
-                  </div>
+                  <Badge variant="deal" className="mb-3">
+                    <Zap size={12} aria-hidden /> Deal of the Day
+                  </Badge>
                   <h2 className="font-heading text-2xl font-bold text-primary mb-1">
                     {dealOfDay.product.name}
                   </h2>
@@ -140,9 +140,9 @@ export default async function HomePage() {
                       </span>
                     )}
                     {dealOfDay.original_price_inr != null && dealOfDay.deal_price_inr != null && (
-                      <span className="rounded-full bg-green-100 text-green-800 px-2.5 py-0.5 text-xs font-bold">
-                        {discountPercent(dealOfDay.original_price_inr, dealOfDay.deal_price_inr)}% OFF
-                      </span>
+                      <Badge variant="success">
+                        {discountPercent(dealOfDay.original_price_inr, dealOfDay.deal_price_inr)}% off
+                      </Badge>
                     )}
                   </div>
                   {dealOfDay.expires_at && (
@@ -151,21 +151,22 @@ export default async function HomePage() {
                     </div>
                   )}
                   <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                    <AffiliateOutboundLink
+                    <DealBuyLink
+                      expiresAt={dealOfDay.expires_at}
                       href={`/go/${dealOfDay.id}`}
                       linkId={dealOfDay.id}
                       storeName={dealOfDay.store_name}
                       productName={dealOfDay.product?.name}
                       priceInr={dealOfDay.deal_price_inr}
-                      className="rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-white hover:bg-accent/90 transition-colors"
+                      className={buttonVariants({ variant: 'deal' })}
                     >
                       Buy on {dealOfDay.store_name}
-                    </AffiliateOutboundLink>
+                    </DealBuyLink>
                     <Link
                       href={`/${dealOfDay.product.category_slug}/${dealOfDay.product.slug}`}
-                      className="rounded-full border border-border bg-surface px-6 py-2.5 text-sm font-semibold text-primary hover:border-accent transition-colors"
+                      className={buttonVariants({ variant: 'secondary' })}
                     >
-                      Read Review
+                      Read the review
                     </Link>
                   </div>
                 </div>
@@ -185,9 +186,9 @@ export default async function HomePage() {
             <div className="flex items-end justify-between mb-6">
               <div>
                 <h2 className="font-heading text-2xl font-bold text-primary">Editor&apos;s Picks</h2>
-                <p className="text-sm text-muted mt-1">Curated top 10 lists for every budget</p>
+                <p className="text-sm text-muted mt-1">Curated lists for every budget</p>
               </div>
-              <Link href="/best-of/best-smartphones-2026" className="text-sm text-accent hover:underline hidden sm:block">
+              <Link href="/best-of" className="inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-accent hover:underline">
                 See all lists →
               </Link>
             </div>

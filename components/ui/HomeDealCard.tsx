@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatIndianPrice } from '@/lib/utils/format'
-import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
+import { DealBuyLink } from '@/components/ui/DealBuyLink'
+import { Badge } from '@/components/ui/Badge'
+import { buttonVariants } from '@/components/ui/Button'
 import type { Deal } from '@/types'
 
 function discountPercent(original: number, deal: number): number {
@@ -30,25 +32,27 @@ export function HomeDealCard({ deal }: HomeDealCardProps) {
       <Link
         href={`/${deal.product.category_slug}/${deal.product.slug}`}
         className="relative block h-24 w-full rounded-lg bg-surface overflow-hidden"
+        tabIndex={-1}
+        aria-hidden
       >
         {deal.product.thumbnail_url && (
           <Image
             src={deal.product.thumbnail_url}
-            alt={deal.product.name}
+            alt=""
             fill
             sizes="200px"
             className="object-contain p-2"
           />
         )}
         {pct != null && (
-          <span className="absolute top-1.5 left-1.5 rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
+          <Badge variant="deal" size="sm" className="absolute top-1.5 left-1.5">
             {pct}% OFF
-          </span>
+          </Badge>
         )}
       </Link>
       <Link
         href={`/${deal.product.category_slug}/${deal.product.slug}`}
-        className="text-xs font-medium text-primary line-clamp-2 leading-snug hover:text-accent"
+        className="text-sm font-medium text-primary line-clamp-2 leading-snug hover:text-accent"
       >
         {deal.product.name}
       </Link>
@@ -57,24 +61,26 @@ export function HomeDealCard({ deal }: HomeDealCardProps) {
           <span className="text-sm font-bold text-accent">{formatIndianPrice(deal.deal_price_inr)}</span>
         )}
         {deal.original_price_inr != null && (
-          <span className="text-[11px] text-muted line-through">
+          <span className="text-xs text-muted line-through">
             {formatIndianPrice(deal.original_price_inr)}
           </span>
         )}
       </div>
       {savings != null && savings > 0 && (
-        <p className="text-[10px] font-medium text-green-700">Save {formatIndianPrice(savings)}</p>
+        <p className="text-xs font-medium text-success-700">Save {formatIndianPrice(savings)}</p>
       )}
-      <AffiliateOutboundLink
+      {/* Secondary on purpose: the hero's one primary action is "Show phones". */}
+      <DealBuyLink
+        expiresAt={deal.expires_at}
         href={`/go/${deal.id}`}
         linkId={deal.id}
         storeName={deal.store_name}
         productName={deal.product.name}
         priceInr={deal.deal_price_inr}
-        className="w-full rounded-lg bg-accent py-1.5 text-center text-xs font-semibold text-white hover:bg-accent/90 transition-colors"
+        className={buttonVariants({ variant: 'secondary', size: 'auto', className: 'h-11 w-full px-2 text-sm' })}
       >
         Buy on {deal.store_name}
-      </AffiliateOutboundLink>
+      </DealBuyLink>
     </div>
   )
 }

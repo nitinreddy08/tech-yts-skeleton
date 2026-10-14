@@ -6,6 +6,9 @@ export const siteConfig = {
   // Branding
   site_name: 'TechReviews India',
   tagline: 'Honest reviews. Best prices.',
+  // Homepage hero (the H1 should say what the site does, not just its name)
+  hero_heading: 'Find the right phone, laptop or earbuds for your budget',
+  hero_subheading: 'Honest, creator-tested reviews and live price comparisons across Indian stores.',
   logo_url: '',
   favicon_url: '',
 
