@@ -403,3 +403,56 @@ target, so inputs never need a separate mobile-size variant.
 | Disabled | `neutral-300` | `neutral-100` | `neutral-600` |
 
 Placeholder text: `text-muted` `#767184`.
+
+---
+
+## Interaction & layout rules
+
+These apply across the app and are the reason several primitives changed
+after launch. New screens should follow them without re-deriving them.
+
+### Touch targets: 44px
+Every control a thumb can hit is at least 44×44px.
+- `Button` size `sm` is 44px (was 38px); `md` is 48px; `auto` has no height of
+  its own, so give it `h-11`.
+- `Chip` stays visually compact (30/36px) but carries invisible hit-slop via an
+  `after:` pseudo-element that extends the touch target to 44px.
+- Icon-only buttons use `h-11 w-11`. Text links in dense areas use
+  `min-h-11 inline-flex items-center`.
+- `Input` and `<select>` are `h-11`; `Input` text is 16px below `sm` so iOS does
+  not zoom on focus.
+
+### Fixed bottom layers
+Tab bar, compare tray, sticky buy bar and cookie banner share the bottom edge.
+Each publishes its measured height with `useBottomLayer(name)`
+(`lib/hooks/useBottomLayer.ts`) as `--layer-<name>`, and sits on top of the
+layers beneath it (`bottom-[calc(var(--layer-tabbar)_+_…)]`). Never hard-code
+"the bar above me" offsets. `<body>` reserves matching bottom padding, and
+`--navbar-height` is the live sticky-header height for `top-[…]` offsets.
+
+### Dialogs and drawers
+Anything modal uses `useDialog` (`lib/hooks/useDialog.ts`): focus moves in, Tab
+is trapped, Escape closes, body scroll locks, focus returns to the opener. The
+panel gets `role="dialog"`, `aria-modal`, `aria-label` and `tabIndex={-1}`, and
+is portaled above the fixed bars (`z-[70]`).
+
+### Tabs
+Use `Tabs.tsx` (`TabList` + `TabPanel`): `role=tablist/tab/tabpanel`, roving
+tabindex, Arrow/Home/End keys. Variants: `underline` (page sections), `pill`
+(content switchers), `segmented` (compact picker).
+
+### Ratings, empty states, breadcrumbs
+- `RatingBadge` is the compact creator-score treatment (cards, rows, results);
+  `ScoreRing` is reserved for the product page and compare headers. Both use the
+  same score bands (`lib/utils/score.ts`).
+- `EmptyState` takes `headingLevel`; pages whose only content is the empty state
+  pass `1`. Its action is a `Button`.
+- `Breadcrumb` renders the labelled `<nav>` + ordered list with `aria-current`.
+
+### Money-path rules
+- One primary action per context. Buying is primary; comparing, saving and
+  alerts are secondary.
+- "Best price" means the cheapest **in-stock** store (`getBestOffer`).
+- Never present modelled data as measured: the price-trend chart is labelled
+  "Illustrative", and price watches say they live on this device.
+- Time-limited CTAs use `DealBuyLink` so an expired deal can't be clicked.

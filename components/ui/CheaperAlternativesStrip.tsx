@@ -18,9 +18,9 @@ export function CheaperAlternativesStrip({
   if (alternatives.length === 0) return null
 
   return (
-    <section className="rounded-xl border border-green-200 bg-green-50/50 p-5">
+    <section className="rounded-xl border border-success-100 bg-success-50/50 p-5">
       <div className="flex items-center gap-2 mb-1">
-        <TrendingDown size={18} className="text-green-700" />
+        <TrendingDown size={18} className="text-success-700" aria-hidden />
         <h2 className="font-heading text-sm font-bold text-primary">
           Save money — cheaper {categoryName.toLowerCase()} options
         </h2>

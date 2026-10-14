@@ -1,17 +1,21 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Bookmark, Bell, GitCompare, LayoutGrid } from 'lucide-react'
 import { SavedProductsClient } from '@/components/ui/SavedProductsClient'
 import { PriceAlertsClient } from '@/components/ui/PriceAlertsClient'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { TabList, TabPanel } from '@/components/ui/Tabs'
 import { loadRecentCompares, type RecentCompare } from '@/lib/utils/recent-compares'
 import { buildCompareUrl } from '@/lib/utils/compare-url'
 
 type Tab = 'saved' | 'alerts' | 'compares'
+const TAB_IDS: Tab[] = ['saved', 'alerts', 'compares']
 
 function RecentComparesPanel() {
-  const [items, setItems] = useState<RecentCompare[]>([])
+  const [items, setItems] = useState<RecentCompare[] | null>(null)
 
   useEffect(() => {
     const refresh = () => setItems(loadRecentCompares())
@@ -24,80 +28,95 @@ function RecentComparesPanel() {
     }
   }, [])
 
+  if (items === null) {
+    return <div className="h-20 shimmer rounded-xl" aria-busy="true" aria-label="Loading recent comparisons" />
+  }
+
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface-alt p-8 text-center">
-        <GitCompare size={32} className="mx-auto text-muted mb-3" />
-        <p className="text-sm font-semibold text-primary">No comparisons yet</p>
-        <p className="text-xs text-muted mt-1 mb-4">Compare 2+ products to see them here</p>
-        <Link href="/compare" className="text-sm font-semibold text-accent hover:underline">
-          Start comparing →
-        </Link>
-      </div>
+      <EmptyState
+        icon={GitCompare}
+        heading="No comparisons yet"
+        description="Compare two or more products and they'll be listed here."
+        action={{ label: 'Start comparing', href: '/compare' }}
+      />
     )
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <ul className="flex flex-col gap-3">
       {items.map((c) => (
-        <Link
-          key={c.id}
-          href={buildCompareUrl(c.slugs)}
-          className="flex items-center justify-between rounded-xl border border-border bg-surface p-4 hover:border-accent transition-colors"
-        >
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-primary line-clamp-2">{c.label}</p>
-            <p className="text-xs text-muted mt-0.5">
-              {c.slugs.length} products · {new Date(c.visitedAt).toLocaleDateString('en-IN')}
-            </p>
-          </div>
-          <GitCompare size={18} className="text-accent shrink-0 ml-3" />
-        </Link>
+        <li key={c.id}>
+          <Link
+            href={buildCompareUrl(c.slugs)}
+            className="flex min-h-11 items-center justify-between rounded-xl border border-border bg-surface p-4 transition-colors hover:border-accent"
+          >
+            <div className="min-w-0">
+              <p className="line-clamp-2 text-sm font-semibold text-primary">{c.label}</p>
+              <p className="mt-0.5 text-xs text-muted">
+                {c.slugs.length} products · {new Date(c.visitedAt).toLocaleDateString('en-IN')}
+              </p>
+            </div>
+            <GitCompare size={18} className="ml-3 shrink-0 text-accent" aria-hidden />
+          </Link>
+        </li>
       ))}
-    </div>
+    </ul>
   )
 }
 
+/**
+ * The single hub for everything stored on this device. /saved and /alerts
+ * redirect here; the active tab lives in the URL (?tab=) so a reload, the back
+ * button and shared links all land on the right one.
+ */
 export function MyStuffClient() {
-  const [tab, setTab] = useState<Tab>('saved')
+  const router = useRouter()
+  const pathname = usePathname()
+  const sp = useSearchParams()
+  const prefix = useId()
+  const requested = sp.get('tab')
+  const tab: Tab = TAB_IDS.includes(requested as Tab) ? (requested as Tab) : 'saved'
 
-  const tabs: { id: Tab; label: string; icon: typeof Bookmark }[] = [
-    { id: 'saved', label: 'Saved', icon: Bookmark },
-    { id: 'alerts', label: 'Alerts', icon: Bell },
-    { id: 'compares', label: 'Compares', icon: GitCompare },
-  ]
+  function setTab(next: string) {
+    router.replace(`${pathname}?tab=${next}`, { scroll: false })
+  }
 
   return (
     <>
       <div className="mb-8">
         <h1 className="font-heading text-3xl font-bold text-primary flex items-center gap-2">
-          <LayoutGrid size={28} className="text-accent" />
+          <LayoutGrid size={28} className="text-accent" aria-hidden />
           My Stuff
         </h1>
         <p className="text-muted mt-2 text-sm">
-          Saved products, price alerts, and recent comparisons — all on this device.
+          Saved products, price watches and recent comparisons — all stored on this device.
         </p>
       </div>
 
-      <div className="flex gap-2 mb-6 overflow-x-auto">
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setTab(id)}
-            className={`inline-flex items-center gap-2 shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-              tab === id ? 'bg-accent text-white' : 'border border-border text-muted hover:text-primary'
-            }`}
-          >
-            <Icon size={16} />
-            {label}
-          </button>
-        ))}
-      </div>
+      <TabList
+        label="My Stuff sections"
+        idPrefix={prefix}
+        variant="pill"
+        active={tab}
+        onChange={setTab}
+        className="mb-6"
+        tabs={[
+          { id: 'saved', label: 'Saved', icon: <Bookmark size={16} aria-hidden /> },
+          { id: 'alerts', label: 'Watches', icon: <Bell size={16} aria-hidden /> },
+          { id: 'compares', label: 'Compares', icon: <GitCompare size={16} aria-hidden /> },
+        ]}
+      />
 
-      {tab === 'saved' && <SavedProductsClient embedded />}
-      {tab === 'alerts' && <PriceAlertsClient embedded />}
-      {tab === 'compares' && <RecentComparesPanel />}
+      <TabPanel idPrefix={prefix} id="saved" active={tab === 'saved'}>
+        {tab === 'saved' && <SavedProductsClient />}
+      </TabPanel>
+      <TabPanel idPrefix={prefix} id="alerts" active={tab === 'alerts'}>
+        {tab === 'alerts' && <PriceAlertsClient />}
+      </TabPanel>
+      <TabPanel idPrefix={prefix} id="compares" active={tab === 'compares'}>
+        {tab === 'compares' && <RecentComparesPanel />}
+      </TabPanel>
     </>
   )
 }

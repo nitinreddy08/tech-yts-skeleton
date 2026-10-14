@@ -67,7 +67,7 @@ export function NewsletterSignup() {
       {status === 'error' && message && (
         <p className="text-xs text-error-500 mt-1.5">{message}</p>
       )}
-      <p className="text-[10px] text-muted mt-1.5">Deal alerts & new reviews. No spam.</p>
+      <p className="text-[11px] text-muted mt-1.5">Deal alerts & new reviews. No spam.</p>
     </div>
   )
 }

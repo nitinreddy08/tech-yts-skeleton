@@ -37,7 +37,7 @@ export function BestOfPreviewCard({ list }: BestOfPreviewCardProps) {
           <Trophy size={40} className="text-accent/40" />
         )}
         <Badge variant="accent" size="sm" className="absolute top-3 left-3 uppercase tracking-wide">
-          <Trophy size={10} /> Top 10
+          <Trophy size={10} aria-hidden /> Top {list.items.length}
         </Badge>
       </div>
       <div className="flex flex-col gap-2 p-4 flex-1">
@@ -47,7 +47,7 @@ export function BestOfPreviewCard({ list }: BestOfPreviewCardProps) {
         <p className="text-xs text-muted line-clamp-2 flex-1">{list.description}</p>
         {topPick && (
           <div className="mt-2 pt-3 border-t border-border">
-            <p className="text-[10px] uppercase tracking-wider text-muted mb-1">#1 Pick</p>
+            <p className="text-[11px] uppercase tracking-wider text-muted mb-1">#1 Pick</p>
             <p className="text-sm font-medium text-primary line-clamp-1">{topPick.name}</p>
             {topPick.current_price_inr != null && (
               <p className="text-sm font-bold text-accent mt-0.5">

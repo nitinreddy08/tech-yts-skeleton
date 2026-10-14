@@ -16,6 +16,10 @@ import { formatIndianPrice } from '@/lib/utils/format'
 import { siteConfig } from '@/lib/config'
 import { ShareBar } from '@/components/ui/ShareBar'
 import { Eyebrow } from '@/components/ui/Eyebrow'
+import { Badge } from '@/components/ui/Badge'
+import { Breadcrumb } from '@/components/ui/Breadcrumb'
+import { Button, buttonVariants } from '@/components/ui/Button'
+import { buildCompareUrl } from '@/lib/utils/compare-url'
 import type { BestOfList, BestOfListItem } from '@/types'
 
 function getPickBadge(rank: number, items: BestOfListItem[]): { label: string; className: string } | null {
@@ -35,7 +39,7 @@ function getPickBadge(rank: number, items: BestOfListItem[]): { label: string; c
   const minPrice = prices.length ? Math.min(...prices) : null
   const item = items.find((i) => i.rank === rank)
   if (minPrice != null && item?.product?.current_price_inr === minPrice) {
-    return { label: 'Best Value', className: 'bg-green-600 text-white' }
+    return { label: 'Best Value', className: 'bg-success-700 text-white' }
   }
   return null
 }
@@ -89,7 +93,7 @@ function BestOfItemCard({
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-2">
               {badge && (
-                <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${badge.className}`}>
+                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${badge.className}`}>
                   {badge.label}
                 </span>
               )}
@@ -121,15 +125,16 @@ function BestOfItemCard({
             <div className="flex flex-wrap gap-2">
               <Link
                 href={`/${product.category_slug}/${product.slug}`}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 transition-colors"
+                className={buttonVariants({ variant: 'primary', size: 'sm' })}
               >
-                Read Full Review <ArrowRight size={14} />
+                Read full review <ArrowRight size={14} aria-hidden />
               </Link>
               <Link
                 href={`/compare?products=${product.slug}`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-medium text-primary hover:border-accent transition-colors"
+                className={buttonVariants({ variant: 'secondary', size: 'sm' })}
+                title="Start a comparison with this product"
               >
-                <GitCompare size={14} /> Compare
+                <GitCompare size={14} aria-hidden /> Compare with…
               </Link>
             </div>
           </div>
@@ -148,11 +153,10 @@ export function BestOfListClient({ list, shareUrl }: BestOfListClientProps) {
   const [activeRank, setActiveRank] = useState<number | null>(list.items[0]?.rank ?? null)
   const observerRef = useRef<IntersectionObserver | null>(null)
 
-  const compareSlugs = list.items
+  const compareSlugList = list.items
     .slice(0, 4)
     .map((i) => i.product?.slug)
-    .filter(Boolean)
-    .join(',')
+    .filter((s): s is string => !!s)
 
   useEffect(() => {
     observerRef.current?.disconnect()
@@ -182,10 +186,14 @@ export function BestOfListClient({ list, shareUrl }: BestOfListClientProps) {
     <main className="max-w-7xl mx-auto px-4 py-10">
       {/* Editorial header */}
       <header className="mb-10">
+        <Breadcrumb
+          className="mb-4"
+          items={[{ label: 'Home', href: '/' }, { label: "Editor's Guides", href: '/best-of' }, { label: list.title }]}
+        />
         <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 text-accent px-3 py-1 text-xs font-semibold">
-            <Trophy size={12} /> Editor&apos;s Guide
-          </span>
+          <Badge variant="accent">
+            <Trophy size={12} aria-hidden /> Editor&apos;s Guide
+          </Badge>
           <span className="text-xs text-muted">{list.items.length} products tested</span>
         </div>
         <h1 className="font-heading text-3xl md:text-4xl font-bold text-primary leading-tight">
@@ -211,21 +219,19 @@ export function BestOfListClient({ list, shareUrl }: BestOfListClientProps) {
               <p className="text-sm text-muted leading-relaxed">
                 Every product on this list was hands-on tested by {siteConfig.creator_name || 'our team'}.
                 We compare specs, real-world performance, and value at current Indian retail prices.
-                Rankings reflect our honest creator rating — no brand pays for placement.
+                Rankings reflect our honest creator rating — no brand pays for placement. Some links on this
+                page are affiliate links; any commission never changes a ranking.
               </p>
             </div>
           </div>
         </div>
 
-        {compareSlugs && list.items.length >= 2 && (
+        {compareSlugList.length >= 2 && (
           <div className="mt-4 flex flex-wrap gap-3">
-            <Link
-              href={`/compare?products=${compareSlugs}`}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 transition-colors"
-            >
-              <GitCompare size={16} />
-              Compare top {Math.min(list.items.length, 4)} side-by-side
-            </Link>
+            <Button href={buildCompareUrl(compareSlugList)} variant="secondary">
+              <GitCompare size={16} aria-hidden />
+              Compare top {compareSlugList.length} side-by-side
+            </Button>
           </div>
         )}
 
@@ -239,7 +245,8 @@ export function BestOfListClient({ list, shareUrl }: BestOfListClientProps) {
               <a
                 key={item.id}
                 href={`#item-${item.rank}`}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                aria-current={activeRank === item.rank ? 'location' : undefined}
+                className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-medium transition-colors ${
                   activeRank === item.rank
                     ? 'bg-accent text-white'
                     : 'border border-border bg-surface text-primary'
@@ -282,7 +289,7 @@ export function BestOfListClient({ list, shareUrl }: BestOfListClientProps) {
               </nav>
 
               <div className="mt-4 pt-4 border-t border-border">
-                <p className="flex items-center gap-1.5 text-[10px] text-muted">
+                <p className="flex items-center gap-1.5 text-[11px] text-muted">
                   <ShieldCheck size={12} />
                   Updated {new Date(list.updated_at).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
                 </p>

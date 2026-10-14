@@ -38,7 +38,7 @@ export async function PopularBrandsStrip({ limit = 8 }: { limit?: number }) {
               <span className="font-heading text-xs font-bold text-primary group-hover:text-accent transition-colors">
                 {brand.name}
               </span>
-              <span className="text-[10px] text-muted tabular-nums">
+              <span className="text-[11px] text-muted tabular-nums">
                 {brand.productCount} product{brand.productCount !== 1 ? 's' : ''}
               </span>
             </Link>

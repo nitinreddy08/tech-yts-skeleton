@@ -14,8 +14,8 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { CategoryFilterClient } from '@/components/ui/CategoryFilterClient'
 import { CategoryBudgetChips } from '@/components/ui/CategoryBudgetChips'
 import { FilterBarSkeleton } from '@/components/ui/LoadingSkeleton'
-import { SearchX, ChevronRight } from 'lucide-react'
-import Link from 'next/link'
+import { SearchX } from 'lucide-react'
+import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import type { Metadata } from 'next'
 import type { SortOption, ProductFilters, ProductSummary } from '@/types'
 
@@ -141,13 +141,7 @@ export default async function CategoryPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(categoryItemListLd) }}
       />
     <main className="mx-auto max-w-7xl px-4 py-8">
-      <nav className="mb-5" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-1.5 text-xs text-muted">
-          <li><Link href="/" className="hover:text-primary transition-colors">Home</Link></li>
-          <li aria-hidden><ChevronRight size={12} /></li>
-          <li aria-current="page" className="font-medium text-primary">{cat.name}</li>
-        </ol>
-      </nav>
+      <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: cat.name }]} />
 
       {/* Page header */}
       <div className="mb-6 flex items-center gap-4 rounded-xl bg-surface-alt p-6 border border-border">

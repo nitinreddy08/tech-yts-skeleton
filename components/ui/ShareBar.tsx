@@ -60,10 +60,10 @@ export function ShareBar({ url, title, text, className = '' }: ShareBarProps) {
         href={buildWhatsAppUrl(shareText, url)}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-primary hover:border-green-500 hover:text-green-700 hover:bg-green-50 transition-colors"
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-primary hover:border-success-500 hover:text-success-700 hover:bg-success-50 transition-colors"
         aria-label="Share on WhatsApp"
       >
-        <MessageCircle size={14} className="text-green-600" />
+        <MessageCircle size={14} className="text-success-700" aria-hidden />
         WhatsApp
       </a>
 
@@ -71,7 +71,7 @@ export function ShareBar({ url, title, text, className = '' }: ShareBarProps) {
       <button
         type="button"
         onClick={nativeShare}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-primary hover:border-accent transition-colors"
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-primary hover:border-accent transition-colors"
       >
         <Share2 size={14} />
         Share
@@ -80,12 +80,12 @@ export function ShareBar({ url, title, text, className = '' }: ShareBarProps) {
       <button
         type="button"
         onClick={copyLink}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-primary hover:border-accent transition-colors"
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-primary hover:border-accent transition-colors"
         aria-label="Copy link"
       >
         {copied ? (
           <>
-            <Check size={14} className="text-green-600" />
+            <Check size={14} className="text-success-700" aria-hidden />
             Copied!
           </>
         ) : (

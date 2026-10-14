@@ -60,7 +60,7 @@ export function AdminClickAnalytics({ clicks }: AdminClickAnalyticsProps) {
           <div className="flex items-end justify-between gap-1.5 h-32">
             {byDay.map((day) => (
               <div key={day.date} className="flex flex-1 flex-col items-center gap-1 h-full justify-end">
-                <span className="text-[10px] font-semibold text-primary tabular-nums">
+                <span className="text-[11px] font-semibold text-primary tabular-nums">
                   {day.count > 0 ? day.count : ''}
                 </span>
                 <div
@@ -68,7 +68,7 @@ export function AdminClickAnalytics({ clicks }: AdminClickAnalyticsProps) {
                   style={{ height: `${Math.max(4, (day.count / maxDay) * 100)}%` }}
                   title={`${day.label}: ${day.count} clicks`}
                 />
-                <span className="text-[9px] text-muted text-center leading-tight">{day.label}</span>
+                <span className="text-[11px] text-muted text-center leading-tight">{day.label}</span>
               </div>
             ))}
           </div>

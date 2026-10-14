@@ -55,12 +55,12 @@ export function SpecsCopyButton({ productName, specifications, template }: Specs
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-primary hover:border-accent hover:text-accent transition-colors"
+      className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-primary hover:border-accent hover:text-accent transition-colors"
       aria-label={copied ? 'Specs copied' : 'Copy specifications to clipboard'}
     >
       {copied ? (
         <>
-          <Check size={14} className="text-green-600" />
+          <Check size={14} className="text-success-700" aria-hidden />
           Copied
         </>
       ) : (

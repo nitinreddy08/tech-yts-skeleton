@@ -45,7 +45,7 @@ export async function PopularTagsStrip({ limit = 14 }: { limit?: number }) {
                 className={chipVariants({ size: 'auto', className: weight })}
               >
                 {tag.label}
-                <span className="text-[10px] text-muted tabular-nums">{tag.count}</span>
+                <span className="text-[11px] text-muted tabular-nums">{tag.count}</span>
               </Link>
             )
           })}

@@ -1,7 +1,5 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import type { Metadata } from 'next'
-import { ChevronRight } from 'lucide-react'
 import { fetchBrandBySlug, fetchProductsByBrand } from '@/lib/data/brands'
 import { getActiveDealMap } from '@/lib/data/product-deals'
 import { CategoryProductResults } from '@/components/ui/CategoryProductResults'
@@ -11,6 +9,8 @@ import { generateBreadcrumbJsonLd, SITE_URL } from '@/lib/utils/seo'
 import { siteConfig } from '@/lib/config'
 import { SearchX } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
+import { Breadcrumb } from '@/components/ui/Breadcrumb'
+import { Eyebrow } from '@/components/ui/Eyebrow'
 
 export const revalidate = 60
 
@@ -58,18 +58,12 @@ export default async function BrandPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <nav className="mb-5 flex items-center gap-1.5 text-xs text-muted" aria-label="Breadcrumb">
-          <Link href="/" className="hover:text-primary transition-colors">
-            Home
-          </Link>
-          <ChevronRight size={12} />
-          <span className="text-primary font-medium">{brand.name}</span>
-        </nav>
+        <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Brands', href: '/brands' }, { label: brand.name }]} />
 
         <div className="mb-8 flex items-center gap-4 rounded-xl border border-border bg-surface-alt p-6">
           <BrandLogo name={brand.name} size="lg" />
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Brand</p>
+            <Eyebrow className="mb-1">Brand</Eyebrow>
             <h1 className="font-heading text-3xl font-bold text-primary">{brand.name}</h1>
             <p className="text-sm text-muted mt-2">
               {products.length} reviewed product{products.length !== 1 ? 's' : ''} — sorted by creator rating
@@ -82,7 +76,7 @@ export default async function BrandPage({
             icon={SearchX}
             heading={`No ${brand.name} products yet`}
             description="Check back soon — we're always adding new reviews."
-            action={{ label: 'Browse Smartphones', href: '/smartphones' }}
+            action={{ label: 'Browse all products', href: '/search' }}
           />
         ) : (
           <BrandProductResults products={products} dealMap={dealMap} brandName={brand.name} />

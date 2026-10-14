@@ -36,7 +36,7 @@ export function RecentComparesStrip() {
               className="shrink-0 max-w-xs rounded-xl border border-border bg-surface-alt px-4 py-3 hover:border-accent transition-colors"
             >
               <p className="text-sm font-semibold text-primary line-clamp-2">{c.label}</p>
-              <p className="text-[10px] text-muted mt-1">
+              <p className="text-[11px] text-muted mt-1">
                 {c.slugs.length} products · {new Date(c.visitedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
               </p>
             </Link>

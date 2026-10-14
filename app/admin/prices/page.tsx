@@ -77,7 +77,7 @@ export default async function AdminPricesPage() {
                               {row.productName}
                             </Link>
                             <span
-                              className={`ml-2 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${meta.className}`}
+                              className={`ml-2 inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${meta.className}`}
                             >
                               {meta.label}
                             </span>

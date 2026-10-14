@@ -301,9 +301,8 @@ design-system/
 
 ## Implementation status
 
-This package is a **spec, not yet wired into the app**. `app/globals.css`
-still defines the current minimal token set (`--color-primary: #111111`,
-`--color-accent: #0066FF`, two shadows, two radii). Implementing this
-system means replacing that block with `tokens.css`'s contents (or
-importing it) and updating components to the new variant props documented
-in `components.md` — intentionally left as a separate, explicit next step.
+Wired into the app: the token layer lives in `app/globals.css` (palette
+scales, semantic remaps, shadow/radius overrides) and the components in
+`components.md` exist in `components/ui/`. See "Interaction & layout rules"
+in `components.md` for the behaviour rules every screen follows (touch
+targets, dialogs, fixed bottom layers, tabs).

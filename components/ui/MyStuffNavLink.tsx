@@ -43,7 +43,7 @@ export function MyStuffNavLink({ className = '' }: { className?: string }) {
       <LayoutGrid size={14} />
       My Stuff
       {count > 0 && (
-        <span className="rounded-full bg-accent text-white px-1.5 py-0.5 text-[10px] font-bold min-w-[18px] text-center">
+        <span className="rounded-full bg-accent text-white px-1.5 py-0.5 text-[11px] font-bold min-w-[18px] text-center">
           {count}
         </span>
       )}

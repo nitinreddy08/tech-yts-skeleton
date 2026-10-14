@@ -41,7 +41,7 @@ export function RelatedGuidesStrip({ guides, productName }: RelatedGuidesStripPr
                 <p className="text-xs text-muted line-clamp-1 mt-0.5">{g.pickReason}</p>
               )}
             </div>
-            <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-accent/10 text-accent px-2.5 py-1 text-[10px] font-bold">
+            <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-accent/10 text-accent px-2.5 py-1 text-[11px] font-bold">
               {rankLabel(g.rank, g.totalPicks)}
               <ChevronRight size={12} />
             </span>

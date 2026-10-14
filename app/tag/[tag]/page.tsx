@@ -1,10 +1,11 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import type { Metadata } from 'next'
-import { ChevronRight, Tag } from 'lucide-react'
+import { SearchX, Tag } from 'lucide-react'
 import { fetchProductsByTag } from '@/lib/data/tags'
 import { getActiveDealMap } from '@/lib/data/product-deals'
 import { TagProductResults } from '@/components/ui/TagProductResults'
+import { Breadcrumb } from '@/components/ui/Breadcrumb'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { SITE_URL } from '@/lib/utils/seo'
 import { siteConfig } from '@/lib/config'
 
@@ -45,17 +46,11 @@ export default async function TagPage({
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
-      <nav className="mb-5 flex items-center gap-1.5 text-xs text-muted" aria-label="Breadcrumb">
-        <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-        <ChevronRight size={12} />
-        <Link href="/tags" className="hover:text-primary transition-colors">Tags</Link>
-        <ChevronRight size={12} />
-        <span className="text-primary font-medium capitalize">{data.tag}</span>
-      </nav>
+      <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Tags', href: '/tags' }, { label: data.tag }]} />
 
       <div className="mb-8 rounded-xl border border-border bg-surface-alt p-6">
         <div className="flex items-center gap-2 mb-2">
-          <Tag size={20} className="text-accent" />
+          <Tag size={20} className="text-accent" aria-hidden />
           <h1 className="font-heading text-2xl font-bold text-primary capitalize">{data.tag}</h1>
         </div>
         <p className="text-sm text-muted">
@@ -63,7 +58,16 @@ export default async function TagPage({
         </p>
       </div>
 
-      <TagProductResults products={data.products} dealMap={dealMap} />
+      {data.products.length === 0 ? (
+        <EmptyState
+          icon={SearchX}
+          heading="No products with this tag yet"
+          description="Browse another tag, or search the catalogue."
+          action={{ label: 'Browse all tags', href: '/tags' }}
+        />
+      ) : (
+        <TagProductResults products={data.products} dealMap={dealMap} />
+      )}
     </main>
   )
 }

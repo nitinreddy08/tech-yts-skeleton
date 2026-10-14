@@ -1,12 +1,14 @@
-import Link from 'next/link'
-import { Search, Home, ArrowRight } from 'lucide-react'
+import { Home, Search, Zap } from 'lucide-react'
 import { fetchAllCategories } from '@/lib/data/categories'
 import { fetchFeaturedProducts } from '@/lib/data/products'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { RecentSearchesStrip } from '@/components/ui/RecentSearchesStrip'
-import { CompareSuggestions } from '@/components/ui/CompareSuggestions'
+import { Button } from '@/components/ui/Button'
+import { Chip } from '@/components/ui/Chip'
+import { Input } from '@/components/ui/Input'
 import { siteConfig } from '@/lib/config'
 
+/** Dead-end recovery: a search box first, three clear exits, then browse paths — nothing more. */
 export default async function NotFoundPage() {
   const [categories, featured] = await Promise.all([
     fetchAllCategories(),
@@ -14,76 +16,55 @@ export default async function NotFoundPage() {
   ])
 
   return (
-    <main className="min-h-[60vh] flex flex-col items-center justify-center px-4 py-16">
-      <div className="text-center max-w-lg mb-10">
-        <p className="text-7xl font-heading font-bold text-accent/20 leading-none mb-4">404</p>
-        <h1 className="font-heading text-2xl md:text-3xl font-bold text-primary mb-3">
-          Page not found
-        </h1>
-        <p className="text-muted leading-relaxed">
-          The page you&apos;re looking for doesn&apos;t exist or may have moved.
-          Let&apos;s get you back to discovering great tech on {siteConfig.site_name}.
+    <main className="flex flex-col items-center px-4 py-12 md:py-16">
+      <div className="mb-8 max-w-lg text-center">
+        <p className="mb-3 font-heading text-6xl font-bold leading-none text-accent/20" aria-hidden>404</p>
+        <h1 className="mb-3 font-heading text-2xl font-bold text-primary md:text-3xl">Page not found</h1>
+        <p className="leading-relaxed text-muted">
+          That page doesn&apos;t exist or may have moved. Search {siteConfig.site_name}, or pick up where you left off.
         </p>
       </div>
 
-      {/* Primary actions */}
-      <div className="flex flex-wrap justify-center gap-3 mb-12">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-white hover:bg-accent/90 transition-colors"
-        >
-          <Home size={16} />
-          Go Home
-        </Link>
-        <Link
-          href="/search"
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-5 py-3 text-sm font-semibold text-primary hover:border-accent transition-colors"
-        >
-          <Search size={16} />
-          Search Products
-        </Link>
-        <Link
-          href="/deals"
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-5 py-3 text-sm font-semibold text-primary hover:border-accent transition-colors"
-        >
-          View Deals
-        </Link>
+      <form action="/search" method="get" role="search" className="mb-6 flex w-full max-w-xl gap-2">
+        <label htmlFor="nf-search" className="sr-only">Search products</label>
+        <Input id="nf-search" name="q" type="search" placeholder="Search phones, laptops, earbuds…" autoComplete="off" />
+        <Button type="submit" size="auto" className="h-11 shrink-0 px-5 text-sm">
+          <Search size={16} aria-hidden />
+          Search
+        </Button>
+      </form>
+
+      <div className="mb-10 flex flex-wrap justify-center gap-3">
+        <Button href="/" variant="secondary" size="auto" className="h-11 px-5 text-sm">
+          <Home size={16} aria-hidden />
+          Go home
+        </Button>
+        <Button href="/deals" variant="secondary" size="auto" className="h-11 px-5 text-sm">
+          <Zap size={16} aria-hidden />
+          View deals
+        </Button>
       </div>
 
-      {/* Search recovery */}
-      <section className="w-full max-w-xl mb-10">
+      <section className="mb-10 w-full max-w-xl">
         <RecentSearchesStrip className="text-left" />
       </section>
 
-      <CompareSuggestions className="w-full max-w-2xl mb-12" />
-
-      {/* Category recovery */}
-      <section className="w-full max-w-3xl mb-12">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted text-center mb-4">
-          Browse by category
-        </h2>
+      <section className="mb-12 w-full max-w-3xl">
+        <h2 className="mb-4 text-center text-sm font-semibold uppercase tracking-wider text-muted">Browse by category</h2>
         <div className="flex flex-wrap justify-center gap-2">
           {categories.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/${cat.slug}`}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-primary hover:border-accent hover:text-accent transition-colors"
-            >
+            <Chip key={cat.slug} size="md" href={`/${cat.slug}`}>
               <span aria-hidden>{cat.icon}</span>
               {cat.name}
-              <ArrowRight size={12} className="text-muted" />
-            </Link>
+            </Chip>
           ))}
         </div>
       </section>
 
-      {/* Featured products recirculation */}
       {featured.length > 0 && (
         <section className="w-full max-w-7xl">
-          <h2 className="font-heading text-lg font-bold text-primary text-center mb-6">
-            Popular right now
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <h2 className="mb-6 text-center font-heading text-lg font-bold text-primary">Popular right now</h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {featured.slice(0, 4).map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}

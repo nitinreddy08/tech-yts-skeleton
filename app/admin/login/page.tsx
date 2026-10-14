@@ -72,7 +72,7 @@ function LoginForm() {
         </div>
 
         {error && (
-          <p className="rounded-lg border border-error-100 bg-error-50 px-4 py-2.5 text-sm text-error-500">
+          <p role="alert" className="rounded-lg border border-error-100 bg-error-50 px-4 py-2.5 text-sm text-error-700">
             {error}
           </p>
         )}
@@ -81,10 +81,13 @@ function LoginForm() {
           {loading ? 'Signing in...' : 'Sign In'}
         </Button>
 
-        <p className="text-center text-xs text-muted">
-          Mock credentials: <span className="font-mono">admin@example.com</span> /{' '}
-          <span className="font-mono">admin</span>
-        </p>
+        {/* Demo hint — never shown in a production build. */}
+        {process.env.NODE_ENV !== 'production' && (
+          <p className="text-center text-xs text-muted">
+            Mock credentials: <span className="font-mono">admin@example.com</span> /{' '}
+            <span className="font-mono">admin</span>
+          </p>
+        )}
       </div>
     </form>
   )
@@ -101,7 +104,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-sm">
         <h1 className="font-heading text-2xl font-bold text-primary text-center">Admin Login</h1>
         <p className="mt-1 text-sm text-muted text-center">Sign in to manage your platform</p>
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="mt-8 h-72 shimmer rounded-xl" aria-hidden />}>
           <LoginForm />
         </Suspense>
       </div>

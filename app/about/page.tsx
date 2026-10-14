@@ -23,8 +23,15 @@ export default function AboutPage() {
         to you — that keeps the site free to use.
       </p>
       <p>
-        Have feedback or a product tip? Reach us through the social links in the footer or subscribe
-        to our deals newsletter for price drops and bank offers.
+        {siteConfig.contact_email ? (
+          <>
+            Have feedback or a product tip? Email us at{' '}
+            <a href={`mailto:${siteConfig.contact_email}`}>{siteConfig.contact_email}</a>, or subscribe to our
+            deals newsletter (in the footer) for price drops and bank offers.
+          </>
+        ) : (
+          <>Want price drops and bank offers as they happen? Subscribe to our deals newsletter in the footer.</>
+        )}
       </p>
     </LegalPageShell>
   )

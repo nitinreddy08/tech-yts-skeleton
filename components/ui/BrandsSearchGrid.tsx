@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
+import { Input } from '@/components/ui/Input'
 
 interface BrandItem {
   id: string
@@ -24,13 +25,13 @@ export function BrandsSearchGrid({ brands }: { brands: BrandItem[] }) {
   return (
     <>
       <div className="relative max-w-md mx-auto mb-10">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-        <input
+        <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden />
+        <Input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search brands..."
-          className="w-full rounded-full border border-border bg-surface py-2.5 pl-10 pr-4 text-sm focus:border-accent outline-none"
+          placeholder="Search brands…"
+          className="rounded-full pl-10"
           aria-label="Search brands"
         />
       </div>
@@ -51,9 +52,11 @@ export function BrandsSearchGrid({ brands }: { brands: BrandItem[] }) {
           </Link>
         ))}
       </div>
-      {filtered.length === 0 && (
-        <p className="text-center text-sm text-muted py-12">No brands match &ldquo;{query}&rdquo;</p>
-      )}
+      <p role="status" className={filtered.length === 0 ? 'py-12 text-center text-sm text-muted' : 'sr-only'}>
+        {filtered.length === 0
+          ? <>No brands match &ldquo;{query}&rdquo;.</>
+          : `${filtered.length} brand${filtered.length !== 1 ? 's' : ''} shown`}
+      </p>
     </>
   )
 }

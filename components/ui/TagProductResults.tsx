@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ArrowUpDown } from 'lucide-react'
 import { CategoryProductResults } from '@/components/ui/CategoryProductResults'
 import type { ProductSummary } from '@/types'
 import type { ProductDealBadge } from '@/lib/data/product-deals'
@@ -49,12 +48,12 @@ export function TagProductResults({ products, dealMap }: TagProductResultsProps)
           {sorted.length !== 1 ? 's' : ''}
         </p>
         <div className="flex items-center gap-2">
-          <ArrowUpDown size={14} className="text-muted" />
+          <label htmlFor="tag-sort" className="text-xs font-semibold uppercase tracking-wider text-muted">Sort</label>
           <select
+            id="tag-sort"
             value={sort}
             onChange={(e) => setSort(e.target.value as TagSort)}
-            className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-primary"
-            aria-label="Sort products"
+            className="h-11 rounded-md border border-neutral-500 bg-surface px-3 text-sm font-medium text-primary"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>

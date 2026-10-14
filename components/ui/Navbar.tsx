@@ -260,7 +260,7 @@ function BottomNavItem({
       <span className="relative">
         {icon}
         {!!badge && badge > 0 && (
-          <span className="absolute -top-1.5 -right-2 rounded-full bg-accent text-white px-1 py-0.5 text-[10px] font-bold min-w-[16px] text-center leading-none">
+          <span className="absolute -top-1.5 -right-2 rounded-full bg-accent text-white px-1 py-0.5 text-[11px] font-bold min-w-[16px] text-center leading-none">
             {badge}
           </span>
         )}
@@ -576,10 +576,10 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
             badge={compareCount}
           />
           <BottomNavItem
-            href="/saved"
+            href="/my?tab=saved"
             icon={<Bookmark size={20} />}
             label="Saved"
-            active={pathname === '/saved'}
+            active={pathname === '/my'}
             badge={savedCount}
           />
           <BottomNavItem

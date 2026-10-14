@@ -67,7 +67,7 @@ export function RecentlyViewedStrip({
                     {p.name}
                   </p>
                   {p.current_price_inr != null && (
-                    <p className="text-[10px] text-muted">{formatIndianPrice(p.current_price_inr)}</p>
+                    <p className="text-[11px] text-muted">{formatIndianPrice(p.current_price_inr)}</p>
                   )}
                 </div>
                 <ChevronRight size={14} className="text-muted shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />

@@ -96,7 +96,7 @@ export default async function AdminDashboard() {
           <Package size={18} className="text-accent mb-2" />
           <p className="text-xs text-muted">Products</p>
           <p className="text-2xl font-bold text-primary mt-0.5">{products.length}</p>
-          <p className="text-[10px] text-muted mt-1 flex items-center gap-2">
+          <p className="text-[11px] text-muted mt-1 flex items-center gap-2">
             <span className="flex items-center gap-0.5 text-green-700">
               <Eye size={10} /> {published.length} live
             </span>
@@ -110,7 +110,7 @@ export default async function AdminDashboard() {
           <MousePointerClick size={18} className="text-accent mb-2" />
           <p className="text-xs text-muted">Total Clicks</p>
           <p className="text-2xl font-bold text-primary mt-0.5">{clicks.length}</p>
-          <p className="text-[10px] text-muted mt-1 flex items-center gap-1">
+          <p className="text-[11px] text-muted mt-1 flex items-center gap-1">
             <TrendingUp size={10} className="text-green-600" />
             {last24h.length} in last 24h
           </p>
@@ -120,7 +120,7 @@ export default async function AdminDashboard() {
           <Zap size={18} className="text-accent mb-2" />
           <p className="text-xs text-muted">Active Deals</p>
           <p className="text-2xl font-bold text-primary mt-0.5">{activeDeals.length}</p>
-          <Link href="/admin/deals" className="text-[10px] text-accent hover:underline mt-1 inline-block">
+          <Link href="/admin/deals" className="text-[11px] text-accent hover:underline mt-1 inline-block">
             Manage deals →
           </Link>
         </div>
@@ -129,7 +129,7 @@ export default async function AdminDashboard() {
           <Trophy size={18} className="text-accent mb-2" />
           <p className="text-xs text-muted">Best-Of Guides</p>
           <p className="text-2xl font-bold text-primary mt-0.5">{publishedLists.length}</p>
-          <Link href="/admin/best-of-lists" className="text-[10px] text-accent hover:underline mt-1 inline-block">
+          <Link href="/admin/best-of-lists" className="text-[11px] text-accent hover:underline mt-1 inline-block">
             Manage lists →
           </Link>
         </div>
@@ -138,7 +138,7 @@ export default async function AdminDashboard() {
           <Mail size={18} className="text-accent mb-2" />
           <p className="text-xs text-muted">Newsletter</p>
           <p className="text-2xl font-bold text-primary mt-0.5">{newsletterCount}</p>
-          <Link href="/admin/newsletter" className="text-[10px] text-accent hover:underline mt-1 inline-block">
+          <Link href="/admin/newsletter" className="text-[11px] text-accent hover:underline mt-1 inline-block">
             View subscribers →
           </Link>
         </div>
@@ -147,7 +147,7 @@ export default async function AdminDashboard() {
           <Clock size={18} className="text-amber-600 mb-2" />
           <p className="text-xs text-muted">Expiring (7d)</p>
           <p className="text-2xl font-bold text-primary mt-0.5">{expiringDeals.length}</p>
-          <Link href="/admin/deals?status=active" className="text-[10px] text-accent hover:underline mt-1 inline-block">
+          <Link href="/admin/deals?status=active" className="text-[11px] text-accent hover:underline mt-1 inline-block">
             Review deals →
           </Link>
         </div>
@@ -198,7 +198,7 @@ export default async function AdminDashboard() {
                         {log.store_name} · {formatClickTime(log.clicked_at)}
                       </p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-green-50 text-green-700 px-2 py-0.5 text-[10px] font-semibold">
+                    <span className="shrink-0 rounded-full bg-green-50 text-green-700 px-2 py-0.5 text-[11px] font-semibold">
                       Click
                     </span>
                   </div>

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { CategoryProductResults } from '@/components/ui/CategoryProductResults'
+import { Chip } from '@/components/ui/Chip'
 import type { ProductSummary } from '@/types'
 import type { ProductDealBadge } from '@/lib/data/product-deals'
 
@@ -29,34 +30,21 @@ export function BrandProductResults({ products, dealMap, brandName }: BrandProdu
   return (
     <div>
       {categories.length > 1 && (
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted mr-1">
-            Category
-          </span>
-          <button
-            type="button"
-            onClick={() => setCategory('all')}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              category === 'all'
-                ? 'bg-accent text-white'
-                : 'border border-border bg-surface text-primary hover:border-accent/50'
-            }`}
-          >
+        <div role="group" aria-label="Category" className="mb-6 flex flex-wrap items-center gap-2">
+          <span className="mr-1 text-xs font-semibold uppercase tracking-wider text-muted">Category</span>
+          <Chip active={category === 'all'} aria-pressed={category === 'all'} onClick={() => setCategory('all')}>
             All {brandName}
-          </button>
+          </Chip>
           {categories.map((slug) => (
-            <button
+            <Chip
               key={slug}
-              type="button"
+              className="capitalize"
+              active={category === slug}
+              aria-pressed={category === slug}
               onClick={() => setCategory(slug)}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors capitalize ${
-                category === slug
-                  ? 'bg-primary text-white'
-                  : 'border border-border bg-surface text-primary hover:border-accent/50'
-              }`}
             >
               {categoryLabel(slug)}
-            </button>
+            </Chip>
           ))}
         </div>
       )}

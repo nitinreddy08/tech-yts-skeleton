@@ -15,6 +15,9 @@ export const siteConfig = {
   // Creator
   creator_name: 'Creator',
   creator_photo_url: '',
+  // Public contact address for the About/Privacy pages. Leave empty until one exists —
+  // the pages then point people at the newsletter instead of a dead end.
+  contact_email: '',
   creator_youtube_channel_url: '',
 
   // Colors (also set via CSS variables in globals.css)

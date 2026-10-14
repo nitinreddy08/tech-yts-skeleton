@@ -33,10 +33,16 @@ export default function PrivacyPage() {
         Outbound links to Amazon, Flipkart, and other stores are governed by their privacy policies.
         We do not sell personal data.
       </p>
-      <h2 className="font-heading text-lg font-bold text-primary pt-2">Contact</h2>
-      <p>
-        Questions about this policy? Use the contact options listed on our About page.
-      </p>
+      {/* Only shown once a real contact address is configured (siteConfig.contact_email). */}
+      {siteConfig.contact_email && (
+        <>
+          <h2 className="font-heading text-lg font-bold text-primary pt-2">Contact</h2>
+          <p>
+            Questions about this policy? Email{' '}
+            <a href={`mailto:${siteConfig.contact_email}`}>{siteConfig.contact_email}</a>.
+          </p>
+        </>
+      )}
     </LegalPageShell>
   )
 }

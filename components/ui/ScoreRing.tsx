@@ -92,7 +92,7 @@ export function ScoreRing({ score, size = 96, strokeWidth = 7, label }: ScoreRin
           >
             {score.toFixed(1)}
           </span>
-          <span className="text-[10px] text-muted leading-none mt-0.5">/10</span>
+          <span className="text-[11px] text-muted leading-none mt-0.5">/10</span>
         </div>
       </div>
       <span className="text-xs font-semibold" style={{ color: textColor }}>

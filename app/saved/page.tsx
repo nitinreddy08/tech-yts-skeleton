@@ -1,17 +1,6 @@
-import type { Metadata } from 'next'
-import { SavedProductsClient } from '@/components/ui/SavedProductsClient'
-import { siteConfig } from '@/lib/config'
+import { redirect } from 'next/navigation'
 
-export const metadata: Metadata = {
-  title: `Saved Products | ${siteConfig.site_name}`,
-  description: 'Your saved tech products — compare prices and buy at the best deal in India.',
-  robots: { index: false, follow: true },
-}
-
+/** Saved items live in the My Stuff hub; this route is kept so old links and bookmarks still work. */
 export default function SavedPage() {
-  return (
-    <main className="max-w-7xl mx-auto px-4 py-8">
-      <SavedProductsClient />
-    </main>
-  )
+  redirect('/my?tab=saved')
 }

@@ -17,11 +17,11 @@ export function ActiveDealBanner({ deal, productName }: ActiveDealBannerProps) {
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-[10px] font-bold text-primary uppercase">
+            <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-bold text-primary uppercase">
               <Zap size={10} /> {dealTypeLabel(deal.dealType)}
             </span>
             {deal.savingsPercent != null && (
-              <span className="text-xs font-bold text-green-700">{deal.savingsPercent}% OFF</span>
+              <span className="text-xs font-bold text-success-700">{deal.savingsPercent}% OFF</span>
             )}
           </div>
           <p className="text-sm font-semibold text-primary line-clamp-2">{deal.headline}</p>
@@ -61,7 +61,7 @@ export function DealRibbon({ deal, className = '' }: DealRibbonProps) {
 
   return (
     <div
-      className={`absolute top-2 right-2 z-10 flex items-center gap-1 rounded-full bg-secondary text-primary text-[10px] font-bold px-2 py-0.5 shadow-sm ${className}`}
+      className={`absolute top-2 right-2 z-10 flex items-center gap-1 rounded-full bg-secondary text-primary text-[11px] font-bold px-2 py-0.5 shadow-sm ${className}`}
     >
       <Zap size={9} />
       {label}
