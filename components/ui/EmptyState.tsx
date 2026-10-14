@@ -1,8 +1,10 @@
-import Link from 'next/link'
+import { Button } from '@/components/ui/Button'
 
 interface EmptyStateProps {
   icon: React.ComponentType<{ size?: number; className?: string }>
   heading: string
+  /** Heading level. Pages whose only content is the empty state should pass 1. */
+  headingLevel?: 1 | 2 | 3
   description: string
   action?: {
     label: string
@@ -11,25 +13,21 @@ interface EmptyStateProps {
   }
 }
 
-const actionClassName =
-  'mt-6 inline-flex items-center px-4 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90 transition-colors'
-
-export function EmptyState({ icon: Icon, heading, description, action }: EmptyStateProps) {
+export function EmptyState({ icon: Icon, heading, headingLevel = 2, description, action }: EmptyStateProps) {
+  const Heading = `h${headingLevel}` as 'h1' | 'h2' | 'h3'
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <Icon size={48} className="text-muted mb-4" />
-      <h3 className="text-lg font-semibold text-primary mb-2">{heading}</h3>
+      <Icon size={48} className="text-muted mb-4" aria-hidden />
+      <Heading className="text-lg font-semibold text-primary mb-2">{heading}</Heading>
       <p className="text-sm text-muted max-w-sm">{description}</p>
       {action && (
-        action.href ? (
-          <Link href={action.href} className={actionClassName}>
-            {action.label}
-          </Link>
-        ) : (
-          <button onClick={action.onClick} className={actionClassName}>
-            {action.label}
-          </button>
-        )
+        <Button
+          size="auto"
+          className="mt-6 h-11 px-5 text-sm"
+          {...(action.href ? { href: action.href } : { onClick: action.onClick })}
+        >
+          {action.label}
+        </Button>
       )}
     </div>
   )

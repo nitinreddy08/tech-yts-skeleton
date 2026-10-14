@@ -146,3 +146,39 @@ export function BestOfPageSkeleton() {
     </main>
   )
 }
+
+/** Generic "title + intro + grid of tiles" skeleton for index-style pages (brands, tags, guides). */
+export function IndexPageSkeleton({ label = 'Loading' }: { label?: string }) {
+  return (
+    <main className="max-w-7xl mx-auto px-4 py-10 animate-pulse" aria-busy="true" aria-label={label}>
+      <div className="mx-auto mb-8 flex max-w-xl flex-col items-center gap-3">
+        <div className="h-9 w-56 shimmer rounded" />
+        <div className="h-4 w-full shimmer rounded" />
+      </div>
+      <div className="mx-auto mb-8 h-11 max-w-md shimmer rounded-full" />
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="h-32 shimmer rounded-xl" />
+        ))}
+      </div>
+    </main>
+  )
+}
+
+export function ComparePageSkeleton() {
+  return (
+    <main className="mx-auto max-w-6xl px-4 py-8 animate-pulse" aria-busy="true" aria-label="Loading comparison">
+      <div className="mb-6 h-8 w-80 max-w-full shimmer rounded" />
+      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="h-56 shimmer rounded-xl" />
+        ))}
+      </div>
+      <div className="flex flex-col gap-2">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-10 shimmer rounded" />
+        ))}
+      </div>
+    </main>
+  )
+}

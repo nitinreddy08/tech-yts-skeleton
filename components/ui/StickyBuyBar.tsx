@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { ShoppingCart, ChevronDown, ChevronUp } from 'lucide-react'
 import { formatIndianPrice } from '@/lib/utils/format'
 import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
-import { useCompareOptional } from '@/components/providers/CompareProvider'
+import { useBottomLayer } from '@/lib/hooks/useBottomLayer'
 import type { AffiliateLink } from '@/types'
 
 interface StickyBuyBarProps {
@@ -24,8 +24,7 @@ export function StickyBuyBar({ productName, thumbnailUrl, bestPrice, links }: St
   const [visible, setVisible] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
-  const compare = useCompareOptional()
-  const compareOffset = compare && compare.products.length >= 1
+  const barRef = useBottomLayer<HTMLDivElement>('buy', visible)
 
   useEffect(() => {
     const el = sentinelRef.current
@@ -47,10 +46,11 @@ export function StickyBuyBar({ productName, thumbnailUrl, bestPrice, links }: St
 
       {/* Sticky bar */}
       <div
+        ref={barRef}
         className={[
-          'fixed left-0 right-0 z-40 border-t border-border bg-surface/95 backdrop-blur-sm shadow-lg transition-all duration-300',
-          compareOffset ? 'bottom-16' : 'bottom-0',
-          visible ? 'translate-y-0' : 'translate-y-full',
+          'fixed left-0 right-0 z-40 border-t border-border bg-surface/95 backdrop-blur-sm shadow-lg transition-transform duration-300',
+          'bottom-[calc(var(--layer-tabbar)_+_var(--layer-compare))]',
+          visible ? 'translate-y-0' : 'translate-y-[200%]',
         ].join(' ')}
         aria-label="Buy options"
       >

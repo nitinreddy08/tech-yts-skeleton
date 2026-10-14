@@ -166,11 +166,53 @@
   --shadow-xl: var(--shadow-xl);
 }
 
+/**
+ * Bottom-layer stack. Mobile tab bar, compare tray, sticky buy bar and cookie
+ * banner all pin to the bottom edge; each publishes its measured height here
+ * (lib/hooks/useBottomLayer.ts) and sits on top of the layers below it:
+ *   tabbar (bottom) → compare → buy → cookie → toast
+ * An absent layer is 0px, so nothing is hard-coded to "the bar above me".
+ */
+:root {
+  --layer-tabbar:  0px;
+  --layer-compare: 0px;
+  --layer-buy:     0px;
+  --layer-cookie:  0px;
+  /* Overwritten at runtime with the real sticky-header height. */
+  --navbar-height: 108px;
+}
+
+html {
+  /* In-page anchors and skip-link targets must clear the sticky header. */
+  scroll-padding-top: calc(var(--navbar-height) + 8px);
+}
+
 body {
   background-color: var(--color-surface);
   color: var(--color-primary);
   font-family: var(--font-body), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  /* Reserve room for whatever fixed bars are currently showing so they never
+     cover the last of the page (footer legal line, final cards). */
+  padding-bottom: calc(var(--layer-tabbar) + var(--layer-compare) + var(--layer-buy));
+}
+
+/* Visible keyboard focus everywhere. :where() keeps specificity at zero so
+   components with their own focus treatment (outline-none + ring) still win. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Scrollbar hiding utility */

@@ -135,10 +135,10 @@ export function CompareProvider({ children }: { children: React.ReactNode }) {
       {toast && (
         <div
           role="status"
-          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[60] max-w-sm mx-4 rounded-xl border border-border bg-primary px-4 py-3 text-sm text-white shadow-lg flex items-start gap-3"
+          className="fixed left-1/2 -translate-x-1/2 z-[60] max-w-sm mx-4 rounded-xl border border-border bg-primary px-4 py-3 text-sm text-white shadow-lg flex items-start gap-3 bottom-[calc(var(--layer-tabbar)_+_var(--layer-compare)_+_var(--layer-buy)_+_var(--layer-cookie)_+_1rem)]"
         >
           <span className="flex-1">{toast}</span>
-          <button type="button" onClick={dismissToast} className="text-white/70 hover:text-white shrink-0" aria-label="Dismiss">
+          <button type="button" onClick={dismissToast} className="-my-2 -mr-2 flex h-11 w-11 shrink-0 items-center justify-center text-white/70 hover:text-white" aria-label="Dismiss">
             ×
           </button>
         </div>

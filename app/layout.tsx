@@ -4,6 +4,7 @@ import './globals.css'
 import { siteConfig } from '@/lib/config'
 import SiteHeader from '@/components/layout/SiteHeader'
 import SiteFooter from '@/components/layout/SiteFooter'
+import { SiteChrome } from '@/components/layout/SiteChrome'
 import { MockProvider } from '@/components/providers/MockProvider'
 import { CompareProvider } from '@/components/providers/CompareProvider'
 import { AnalyticsScripts } from '@/components/ui/AnalyticsScripts'
@@ -29,16 +30,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en" className={`${geist.variable} ${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-surface text-primary pb-14 md:pb-0">
+      <body className="min-h-full flex flex-col bg-surface text-primary">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}
         />
         <MockProvider>
           <CompareProvider>
-            <SiteHeader />
-            {children}
-            <SiteFooter />
+            <SiteChrome header={<SiteHeader />} footer={<SiteFooter />}>
+              {children}
+            </SiteChrome>
           </CompareProvider>
         </MockProvider>
 

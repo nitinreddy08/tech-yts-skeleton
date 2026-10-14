@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useId } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -38,6 +38,11 @@ function highlightMatch(text: string, query: string): React.ReactNode {
 }
 
 export function SearchBar() {
+  // The navbar mounts two instances (desktop + mobile), so ids must be unique.
+  const uid = useId()
+  const inputId = `${uid}-input`
+  const listboxId = `${uid}-listbox`
+  const optionId = (i: number) => `${uid}-option-${i}`
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [totalCount, setTotalCount] = useState(0)
@@ -167,17 +172,17 @@ export function SearchBar() {
         }}
         role="search"
       >
-        <label htmlFor="search-input" className="sr-only">Search products</label>
+        <label htmlFor={inputId} className="sr-only">Search products</label>
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
           <input
             ref={inputRef}
-            id="search-input"
+            id={inputId}
             type="search"
             role="combobox"
             aria-expanded={showDropdown}
-            aria-controls="search-listbox"
-            aria-activedescendant={activeIndex >= 0 ? `search-option-${activeIndex}` : undefined}
+            aria-controls={listboxId}
+            aria-activedescendant={activeIndex >= 0 ? optionId(activeIndex) : undefined}
             aria-autocomplete="list"
             value={query}
             onChange={(e) => {
@@ -202,7 +207,7 @@ export function SearchBar() {
                 setActiveIndex(-1)
                 inputRef.current?.focus()
               }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary"
+              className="absolute right-0 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-muted hover:text-primary"
               aria-label="Clear search"
             >
               <X size={14} />
@@ -215,7 +220,7 @@ export function SearchBar() {
         {showRecentOrPopular && (
           <motion.div
             ref={listRef}
-            id="search-listbox"
+            id={listboxId}
             role="listbox"
             className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-border bg-surface shadow-lg"
             initial={{ opacity: 0, y: -8 }}
@@ -232,7 +237,7 @@ export function SearchBar() {
                   <button
                     key={term}
                     type="button"
-                    id={`search-option-${i}`}
+                    id={optionId(i)}
                     role="option"
                     aria-selected={activeIndex === i}
                     onClick={() => navigate(term)}
@@ -276,7 +281,7 @@ export function SearchBar() {
         {showDropdown && results.length > 0 && (
           <motion.div
             ref={listRef}
-            id="search-listbox"
+            id={listboxId}
             role="listbox"
             className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-border bg-surface shadow-lg"
             initial={{ opacity: 0, y: -8 }}
@@ -293,7 +298,7 @@ export function SearchBar() {
               <button
                 key={r.id}
                 type="button"
-                id={`search-option-${i}`}
+                id={optionId(i)}
                 role="option"
                 aria-selected={activeIndex === i}
                 onClick={() => selectResult(r)}
@@ -326,7 +331,7 @@ export function SearchBar() {
             ))}
             <button
               type="button"
-              id={`search-option-${results.length}`}
+              id={optionId(results.length)}
               role="option"
               aria-selected={activeIndex === results.length}
               onClick={() => navigate(query)}

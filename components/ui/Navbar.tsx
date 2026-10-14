@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useId } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { siteConfig } from '@/lib/config'
@@ -8,6 +9,9 @@ import { SearchBar } from '@/components/ui/SearchBar'
 import { useCompareOptional } from '@/components/providers/CompareProvider'
 import { buildCompareUrl } from '@/lib/utils/compare-url'
 import { MyStuffNavLink } from '@/components/ui/MyStuffNavLink'
+import { Button } from '@/components/ui/Button'
+import { useBottomLayer, useNavbarHeight } from '@/lib/hooks/useBottomLayer'
+import { useDialog } from '@/lib/hooks/useDialog'
 import { SiteLogoMark } from '@/components/ui/SiteLogo'
 import { loadWishlist } from '@/lib/utils/wishlist'
 import { Menu, X, ChevronDown, Zap, GitCompare, Trophy, Home, Search, Bookmark } from 'lucide-react'
@@ -30,61 +34,96 @@ interface NavbarProps {
   activeDealCount: number
 }
 
+/**
+ * Menu-style dropdown: opens on hover (desktop pointers), on click/tap and
+ * Enter/Space (keyboard), and closes on Escape, outside press or focus leaving.
+ */
 function useDropdown() {
   const [open, setOpen] = useState(false)
+  // A click/tap/Enter "pins" the menu open so the pointer leaving (or the
+  // hover that preceded the click) doesn't immediately close it again.
+  const pinned = useRef(false)
   const ref = useRef<HTMLDivElement>(null)
-  return { open, setOpen, ref }
-}
+  const id = useId()
 
-function NavLink({
-  href,
-  children,
-  className = '',
-}: {
-  href: string
-  children: React.ReactNode
-  className?: string
-}) {
-  const pathname = usePathname()
-  const active = pathname === href || (href !== '/' && pathname.startsWith(href))
+  const close = () => {
+    pinned.current = false
+    setOpen(false)
+  }
+  const toggle = () => {
+    if (open && !pinned.current) {
+      pinned.current = true // opened by hover → keep it open
+    } else if (open) {
+      close()
+    } else {
+      pinned.current = true
+      setOpen(true)
+    }
+  }
 
-  return (
-    <Link
-      href={href}
-      className={`px-3 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
-        active
-          ? 'text-accent border-b-2 border-accent -mb-px'
-          : 'text-muted hover:text-primary'
-      } ${className}`}
-    >
-      {children}
-    </Link>
-  )
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      if (!ref.current?.contains(e.target as Node)) {
+        pinned.current = false
+        setOpen(false)
+      }
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        pinned.current = false
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('touchstart', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('touchstart', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  const containerProps = {
+    ref,
+    onMouseEnter: () => setOpen(true),
+    onMouseLeave: () => {
+      if (!pinned.current) setOpen(false)
+    },
+    onBlur: (e: React.FocusEvent<HTMLDivElement>) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) close()
+    },
+  }
+  return { open, toggle, id, containerProps }
 }
 
 function Top10Dropdown({ lists }: { lists: NavBestOfList[] }) {
-  const { open, setOpen, ref } = useDropdown()
+  const { open, toggle, id, containerProps } = useDropdown()
 
   return (
-    <div ref={ref} className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+    <div className="relative" {...containerProps}>
       <button
         type="button"
-        className="flex items-center gap-1 px-3 py-3 text-sm font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
+        className="flex min-h-11 items-center gap-1 px-3 py-3 text-sm font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
+        aria-haspopup="true"
         aria-expanded={open}
+        aria-controls={id}
+        onClick={toggle}
       >
-        <Trophy size={14} className="text-accent" />
+        <Trophy size={14} className="text-accent" aria-hidden />
         Top 10
-        <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
       </button>
       {open && lists.length > 0 && (
-        <div className="absolute left-0 top-full w-80 rounded-xl border border-border bg-surface shadow-lg z-50 p-4">
+        <div id={id} className="absolute left-0 top-full w-80 rounded-xl border border-border bg-surface shadow-lg z-50 p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-3">Editor&apos;s Guides</p>
           <div className="flex flex-col gap-1">
             {lists.map((list) => (
               <Link
                 key={list.slug}
                 href={`/best-of/${list.slug}`}
-                className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm text-primary hover:bg-surface-alt hover:text-accent transition-colors"
+                className="flex min-h-11 items-center justify-between rounded-lg px-3 py-2 text-sm text-primary hover:bg-surface-alt hover:text-accent transition-colors"
               >
                 <span className="font-medium line-clamp-1">{list.title}</span>
                 <span className="text-xs text-muted shrink-0 ml-2">{list.itemCount} picks</span>
@@ -93,7 +132,7 @@ function Top10Dropdown({ lists }: { lists: NavBestOfList[] }) {
           </div>
           <Link
             href="/best-of"
-            className="mt-3 block text-center text-xs font-semibold text-accent hover:underline pt-2 border-t border-border"
+            className="mt-3 flex min-h-11 items-center justify-center text-sm font-semibold text-accent hover:underline pt-2 border-t border-border"
           >
             View all guides →
           </Link>
@@ -103,43 +142,78 @@ function Top10Dropdown({ lists }: { lists: NavBestOfList[] }) {
   )
 }
 
-function CompareDropdown({ categories }: { categories: NavCategory[] }) {
-  const { open, setOpen, ref } = useDropdown()
+/**
+ * "Compare" is a real link (to the tray, or the compare page when empty) with a
+ * separate chevron that opens a menu of the current comparison — so the menu
+ * holds compare actions rather than a duplicate of the category links.
+ */
+function CompareDropdown() {
+  const { open, toggle, id, containerProps } = useDropdown()
   const compare = useCompareOptional()
-  const count = compare?.products.length ?? 0
-  const compareHref = count >= 2 ? buildCompareUrl(compare!.products.map((p) => p.slug)) : '/compare'
+  const products = compare?.products ?? []
+  const count = products.length
+  const compareHref = count >= 2 ? buildCompareUrl(products.map((p) => p.slug)) : '/compare'
 
   return (
-    <div ref={ref} className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+    <div className="relative flex items-center" {...containerProps}>
       <Link
         href={compareHref}
-        className="flex items-center gap-1 px-3 py-3 text-sm font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
+        className="flex min-h-11 items-center gap-1 py-3 pl-3 pr-1 text-sm font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
         aria-label={count > 0 ? `Compare ${count} products` : 'Compare products'}
       >
-        <GitCompare size={14} />
+        <GitCompare size={14} aria-hidden />
         Compare
         {count > 0 && (
-          <span className="rounded-full bg-accent text-white px-1.5 py-0.5 text-[10px] font-bold min-w-[18px] text-center">
+          <span className="rounded-full bg-accent text-white px-1.5 py-0.5 text-[11px] font-bold min-w-[18px] text-center">
             {count}
           </span>
         )}
-        <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
       </Link>
+      <button
+        type="button"
+        className="flex h-11 w-8 items-center justify-center text-muted hover:text-primary"
+        aria-label="Show comparison menu"
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={toggle}
+      >
+        <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
+      </button>
       {open && (
-        <div className="absolute left-0 top-full w-52 rounded-xl border border-border bg-surface shadow-lg z-50 p-3">
-          {categories.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/${cat.slug}`}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-primary hover:bg-surface-alt hover:text-accent transition-colors"
-            >
-              <span aria-hidden>{cat.icon}</span>
-              {cat.name}
-            </Link>
-          ))}
+        <div id={id} className="absolute left-0 top-full w-72 rounded-xl border border-border bg-surface shadow-lg z-50 p-3">
+          <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wider text-muted">
+            Your comparison ({count}/4)
+          </p>
+          {count === 0 ? (
+            <p className="px-1 pb-3 text-sm text-muted">
+              Tap <span className="font-semibold text-primary">Compare</span> on any product card to add it here.
+            </p>
+          ) : (
+            <ul className="flex flex-col">
+              {products.map((p) => (
+                <li key={p.id} className="flex items-center justify-between gap-2 pl-1">
+                  <span className="truncate text-sm text-primary">{p.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => compare?.removeProduct(p.id)}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center text-muted hover:text-primary"
+                    aria-label={`Remove ${p.name} from compare`}
+                  >
+                    <X size={14} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {count >= 2 && (
+            <Button href={compareHref} size="auto" className="mb-1 mt-1 h-11 w-full text-sm">
+              Compare {count} products
+            </Button>
+          )}
           <Link
             href="/compare"
-            className="mt-2 flex items-center gap-1 rounded-lg px-3 py-2.5 text-sm font-semibold text-accent hover:bg-accent/5 border-t border-border pt-3"
+            className="mt-1 flex min-h-11 items-center rounded-lg border-t border-border px-1 pt-2 text-sm font-semibold text-accent hover:underline"
           >
             Compare any product →
           </Link>
@@ -186,12 +260,12 @@ function BottomNavItem({
       <span className="relative">
         {icon}
         {!!badge && badge > 0 && (
-          <span className="absolute -top-1.5 -right-2 rounded-full bg-accent text-white px-1 py-0.5 text-[9px] font-bold min-w-[15px] text-center leading-none">
+          <span className="absolute -top-1.5 -right-2 rounded-full bg-accent text-white px-1 py-0.5 text-[10px] font-bold min-w-[16px] text-center leading-none">
             {badge}
           </span>
         )}
       </span>
-      <span className="text-[10px] font-medium">{label}</span>
+      <span className="text-[11px] font-medium">{label}</span>
     </>
   )
   const className = `flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[56px] transition-colors ${
@@ -221,9 +295,13 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
   const compareCount = compare?.products.length ?? 0
   const compareHref = compareCount >= 2 ? buildCompareUrl(compare!.products.map((p) => p.slug)) : '/compare'
   const [savedCount, setSavedCount] = useState(0)
+  const headerRef = useNavbarHeight<HTMLElement>()
 
   const pathSegments = pathname.split('/').filter(Boolean)
   const isProductPage = pathSegments.length === 2 && categories.some((c) => c.slug === pathSegments[0])
+  const closeDrawer = () => setDrawerOpen(false)
+  const drawerRef = useDialog<HTMLDivElement>(drawerOpen, closeDrawer)
+  const tabbarRef = useBottomLayer<HTMLElement>('tabbar', !isProductPage)
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 8)
@@ -247,26 +325,15 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
     setExpandedSection(null)
   }, [pathname])
 
-  useEffect(() => {
-    document.body.style.overflow = drawerOpen ? 'hidden' : ''
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [drawerOpen])
-
   return (
-    <header className="sticky top-0 z-50 bg-surface">
+    <header ref={headerRef} className="sticky top-0 z-50 bg-surface">
       {/* Top row: logo + search + menu */}
       <div
         className={`border-b border-border transition-all duration-200 ${
           scrolled ? 'shadow-sm' : ''
         }`}
       >
-        <div
-          className={`mx-auto flex max-w-7xl items-center gap-3 px-4 transition-all duration-200 ${
-            scrolled ? 'h-12' : 'h-14'
-          }`}
-        >
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 h-14">
           <Link
             href="/"
             className="flex items-center gap-2 font-heading text-lg font-bold text-primary shrink-0 hover:text-accent transition-colors"
@@ -286,7 +353,7 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
             <Zap size={12} className="text-accent" />
             Deals
             {activeDealCount > 0 && (
-              <span className="rounded-full bg-accent text-white px-1.5 py-0.5 text-[10px] font-bold">
+              <span className="rounded-full bg-accent text-white px-1.5 py-0.5 text-[11px] font-bold">
                 {activeDealCount}
               </span>
             )}
@@ -294,7 +361,7 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
 
           <button
             type="button"
-            className="md:hidden ml-auto flex items-center justify-center w-10 h-10 rounded-lg text-primary hover:bg-surface-alt"
+            className="md:hidden ml-auto flex items-center justify-center w-11 h-11 rounded-lg text-primary hover:bg-surface-alt"
             onClick={() => setDrawerOpen(true)}
             aria-label="Open menu"
           >
@@ -309,12 +376,11 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
       </div>
 
       {/* Desktop nav row */}
-      <nav className="hidden md:block border-b border-border bg-surface">
+      <nav className="hidden md:block border-b border-border bg-surface" aria-label="Main">
         <div className="mx-auto flex max-w-7xl items-center px-4">
           <Top10Dropdown lists={bestOfLists} />
-          <CompareDropdown categories={categories} />
-          <NavLink href="/search">Search</NavLink>
-          <MyStuffNavLink className="px-3 py-3 text-sm font-medium whitespace-nowrap -mb-px" />
+          <CompareDropdown />
+          <MyStuffNavLink className="min-h-11 px-3 py-3 text-sm font-medium whitespace-nowrap -mb-px" />
           <div className="ml-auto flex items-center">
             {categories.map((cat) => (
               <CategoryLink key={cat.slug} category={cat} />
@@ -323,11 +389,21 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
         </div>
       </nav>
 
-      {/* Mobile full-screen drawer */}
-      {drawerOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setDrawerOpen(false)} aria-hidden />
-          <div className="absolute inset-y-0 right-0 w-full max-w-sm bg-surface shadow-xl flex flex-col">
+      {/* Mobile full-screen drawer. Portaled to <body> so it sits above the
+          cookie banner and other fixed layers instead of inside the header's
+          stacking context. */}
+      {drawerOpen &&
+        createPortal(
+        <div className="fixed inset-0 z-[70] md:hidden">
+          <div className="absolute inset-0 bg-black/40" onClick={closeDrawer} aria-hidden />
+          <div
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Site menu"
+            tabIndex={-1}
+            className="absolute inset-y-0 right-0 w-full max-w-sm bg-surface shadow-xl flex flex-col outline-none"
+          >
             <div className="flex items-center justify-between border-b border-border px-4 h-14 shrink-0">
               <span className="flex items-center gap-2 font-heading font-bold text-primary">
                 <SiteLogoMark className="h-6 w-6 shrink-0" />
@@ -335,8 +411,8 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
               </span>
               <button
                 type="button"
-                className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-surface-alt"
-                onClick={() => setDrawerOpen(false)}
+                className="flex items-center justify-center w-11 h-11 rounded-lg hover:bg-surface-alt"
+                onClick={closeDrawer}
                 aria-label="Close menu"
               >
                 <X size={22} />
@@ -452,29 +528,37 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
               </div>
 
               <Link
-                href="/search"
+                href="/brands"
                 className={`mt-2 rounded-lg px-3 py-3 text-sm font-semibold transition-colors ${
-                  pathname === '/search' ? 'bg-accent/10 text-accent' : 'text-primary hover:bg-surface-alt'
+                  pathname.startsWith('/brand') ? 'bg-accent/10 text-accent' : 'text-primary hover:bg-surface-alt'
                 }`}
               >
-                Search
+                All brands
+              </Link>
+              <Link
+                href="/tags"
+                className={`rounded-lg px-3 py-3 text-sm font-semibold transition-colors ${
+                  pathname.startsWith('/tag') ? 'bg-accent/10 text-accent' : 'text-primary hover:bg-surface-alt'
+                }`}
+              >
+                Browse by tag
               </Link>
 
               <div className="rounded-lg px-3 py-3">
-                <MyStuffNavLink className="text-sm font-semibold" />
+                <MyStuffNavLink className="min-h-6 text-sm font-semibold" />
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Mobile bottom tab bar — thumb-reachable primary actions.
           Hidden on product pages, which have their own sticky buy bar. */}
       {!isProductPage && (
         <nav
-          className={`md:hidden fixed inset-x-0 z-40 flex border-t border-border bg-surface/95 backdrop-blur-sm transition-all ${
-            compareCount >= 1 ? 'bottom-16' : 'bottom-0'
-          }`}
+          ref={tabbarRef}
+          className="md:hidden fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface/95 backdrop-blur-sm"
           aria-label="Primary"
         >
           <BottomNavItem href="/" icon={<Home size={20} />} label="Home" active={pathname === '/'} />

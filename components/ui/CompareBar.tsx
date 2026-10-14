@@ -2,8 +2,11 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X, GitCompare } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { useBottomLayer } from '@/lib/hooks/useBottomLayer'
 import { buildCompareUrl } from '@/lib/utils/compare-url'
 import type { ProductSummary } from '@/types'
 
@@ -15,80 +18,88 @@ interface CompareBarProps {
 }
 
 export function CompareBar({ products, onRemove, onClear, maxProducts = 4 }: CompareBarProps) {
+  const pathname = usePathname()
+  const show = products.length >= 1 && !(pathname ?? '').startsWith('/admin')
+  const barRef = useBottomLayer<HTMLDivElement>('compare', show)
   const compareHref = buildCompareUrl(products.map((p) => p.slug))
 
   return (
     <AnimatePresence>
-      {products.length >= 1 && (
+      {show && (
         <motion.div
-          className="fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-border shadow-lg px-4 py-3"
+          ref={barRef}
+          role="region"
+          aria-label="Compare tray"
+          data-compare-bar
+          className="fixed inset-x-0 bottom-[var(--layer-tabbar)] z-40 bg-surface border-t border-border shadow-lg px-4 py-2"
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 80, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         >
-          <div className="mx-auto max-w-7xl flex items-center gap-3 overflow-x-auto">
-            <div className="flex items-center gap-1.5 shrink-0 text-xs font-semibold text-muted">
-              <GitCompare size={14} className="text-accent" />
-              Compare ({products.length}/{maxProducts})
+          <div className="mx-auto flex max-w-7xl items-center gap-3">
+            {/* Products scroll on their own; the actions on the right never do,
+                so "Compare Now" can't slide out of view on a phone. */}
+            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-1.5 shrink-0 text-xs font-semibold text-muted">
+                <GitCompare size={14} className="text-accent" aria-hidden />
+                <span className="hidden sm:inline">Compare</span> ({products.length}/{maxProducts})
+              </div>
+
+              {products.map((product) => (
+                <motion.div
+                  key={product.id}
+                  layout
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="flex items-center gap-2 rounded-lg border border-border bg-surface-alt pl-2 shrink-0"
+                >
+                  {product.thumbnail_url ? (
+                    <div className="relative w-8 h-8 shrink-0">
+                      <Image
+                        src={product.thumbnail_url}
+                        alt=""
+                        fill
+                        sizes="32px"
+                        className="object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 shrink-0 bg-border rounded" />
+                  )}
+                  <span className="text-xs text-primary truncate max-w-[100px]">{product.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => onRemove(product.id)}
+                    className="flex h-11 w-9 items-center justify-center text-muted hover:text-primary"
+                    aria-label={`Remove ${product.name} from compare`}
+                  >
+                    <X size={14} />
+                  </button>
+                </motion.div>
+              ))}
+
+              {products.length < maxProducts && (
+                <Link
+                  href="/compare"
+                  className="shrink-0 inline-flex min-h-11 items-center px-2 text-xs font-medium text-accent hover:underline"
+                >
+                  + Add more
+                </Link>
+              )}
             </div>
 
-            {products.map((product) => (
-              <motion.div
-                key={product.id}
-                layout
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex items-center gap-2 rounded-lg border border-border bg-surface-alt px-2 py-1.5 shrink-0"
-              >
-                {product.thumbnail_url ? (
-                  <div className="relative w-8 h-8 shrink-0">
-                    <Image
-                      src={product.thumbnail_url}
-                      alt=""
-                      fill
-                      sizes="32px"
-                      className="object-contain"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-8 h-8 shrink-0 bg-border rounded" />
-                )}
-                <span className="text-xs text-primary truncate max-w-[100px]">{product.name}</span>
-                <button
-                  type="button"
-                  onClick={() => onRemove(product.id)}
-                  className="text-muted hover:text-primary p-0.5"
-                  aria-label={`Remove ${product.name} from compare`}
-                >
-                  <X size={14} />
-                </button>
-              </motion.div>
-            ))}
-
-            {products.length < maxProducts && (
-              <Link
-                href="/compare"
-                className="shrink-0 text-xs text-accent hover:underline px-2"
-              >
-                + Add more
-              </Link>
-            )}
-
-            <div className="ml-auto flex items-center gap-2 shrink-0">
+            <div className="flex shrink-0 items-center gap-1">
               {products.length >= 2 ? (
-                <Link
-                  href={compareHref}
-                  className="px-4 py-2 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 whitespace-nowrap"
-                >
+                <Button href={compareHref} size="auto" className="h-11 px-4 text-sm whitespace-nowrap">
                   Compare Now
-                </Link>
+                </Button>
               ) : (
-                <span className="text-xs text-muted whitespace-nowrap">Add 1 more to compare</span>
+                <span className="hidden text-xs text-muted whitespace-nowrap sm:inline">Add 1 more to compare</span>
               )}
               <button
                 type="button"
                 onClick={onClear}
-                className="text-sm text-muted hover:text-primary px-2"
+                className="inline-flex min-h-11 items-center px-3 text-sm text-muted hover:text-primary"
               >
                 Clear
               </button>
