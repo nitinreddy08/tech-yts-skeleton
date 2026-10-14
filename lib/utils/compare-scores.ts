@@ -1,11 +1,35 @@
 import type { SpecDiffRow } from '@/types'
 
-/** Which products win each spec row (ties → all tied products win). */
-export function specWinners(values: (string | number | boolean | null)[]): boolean[] {
+export type SpecDirection = 'higher' | 'lower' | 'neutral'
+
+/** Specs where a smaller number is the better one (a lighter phone, a lower price). */
+const LOWER_IS_BETTER = /(^|_)(weight|thickness|latency|price|charge_time|charging_time|bezel)(_|$)/
+/** Specs where a bigger number is just different, not better (a larger driver isn't "winning"). */
+const NEUTRAL_SIZE = /(^|_)(driver_size|display_size|screen_size|size|width|height|diagonal)(_|$)/
+
+export function specDirection(specKey?: string): SpecDirection {
+  if (!specKey) return 'higher'
+  if (LOWER_IS_BETTER.test(specKey)) return 'lower'
+  if (NEUTRAL_SIZE.test(specKey)) return 'neutral'
+  return 'higher'
+}
+
+/**
+ * Which products win each spec row (ties → all tied products win).
+ * Direction matters: the lightest laptop wins "weight", not the heaviest, and a
+ * bigger driver or screen is a difference, not a win.
+ */
+export function specWinners(
+  values: (string | number | boolean | null)[],
+  specKey?: string
+): boolean[] {
+  const direction = specDirection(specKey)
   const nums = values.map((v) => (typeof v === 'number' ? v : null))
   if (nums.some((n) => n !== null)) {
-    const max = Math.max(...(nums.filter((n) => n !== null) as number[]))
-    return nums.map((n) => n === max)
+    if (direction === 'neutral') return values.map(() => false)
+    const present = nums.filter((n) => n !== null) as number[]
+    const best = direction === 'lower' ? Math.min(...present) : Math.max(...present)
+    return nums.map((n) => n === best)
   }
 
   const bools = values.map((v) => (typeof v === 'boolean' ? v : null))
@@ -31,7 +55,7 @@ export function computeCompareScores(
 
   for (const row of diffRows) {
     if (!row.hasDiff) continue
-    const winners = specWinners(row.values)
+    const winners = specWinners(row.values, row.specKey)
     if (!winners.some(Boolean)) continue
     total++
     winners.forEach((won, i) => {

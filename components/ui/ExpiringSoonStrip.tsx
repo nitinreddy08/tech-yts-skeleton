@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { Clock } from 'lucide-react'
 import { DealCountdown } from '@/components/ui/DealCountdown'
-import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
+import { DealBuyLink } from '@/components/ui/DealBuyLink'
 import { buttonVariants } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
 import { formatIndianPrice } from '@/lib/utils/format'
 import type { Deal } from '@/types'
 
@@ -15,48 +16,56 @@ export function ExpiringSoonStrip({ deals }: ExpiringSoonStripProps) {
   if (deals.length === 0) return null
 
   return (
-    <section className="mb-8 rounded-xl border border-secondary/40 bg-gradient-to-r from-secondary/10 to-surface p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <Clock size={18} className="text-secondary-700" />
-        <h2 className="font-heading text-sm font-bold text-primary">Ending Soon</h2>
-        <span className="text-xs text-muted">Don&apos;t miss these — expiring in 48 hours</span>
+    <section aria-labelledby="ending-soon" className="mb-8 rounded-xl border border-secondary-200 bg-secondary-50 p-5">
+      <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <Clock size={18} className="text-secondary-700" aria-hidden />
+        <h2 id="ending-soon" className="font-heading text-sm font-bold text-primary">Ending soon</h2>
+        <span className="text-xs text-muted">Expiring within 48 hours</span>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-1">
+      <ul className="flex gap-3 overflow-x-auto pb-1 snap-x">
         {deals.map((deal) => {
           if (!deal.product) return null
+          const pct =
+            deal.original_price_inr && deal.deal_price_inr
+              ? Math.round(((deal.original_price_inr - deal.deal_price_inr) / deal.original_price_inr) * 100)
+              : null
           return (
-            <div
+            <li
               key={deal.id}
-              className="shrink-0 w-64 rounded-lg border border-border bg-surface p-3 flex flex-col gap-2"
+              className="flex w-64 shrink-0 snap-start flex-col gap-2 rounded-lg border border-border bg-surface p-3"
             >
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted">{deal.store_name}</p>
               <Link
                 href={`/${deal.product.category_slug}/${deal.product.slug}`}
                 className="text-sm font-semibold text-primary line-clamp-2 hover:text-accent"
               >
                 {deal.product.name}
               </Link>
-              <div className="flex items-baseline gap-2">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 {deal.deal_price_inr != null && (
-                  <span className="text-base font-bold text-accent">
-                    {formatIndianPrice(deal.deal_price_inr)}
-                  </span>
+                  <span className="text-base font-bold text-accent">{formatIndianPrice(deal.deal_price_inr)}</span>
                 )}
+                {deal.original_price_inr != null && (
+                  <span className="text-xs text-muted line-through">{formatIndianPrice(deal.original_price_inr)}</span>
+                )}
+                {pct != null && pct > 0 && <Badge variant="success" size="sm">{pct}% off</Badge>}
               </div>
               {deal.expires_at && <DealCountdown expiresAt={deal.expires_at} compact />}
-              <AffiliateOutboundLink
+              <DealBuyLink
+                expiresAt={deal.expires_at}
                 href={`/go/${deal.id}`}
                 linkId={deal.id}
                 storeName={deal.store_name}
                 productName={deal.product.name}
                 priceInr={deal.deal_price_inr}
-                className={buttonVariants({ variant: 'deal', size: 'auto', className: 'mt-auto py-1.5 text-xs' })}
+                className={buttonVariants({ variant: 'deal', size: 'sm', className: 'mt-auto' })}
               >
-                Grab deal
-              </AffiliateOutboundLink>
-            </div>
+                Buy at {deal.store_name}
+              </DealBuyLink>
+            </li>
           )
         })}
-      </div>
+      </ul>
     </section>
   )
 }

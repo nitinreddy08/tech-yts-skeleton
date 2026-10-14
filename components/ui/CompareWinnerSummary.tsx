@@ -23,11 +23,11 @@ export function CompareWinnerSummary({ products, diffRows }: CompareWinnerSummar
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
           <h2 className="text-sm font-semibold text-primary flex items-center gap-2">
-            <Trophy size={16} className="text-accent" />
+            <Trophy size={16} className="text-accent" aria-hidden />
             Spec win tally
           </h2>
           <p className="text-xs text-muted mt-0.5">
-            Based on {scores[0].total} differing specs — higher is better on paper
+            Based on {scores[0].total} differing specs — the better value on each, on paper
           </p>
         </div>
         {winnerIdx != null && (

@@ -43,6 +43,9 @@ export default async function ComparePage({
     await Promise.all(slugs.slice(0, 4).map((s) => fetchProductBySlug(s)))
   ).filter((p): p is ProductDetail => p !== null)
 
+  const requestedSlugs = slugs.slice(0, 4)
+  const missingSlugs = requestedSlugs.filter((slug) => !products.some((p) => p.slug === slug))
+
   const diffRows = products.length >= 2 ? buildSpecDiffTable(products) : []
 
   // All published products as picker options
@@ -68,6 +71,7 @@ export default async function ComparePage({
         diffRows={diffRows}
         allProductOptions={allProductOptions}
         shareUrl={shareUrl}
+        missingSlugs={missingSlugs}
       />
       {products.length >= 2 && (
         <div className="mt-10 pt-8 border-t border-border">

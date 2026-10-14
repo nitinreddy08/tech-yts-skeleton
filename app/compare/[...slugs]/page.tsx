@@ -44,6 +44,9 @@ export default async function DirectComparePage({
 
   if (products.length < 2) notFound()
 
+  const requested = productSlugs.slice(0, 4)
+  const missingSlugs = requested.filter((slug) => !products.some((p) => p.slug === slug))
+
   const diffRows = buildSpecDiffTable(products)
 
   const publishedProducts = await productRepository.list()
@@ -65,6 +68,7 @@ export default async function DirectComparePage({
         diffRows={diffRows}
         allProductOptions={allProductOptions}
         shareUrl={shareUrl}
+        missingSlugs={missingSlugs}
       />
     </main>
   )

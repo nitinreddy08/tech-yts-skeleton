@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { Zap } from 'lucide-react'
 import type { Metadata } from 'next'
 import { fetchActiveDeals, fetchExpiringSoonDeals } from '@/lib/data/deals'
@@ -29,17 +30,21 @@ export default async function DealsPage() {
       <main className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="font-heading text-3xl font-bold text-primary flex items-center gap-2">
-          <Zap size={28} className="text-accent" /> Deals & Offers
+          <Zap size={28} className="text-accent" aria-hidden /> Deals &amp; Offers
         </h1>
         <p className="text-muted mt-2 max-w-xl">
-          Price drops, bank offers, and daily deals — tracked across Amazon, Flipkart and more.
-          All links go through our tracker so you always get the best price.
+          Price drops, bank offers and daily deals across Amazon, Flipkart and more. Links are
+          affiliate links — we may earn a commission at no extra cost to you.
         </p>
       </div>
 
-      <ExpiringSoonStrip deals={expiringSoon} />
+      {/* The featured deal already has the hero below; don't repeat it here. */}
+      <ExpiringSoonStrip deals={expiringSoon.filter((d) => d.id !== dealOfDay?.id)} />
 
-      <DealsClient deals={deals} dealOfDay={dealOfDay} />
+      {/* useSearchParams (filters live in the URL) needs a Suspense boundary. */}
+      <Suspense fallback={<div className="h-64 shimmer rounded-2xl" aria-hidden />}>
+        <DealsClient deals={deals} dealOfDay={dealOfDay} />
+      </Suspense>
       </main>
     </>
   )

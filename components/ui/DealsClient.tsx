@@ -1,21 +1,13 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import {
-  Zap,
-  TrendingDown,
-  Tag,
-  Percent,
-  ShoppingCart,
-  SlidersHorizontal,
-  ArrowUpDown,
-  Store,
-} from 'lucide-react'
+import { Zap, TrendingDown, Tag, Percent, ShoppingCart } from 'lucide-react'
 import { DealCountdown } from '@/components/ui/DealCountdown'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
+import { DealBuyLink } from '@/components/ui/DealBuyLink'
 import { Badge } from '@/components/ui/Badge'
 import { Chip } from '@/components/ui/Chip'
 import { buttonVariants } from '@/components/ui/Button'
@@ -53,11 +45,23 @@ interface DealsClientProps {
   dealOfDay: Deal | null
 }
 
+const CTA_LABEL: Record<Deal['deal_type'], (store: string) => string> = {
+  deal_of_day: (store) => `Buy at ${store}`,
+  price_drop: (store) => `Buy at ${store}`,
+  bank_offer: () => 'Get offer',
+  coupon: () => 'Get coupon',
+  upcoming_sale: () => 'View sale',
+  sale_event: () => 'View sale',
+}
+
+const SORTS: DealSort[] = ['discount', 'price_asc', 'price_desc', 'expiring']
+
 export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
-  const [filter, setFilter] = useState<DealFilter>('all')
-  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
-  const [storeFilter, setStoreFilter] = useState<StoreFilter>('all')
-  const [sort, setSort] = useState<DealSort>('discount')
+  // Filter + sort state lives in the URL so a filtered view can be shared,
+  // survives a reload, and works with the back button.
+  const router = useRouter()
+  const pathname = usePathname()
+  const sp = useSearchParams()
 
   const dealTypes = useMemo(() => {
     const types = new Set(deals.map((d) => d.deal_type))
@@ -75,6 +79,30 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
     const names = new Set(deals.map((d) => d.store_name))
     return ['all', ...Array.from(names).sort()] as StoreFilter[]
   }, [deals])
+
+  const rawType = sp.get('type') ?? 'all'
+  const rawCat = sp.get('category') ?? 'all'
+  const rawStore = sp.get('store') ?? 'all'
+  const rawSort = sp.get('sort') ?? 'discount'
+  // Ignore stale/garbage params: only accept values that exist in the data.
+  const filter = (dealTypes.includes(rawType as DealFilter) ? rawType : 'all') as DealFilter
+  const categoryFilter = (categories.includes(rawCat) ? rawCat : 'all') as CategoryFilter
+  const storeFilter = (stores.includes(rawStore) ? rawStore : 'all') as StoreFilter
+  const sort = (SORTS.includes(rawSort as DealSort) ? rawSort : 'discount') as DealSort
+
+  function setParam(key: string, value: string) {
+    const params = new URLSearchParams(sp.toString())
+    if (!value || value === 'all' || (key === 'sort' && value === 'discount')) params.delete(key)
+    else params.set(key, value)
+    const qs = params.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+  }
+
+  function clearFilters() {
+    router.replace(pathname, { scroll: false })
+  }
+
+  const filtersActive = filter !== 'all' || categoryFilter !== 'all' || storeFilter !== 'all'
 
   const filtered = useMemo(() => {
     let list = filter === 'all' ? [...deals] : deals.filter((d) => d.deal_type === filter)
@@ -121,14 +149,38 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
     (categoryFilter === 'all' || dealOfDay.product.category_slug === categoryFilter) &&
     (storeFilter === 'all' || dealOfDay.store_name === storeFilter)
 
-  const priceDrops = filtered.filter((d) => d.deal_type !== 'deal_of_day')
-  const hasContent = (showDealOfDay && dealOfDay?.product) || priceDrops.length > 0
+  // Only the featured deal is lifted into the hero; any other deal_of_day deal stays in the grid.
+  const priceDrops = filtered.filter((d) => !(showDealOfDay && d.id === dealOfDay?.id))
+  const hasContent = !!(showDealOfDay && dealOfDay?.product) || priceDrops.length > 0
+
+  const filterGroup = (
+    label: string,
+    options: { value: string; label: string }[],
+    current: string,
+    param: string,
+    capitalize = false
+  ) => (
+    <div role="group" aria-label={label} className="flex flex-wrap items-center gap-2">
+      <span className="w-full text-xs font-semibold uppercase tracking-wider text-muted sm:w-16">{label}</span>
+      {options.map((o) => (
+        <Chip
+          key={o.value}
+          active={current === o.value}
+          aria-pressed={current === o.value}
+          onClick={() => setParam(param, o.value)}
+          className={capitalize ? 'capitalize' : undefined}
+        >
+          {o.label}
+        </Chip>
+      ))}
+    </div>
+  )
 
   return (
     <>
       {/* Deal of the Day hero */}
       {showDealOfDay && dealOfDay && dealOfDay.product && (
-        <div className="relative overflow-hidden rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/8 via-surface to-surface-alt p-6 md:p-10 mb-10">
+        <div className="relative overflow-hidden rounded-2xl border border-secondary-200 bg-secondary-50 p-6 md:p-10 mb-10">
           <div className="absolute top-4 right-4 hidden md:block">
             {dealOfDay.expires_at && <DealCountdown expiresAt={dealOfDay.expires_at} />}
           </div>
@@ -137,14 +189,14 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
               {dealOfDay.product.thumbnail_url && (
                 <Image
                   src={dealOfDay.product.thumbnail_url}
-                  alt={dealOfDay.product.name}
+                  alt=""
                   fill
                   sizes="192px"
                   className="object-contain p-4"
                 />
               )}
               <Badge variant="deal" className="absolute top-3 left-3">
-                <Zap size={12} /> Deal of the Day
+                <Zap size={12} aria-hidden /> Deal of the Day
               </Badge>
             </div>
             <div className="flex-1 text-center md:text-left">
@@ -169,10 +221,10 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
               {dealOfDay.original_price_inr != null && dealOfDay.deal_price_inr != null && (
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
                   <Badge variant="success">
-                    <Percent size={14} />
+                    <Percent size={14} aria-hidden />
                     {discountPercent(dealOfDay.original_price_inr, dealOfDay.deal_price_inr)}% off
                   </Badge>
-                  <span className="text-sm font-medium text-green-700">
+                  <span className="text-sm font-medium text-success-700">
                     You save {formatIndianPrice(savingsAmount(dealOfDay.original_price_inr, dealOfDay.deal_price_inr))}
                   </span>
                 </div>
@@ -183,22 +235,23 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
                 </div>
               )}
               <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                <AffiliateOutboundLink
+                <DealBuyLink
+                  expiresAt={dealOfDay.expires_at}
                   href={`/go/${dealOfDay.id}`}
                   linkId={dealOfDay.id}
                   storeName={dealOfDay.store_name}
                   productName={dealOfDay.product.name}
                   priceInr={dealOfDay.deal_price_inr}
-                  className={buttonVariants({ variant: 'deal', size: 'md', className: 'rounded-xl' })}
+                  className={buttonVariants({ variant: 'deal', size: 'md' })}
                 >
-                  <ShoppingCart size={16} />
+                  <ShoppingCart size={16} aria-hidden />
                   Buy on {dealOfDay.store_name}
-                </AffiliateOutboundLink>
+                </DealBuyLink>
                 <Link
                   href={`/${dealOfDay.product.category_slug}/${dealOfDay.product.slug}`}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-6 py-3 text-sm font-semibold text-primary hover:border-accent transition-colors"
+                  className={buttonVariants({ variant: 'secondary', size: 'md' })}
                 >
-                  Read Review
+                  Read the review
                 </Link>
               </div>
             </div>
@@ -208,52 +261,53 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
 
       {/* Filters + sort toolbar */}
       {deals.length > 0 && (
-        <div className="flex flex-col gap-4 mb-8">
-          <div className="flex flex-wrap items-center gap-2">
-            <SlidersHorizontal size={16} className="text-muted shrink-0" />
-            {dealTypes.map((type) => (
-              <Chip key={type} active={filter === type} onClick={() => setFilter(type)}>
-                {type === 'all' ? 'All Deals' : DEAL_TYPE_LABELS[type as Deal['deal_type']]}
-              </Chip>
-            ))}
-          </div>
-          {categories.length > 2 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <Tag size={16} className="text-muted shrink-0" />
-              {categories.map((cat) => (
-                <Chip key={cat} active={categoryFilter === cat} onClick={() => setCategoryFilter(cat)} className="capitalize">
-                  {cat === 'all' ? 'All Categories' : categoryLabel(cat)}
-                </Chip>
-              ))}
-            </div>
+        <div className="flex flex-col gap-3 mb-8">
+          {filterGroup(
+            'Type',
+            dealTypes.map((t) => ({ value: t, label: t === 'all' ? 'All deals' : DEAL_TYPE_LABELS[t as Deal['deal_type']] })),
+            filter,
+            'type'
           )}
-          {stores.length > 2 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <Store size={16} className="text-muted shrink-0" />
-              {stores.map((store) => (
-                <Chip key={store} active={storeFilter === store} onClick={() => setStoreFilter(store)}>
-                  {store === 'all' ? 'All Stores' : store}
-                </Chip>
-              ))}
-            </div>
-          )}
+          {categories.length > 2 &&
+            filterGroup(
+              'Category',
+              categories.map((c) => ({ value: c, label: c === 'all' ? 'All categories' : categoryLabel(c) })),
+              categoryFilter,
+              'category',
+              true
+            )}
+          {stores.length > 2 &&
+            filterGroup(
+              'Store',
+              stores.map((st) => ({ value: st, label: st === 'all' ? 'All stores' : st })),
+              storeFilter,
+              'store'
+            )}
           <div className="flex items-center justify-between gap-4">
-            <p className="text-sm text-muted">
+            <p className="text-sm text-muted" aria-live="polite">
               <span className="font-semibold text-primary">{filtered.length}</span> active deal
               {filtered.length !== 1 ? 's' : ''}
+              {filtersActive && (
+                <>
+                  {' · '}
+                  <button type="button" onClick={clearFilters} className="inline-flex min-h-11 items-center text-accent underline">
+                    Clear filters
+                  </button>
+                </>
+              )}
             </p>
             <div className="flex items-center gap-2">
-              <ArrowUpDown size={14} className="text-muted" />
+              <label htmlFor="deals-sort" className="text-xs font-semibold uppercase tracking-wider text-muted">Sort</label>
               <select
+                id="deals-sort"
                 value={sort}
-                onChange={(e) => setSort(e.target.value as DealSort)}
-                className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-primary"
-                aria-label="Sort deals"
+                onChange={(e) => setParam('sort', e.target.value)}
+                className="h-11 rounded-md border border-neutral-500 bg-surface px-3 text-sm font-medium text-primary"
               >
-                <option value="discount">Biggest Discount</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
-                <option value="expiring">Expiring Soon</option>
+                <option value="discount">Biggest discount</option>
+                <option value="price_asc">Price: low to high</option>
+                <option value="price_desc">Price: high to low</option>
+                <option value="expiring">Expiring soon</option>
               </select>
             </div>
           </div>
@@ -261,11 +315,11 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
       )}
 
       {/* Deal grid */}
-      {priceDrops.length > 0 ? (
+      {priceDrops.length > 0 && (
         <section>
           <h2 className="font-heading text-xl font-semibold text-primary mb-4 flex items-center gap-2">
-            <TrendingDown size={20} className="text-accent" />
-            {filter === 'all' ? 'All Offers' : DEAL_TYPE_LABELS[filter as Deal['deal_type']]}
+            <TrendingDown size={20} className="text-accent" aria-hidden />
+            {filter === 'all' ? 'All offers' : DEAL_TYPE_LABELS[filter as Deal['deal_type']]}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {priceDrops.map((deal) => {
@@ -292,7 +346,7 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
                       {deal.product.thumbnail_url && (
                         <Image
                           src={deal.product.thumbnail_url}
-                          alt={deal.product.name}
+                          alt=""
                           fill
                           sizes="80px"
                           className="object-contain p-1"
@@ -300,9 +354,9 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="inline-block rounded-md bg-surface-alt px-2 py-0.5 text-[10px] font-semibold uppercase text-muted mb-1">
-                        {DEAL_TYPE_LABELS[deal.deal_type]}
-                      </span>
+                      <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">
+                        {DEAL_TYPE_LABELS[deal.deal_type]} · {deal.store_name}
+                      </p>
                       <p className="text-sm font-semibold text-primary line-clamp-2">
                         {deal.product.name}
                       </p>
@@ -312,7 +366,7 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
                     </div>
                   </Link>
                   <div className="px-4 pb-4 flex flex-col gap-2 mt-auto">
-                    <div className="flex items-baseline gap-2">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                       {deal.deal_price_inr != null && (
                         <span className="text-lg font-bold text-accent">
                           {formatIndianPrice(deal.deal_price_inr)}
@@ -323,22 +377,20 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
                           {formatIndianPrice(deal.original_price_inr)}
                         </span>
                       )}
-                      {pct != null && (
-                        <span className="ml-auto text-xs font-bold text-accent">{pct}% off</span>
+                      {savings != null && savings > 0 && pct != null && (
+                        <Badge variant="success" size="sm" className="ml-auto">
+                          Save {formatIndianPrice(savings)} · {pct}%
+                        </Badge>
                       )}
                     </div>
-                    {savings != null && savings > 0 && (
-                      <p className="text-xs font-medium text-green-700">
-                        You save {formatIndianPrice(savings)}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       {deal.expires_at ? (
                         <DealCountdown expiresAt={deal.expires_at} compact />
                       ) : (
-                        <span className="text-xs text-muted">{deal.store_name}</span>
+                        <span className="text-xs text-muted">No expiry listed</span>
                       )}
-                      <AffiliateOutboundLink
+                      <DealBuyLink
+                        expiresAt={deal.expires_at}
                         href={`/go/${deal.id}`}
                         linkId={deal.id}
                         storeName={deal.store_name}
@@ -346,9 +398,8 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
                         priceInr={deal.deal_price_inr}
                         className={buttonVariants({ variant: 'deal', size: 'sm' })}
                       >
-                        <ShoppingCart size={12} />
-                        Buy Now
-                      </AffiliateOutboundLink>
+                        {CTA_LABEL[deal.deal_type](deal.store_name)}
+                      </DealBuyLink>
                     </div>
                   </div>
                 </article>
@@ -356,23 +407,23 @@ export function DealsClient({ deals, dealOfDay }: DealsClientProps) {
             })}
           </div>
         </section>
-      ) : (
-        !showDealOfDay &&
-        hasContent === false && (
-          <EmptyState
-            icon={Tag}
-            heading="No active deals"
-            description="Check back soon — we track prices daily across Amazon, Flipkart & more."
-            action={{ label: 'Browse Products', href: '/smartphones' }}
-          />
-        )
       )}
 
-      {filtered.length === 0 && deals.length > 0 && (
+      {/* Exactly one empty state: nothing exists at all, or filters hide everything. */}
+      {deals.length === 0 && (
+        <EmptyState
+          icon={Tag}
+          heading="No active deals"
+          description="Check back soon — we compare prices across Amazon, Flipkart & more."
+          action={{ label: 'Browse products', href: '/search' }}
+        />
+      )}
+      {deals.length > 0 && !hasContent && (
         <EmptyState
           icon={Tag}
           heading="No deals match your filters"
-          description="Try a different category or store"
+          description="Try a different type, category or store."
+          action={{ label: 'Clear filters', onClick: clearFilters }}
         />
       )}
     </>

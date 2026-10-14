@@ -1,23 +1,17 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useId, useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import {
-  X,
-  Plus,
-  Crown,
-  ArrowUpDown,
-  ShoppingCart,
-  ExternalLink,
-  ChevronDown,
-  ChevronUp,
-  Printer,
-} from 'lucide-react'
+import { X, Plus, Crown, ArrowUpDown, ExternalLink, Printer, Info } from 'lucide-react'
 import { formatIndianPrice } from '@/lib/utils/format'
 import { ScoreRing } from '@/components/ui/ScoreRing'
 import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
+import { Button, buttonVariants } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Toggle } from '@/components/ui/Toggle'
+import { getBestOffer } from '@/lib/utils/best-offer'
 import { ShareBar } from '@/components/ui/ShareBar'
 import { CompareWinnerSummary } from '@/components/ui/CompareWinnerSummary'
 import { CompareSuggestions } from '@/components/ui/CompareSuggestions'
@@ -31,6 +25,8 @@ interface CompareClientProps {
   diffRows: SpecDiffRow[]
   allProductOptions: { id: string; name: string; slug: string; thumbnail_url: string }[]
   shareUrl?: string
+  /** Slugs the URL asked for that don't exist, so we can say so instead of silently dropping them. */
+  missingSlugs?: string[]
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -42,33 +38,45 @@ function formatVal(v: string | number | boolean | null): string {
 }
 
 /**
- * For numeric specs, find which product has the highest value.
- * Returns an array of booleans indicating if that product "wins" this row.
+ * Which products "win" a spec row. Direction-aware (lighter beats heavier,
+ * more RAM beats less) — see specWinners.
  */
-function winnerFlags(values: (string | number | boolean | null)[]): boolean[] {
-  return specWinners(values)
+function winnerFlags(values: (string | number | boolean | null)[], specKey: string): boolean[] {
+  return specWinners(values, specKey)
 }
 
 // ── component ─────────────────────────────────────────────────────────────────
 
-export function CompareClient({ products, diffRows, allProductOptions, shareUrl }: CompareClientProps) {
+export function CompareClient({ products, diffRows, allProductOptions, shareUrl, missingSlugs = [] }: CompareClientProps) {
   const router = useRouter()
+  const uid = useId()
   const [diffsOnly, setDiffsOnly] = useState(false)
-  const [pickerOpen, setPickerOpen] = useState<number | null>(null) // slot index
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerQuery, setPickerQuery] = useState('')
+  const [activeOption, setActiveOption] = useState(0)
   const pickerRef = useRef<HTMLDivElement>(null)
+  const addButtonRef = useRef<HTMLButtonElement>(null)
 
-  // Close picker on outside click
+  function closePicker(restoreFocus = false) {
+    setPickerOpen(false)
+    setPickerQuery('')
+    setActiveOption(0)
+    if (restoreFocus) addButtonRef.current?.focus()
+  }
+
+  // Close the picker on an outside press (mouse or touch)
   useEffect(() => {
-    function handler(e: MouseEvent) {
+    if (!pickerOpen) return
+    function handler(e: PointerEvent) {
       if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
-        setPickerOpen(null)
+        setPickerOpen(false)
         setPickerQuery('')
+        setActiveOption(0)
       }
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+    document.addEventListener('pointerdown', handler)
+    return () => document.removeEventListener('pointerdown', handler)
+  }, [pickerOpen])
 
   useEffect(() => {
     if (products.length >= 2) {
@@ -82,6 +90,7 @@ export function CompareClient({ products, diffRows, allProductOptions, shareUrl 
   const rows = diffsOnly ? diffRows.filter((r) => r.hasDiff) : diffRows
   const slots = 4 // max products
   const cols = Math.max(products.length + (products.length < slots ? 1 : 0), 2)
+  const allIdentical = products.length >= 2 && diffRows.length > 0 && diffRows.every((r) => !r.hasDiff)
 
   // Navigate by updating URL ?products= param
   function removeProduct(slug: string) {
@@ -97,8 +106,7 @@ export function CompareClient({ products, diffRows, allProductOptions, shareUrl 
     const current = products.map((p) => p.slug)
     if (current.includes(slug)) return
     router.push(`/compare?products=${[...current, slug].join(',')}`)
-    setPickerOpen(null)
-    setPickerQuery('')
+    closePicker()
   }
 
   const filteredOptions = allProductOptions.filter(
@@ -107,11 +115,23 @@ export function CompareClient({ products, diffRows, allProductOptions, shareUrl 
       o.name.toLowerCase().includes(pickerQuery.toLowerCase())
   )
 
-  // Cheapest price per product
-  function bestPrice(p: ProductDetail): number | null {
-    const prices = p.affiliate_links.map((l) => l.price_inr).filter((x): x is number => x != null)
-    return prices.length ? Math.min(...prices) : null
+  function onPickerKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      closePicker(true)
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActiveOption((i) => Math.min(filteredOptions.length - 1, i + 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActiveOption((i) => Math.max(0, i - 1))
+    } else if (e.key === 'Enter' && filteredOptions[activeOption]) {
+      e.preventDefault()
+      addProduct(filteredOptions[activeOption].slug)
+    }
   }
+
+  const listboxId = `${uid}-options`
 
   return (
     <div className="compare-print-area flex flex-col gap-6">
@@ -131,7 +151,7 @@ export function CompareClient({ products, diffRows, allProductOptions, shareUrl 
         </div>
 
         {products.length >= 2 && (
-          <div className="flex flex-wrap items-center gap-2 no-print">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 no-print">
             {shareUrl && (
               <ShareBar
                 url={shareUrl}
@@ -140,73 +160,60 @@ export function CompareClient({ products, diffRows, allProductOptions, shareUrl 
                 className="!mt-0"
               />
             )}
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-muted hover:border-accent hover:text-accent transition-colors"
-            >
-              <Printer size={13} />
+            <Button variant="secondary" size="auto" onClick={() => window.print()} className="h-11 px-3 text-sm">
+              <Printer size={14} aria-hidden />
               Print
-            </button>
-            <button
-              onClick={() => setDiffsOnly((v) => !v)}
-              className={[
-                'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
-                diffsOnly
-                  ? 'border-accent bg-accent/10 text-accent'
-                  : 'border-border text-muted hover:border-accent hover:text-accent',
-              ].join(' ')}
-              aria-pressed={diffsOnly}
-            >
-              <ArrowUpDown size={13} />
-              {diffsOnly ? 'Showing differences' : 'Show differences only'}
-            </button>
+            </Button>
+            <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium text-primary">
+              <Toggle checked={diffsOnly} onChange={setDiffsOnly} aria-label="Show differences only" />
+              Differences only
+            </label>
           </div>
         )}
       </div>
 
-      {/* ── Product header cards + picker ─────────────────────────────── */}
+      {missingSlugs.length > 0 && (
+        <p role="status" className="flex items-start gap-2 rounded-lg bg-info-50 px-3 py-2 text-sm text-info-700">
+          <Info size={16} className="mt-0.5 shrink-0" aria-hidden />
+          <span>
+            We couldn&apos;t find {missingSlugs.map((m) => `“${m}”`).join(', ')}, so it isn&apos;t in this comparison.
+          </span>
+        </p>
+      )}
+
+      {/* ── Product header cards + picker ─────────────────────────────────
+          Phones scroll these sideways at a readable width instead of squeezing
+          3–4 cards into ~80px columns; from sm up they share the row. */}
       <div
-        className="grid gap-3"
+        className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:overflow-visible sm:px-0 sm:pb-0"
         style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
       >
-        {/* Existing product cards */}
         {products.map((p) => {
-          const price = bestPrice(p)
-          const cheapestLink = [...p.affiliate_links]
-            .sort((a, b) => (a.price_inr ?? Infinity) - (b.price_inr ?? Infinity))
-            .find((l) => l.price_inr != null)
+          const best = getBestOffer(p.affiliate_links)
+          const link = best.link
 
           return (
             <div
               key={p.id}
-              className="relative flex flex-col rounded-xl border border-border bg-surface p-4 shadow-sm"
+              className="relative flex w-44 shrink-0 snap-start flex-col rounded-xl border border-border bg-surface p-4 shadow-sm sm:w-auto"
             >
-              {/* Remove button */}
               <button
+                type="button"
                 onClick={() => removeProduct(p.slug)}
-                className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-muted hover:bg-surface-alt hover:text-primary transition-colors"
-                aria-label={`Remove ${p.name}`}
+                className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-full text-muted hover:text-primary transition-colors no-print"
+                aria-label={`Remove ${p.name} from comparison`}
               >
-                <X size={13} />
+                <X size={14} aria-hidden />
               </button>
 
-              {/* Thumbnail */}
-              <Link href={`/${p.category_slug}/${p.slug}`}>
+              <Link href={`/${p.category_slug}/${p.slug}`} tabIndex={-1} aria-hidden>
                 <div className="relative mx-auto mb-3 h-24 w-24 overflow-hidden rounded-xl bg-surface-alt">
                   {p.thumbnail_url && (
-                    <Image
-                      src={p.thumbnail_url}
-                      alt={p.name}
-                      fill
-                      sizes="96px"
-                      className="object-contain p-2"
-                    />
+                    <Image src={p.thumbnail_url} alt="" fill sizes="96px" className="object-contain p-2" />
                   )}
                 </div>
               </Link>
 
-              {/* Info */}
               <Eyebrow>{p.brand_name}</Eyebrow>
               <Link href={`/${p.category_slug}/${p.slug}`}>
                 <h2 className="mt-0.5 text-sm font-semibold text-primary leading-tight hover:text-accent transition-colors line-clamp-2">
@@ -214,31 +221,28 @@ export function CompareClient({ products, diffRows, allProductOptions, shareUrl 
                 </h2>
               </Link>
 
-              {/* Score ring */}
               <div className="my-3 flex justify-center">
                 <ScoreRing score={p.creator_rating} size={64} />
               </div>
 
-              {/* Price */}
-              {price != null && (
-                <p className="text-center text-base font-extrabold text-accent">
-                  {formatIndianPrice(price)}
-                </p>
+              {best.price != null ? (
+                <p className="text-center text-base font-extrabold text-accent">{formatIndianPrice(best.price)}</p>
+              ) : (
+                <p className="text-center text-sm text-muted">{best.allUnavailable ? 'Out of stock' : 'Price unavailable'}</p>
               )}
 
-              {/* Buy button */}
-              {cheapestLink && (
+              {link && (
                 <AffiliateOutboundLink
-                  href={`/go/${cheapestLink.id}`}
-                  linkId={cheapestLink.id}
-                  storeName={cheapestLink.store_name}
+                  href={`/go/${link.id}`}
+                  linkId={link.id}
+                  storeName={link.store_name}
                   productName={p.name}
-                  priceInr={cheapestLink.price_inr}
-                  className="mt-3 flex items-center justify-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-white hover:bg-accent/90 transition-colors"
+                  priceInr={link.price_inr}
+                  className={buttonVariants({ variant: 'primary', size: 'sm', className: 'mt-3 w-full px-2 text-sm no-print' })}
                 >
-                  <ShoppingCart size={12} />
-                  Buy on {cheapestLink.store_name}
-                  <ExternalLink size={11} className="opacity-70" />
+                  <span className="truncate">Buy at {link.store_name}</span>
+                  <ExternalLink size={11} className="opacity-70 shrink-0" aria-hidden />
+                  <span className="sr-only"> (opens in a new tab)</span>
                 </AffiliateOutboundLink>
               )}
             </div>
@@ -247,54 +251,71 @@ export function CompareClient({ products, diffRows, allProductOptions, shareUrl 
 
         {/* Add product slot — show while under max */}
         {products.length < slots && (
-          <div ref={pickerOpen !== null ? pickerRef : undefined} className="relative">
+          <div ref={pickerRef} className="relative w-44 shrink-0 snap-start sm:w-auto no-print">
             <button
-              onClick={() => setPickerOpen(pickerOpen === 0 ? null : 0)}
-              className="flex h-full min-h-[200px] w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-surface-alt text-muted hover:border-accent hover:text-accent transition-colors"
-              aria-label="Add product to compare"
+              ref={addButtonRef}
+              type="button"
+              onClick={() => (pickerOpen ? closePicker() : setPickerOpen(true))}
+              aria-expanded={pickerOpen}
+              aria-haspopup="listbox"
+              className="flex h-full min-h-[200px] w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-neutral-500 bg-surface-alt text-muted hover:border-accent hover:text-accent transition-colors"
             >
-              <Plus size={24} />
-              <span className="text-xs font-medium">Add Product</span>
+              <Plus size={24} aria-hidden />
+              <span className="text-sm font-medium">Add product</span>
             </button>
 
-            {pickerOpen !== null && (
+            {pickerOpen && (
               <div
-                ref={pickerRef}
-                className="absolute left-0 top-full z-50 mt-2 w-72 rounded-xl border border-border bg-surface shadow-lg overflow-hidden"
+                onKeyDown={onPickerKeyDown}
+                className="absolute right-0 top-full z-50 mt-2 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-surface shadow-lg sm:left-0 sm:right-auto"
               >
-                {/* Search input */}
-                <div className="p-2 border-b border-border">
-                  <input
+                <div className="border-b border-border p-2">
+                  <label htmlFor={`${uid}-search`} className="sr-only">Search products to add</label>
+                  <Input
+                    id={`${uid}-search`}
                     autoFocus
-                    type="text"
+                    type="search"
+                    role="combobox"
+                    aria-expanded
+                    aria-controls={listboxId}
+                    aria-activedescendant={filteredOptions[activeOption] ? `${uid}-opt-${activeOption}` : undefined}
+                    aria-autocomplete="list"
                     value={pickerQuery}
-                    onChange={(e) => setPickerQuery(e.target.value)}
+                    onChange={(e) => {
+                      setPickerQuery(e.target.value)
+                      setActiveOption(0)
+                    }}
                     placeholder="Search products…"
-                    className="w-full rounded-lg border border-border bg-surface-alt px-3 py-2 text-sm text-primary placeholder:text-muted outline-none focus:border-accent"
+                    autoComplete="off"
                   />
                 </div>
 
-                {/* Options */}
-                <div className="max-h-64 overflow-y-auto">
+                <ul id={listboxId} role="listbox" aria-label="Products" className="max-h-64 overflow-y-auto">
                   {filteredOptions.length === 0 ? (
-                    <p className="px-4 py-3 text-xs text-muted">No products found</p>
+                    <li role="presentation" className="px-4 py-3 text-sm text-muted">No products found</li>
                   ) : (
-                    filteredOptions.map((opt) => (
-                      <button
+                    filteredOptions.map((opt, i) => (
+                      <li
                         key={opt.slug}
+                        id={`${uid}-opt-${i}`}
+                        role="option"
+                        aria-selected={i === activeOption}
+                        onMouseEnter={() => setActiveOption(i)}
                         onClick={() => addProduct(opt.slug)}
-                        className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm text-primary hover:bg-surface-alt transition-colors"
+                        className={`flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 text-sm text-primary transition-colors ${
+                          i === activeOption ? 'bg-surface-alt' : ''
+                        }`}
                       >
                         <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-surface-alt">
                           {opt.thumbnail_url && (
-                            <Image src={opt.thumbnail_url} alt={opt.name} fill sizes="32px" className="object-contain p-0.5" />
+                            <Image src={opt.thumbnail_url} alt="" fill sizes="32px" className="object-contain p-0.5" />
                           )}
                         </div>
                         <span className="flex-1 leading-tight line-clamp-2">{opt.name}</span>
-                      </button>
+                      </li>
                     ))
                   )}
-                </div>
+                </ul>
               </div>
             )}
           </div>
@@ -306,32 +327,33 @@ export function CompareClient({ products, diffRows, allProductOptions, shareUrl 
         <CompareWinnerSummary products={products} diffRows={diffRows} />
       )}
 
+      {allIdentical && diffsOnly && (
+        <p role="status" className="rounded-lg border border-border bg-surface-alt px-4 py-3 text-sm text-muted">
+          These products have identical specs — switch off &ldquo;Differences only&rdquo; to see them side by side.
+        </p>
+      )}
+
       {/* ── Spec table ─────────────────────────────────────────────────── */}
       {products.length >= 2 && rows.length > 0 && (
         <div className="overflow-x-auto rounded-xl border border-border">
-          <table className="w-full text-sm" style={{ minWidth: `${cols * 160 + 160}px` }}>
-            <thead className="sticky top-0 z-10 bg-surface-alt border-b border-border">
+          <table className="w-full text-sm" style={{ minWidth: `${products.length * 150 + 150}px` }}>
+            <caption className="sr-only">Specification comparison</caption>
+            <thead className="bg-surface-alt border-b border-border">
               <tr>
-                {/* Label column header */}
-                <th className="w-40 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">
+                <th scope="col" className="sticky left-0 z-10 w-36 bg-surface-alt px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">
                   Spec
                 </th>
                 {products.map((p) => (
-                  <th key={p.id} className="px-4 py-3 text-center text-xs font-semibold text-primary">
-                    <span className="line-clamp-1">{p.name}</span>
+                  <th key={p.id} scope="col" className="px-4 py-3 text-center text-xs font-semibold text-primary">
+                    <span className="line-clamp-2">{p.name}</span>
                   </th>
                 ))}
-                {/* Pad if < 4 cols */}
-                {products.length < slots &&
-                  Array.from({ length: slots - products.length }).map((_, i) => (
-                    <th key={`pad-${i}`} />
-                  ))}
               </tr>
             </thead>
 
             <tbody className="divide-y divide-border">
               {rows.map((row, rowIdx) => {
-                const winners = row.hasDiff ? winnerFlags(row.values) : []
+                const winners = row.hasDiff ? winnerFlags(row.values, row.specKey) : []
 
                 return (
                   <tr
@@ -341,54 +363,43 @@ export function CompareClient({ products, diffRows, allProductOptions, shareUrl 
                       row.hasDiff ? 'ring-1 ring-inset ring-accent/20' : '',
                     ].join(' ')}
                   >
-                    {/* Spec label — sticky left */}
-                    <td className="sticky left-0 bg-inherit w-40 px-4 py-3 font-medium text-muted text-xs">
+                    <th scope="row" className="sticky left-0 z-10 w-36 bg-inherit px-4 py-3 text-left text-xs font-medium text-muted">
                       <div className="flex items-center gap-1.5">
                         {row.hasDiff && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-accent shrink-0" aria-label="Values differ" />
+                          <>
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
+                            <span className="sr-only">Values differ: </span>
+                          </>
                         )}
                         {row.label}
                       </div>
-                    </td>
+                    </th>
 
-                    {/* Value cells */}
                     {row.values.map((val, colIdx) => {
                       const isWinner = winners[colIdx]
 
                       return (
                         <td
                           key={colIdx}
-                          className={[
-                            'px-4 py-3 text-center text-sm',
-                            isWinner ? 'font-semibold' : '',
-                          ].join(' ')}
+                          className={['px-4 py-3 text-center text-sm', isWinner ? 'font-semibold' : ''].join(' ')}
                         >
                           <span
                             className={[
                               'inline-flex items-center justify-center gap-1',
-                              isWinner
-                                ? 'text-accent'
-                                : val === null
-                                ? 'text-muted/40'
-                                : 'text-primary',
+                              isWinner ? 'text-accent' : 'text-primary',
                             ].join(' ')}
                           >
                             {isWinner && (
-                              <Crown size={12} className="text-accent shrink-0" aria-label="Best value" />
+                              <>
+                                <Crown size={12} className="shrink-0 text-accent" aria-hidden />
+                                <span className="sr-only">Best: </span>
+                              </>
                             )}
                             {formatVal(val)}
                           </span>
                         </td>
                       )
                     })}
-
-                    {/* Padding cells */}
-                    {products.length < slots &&
-                      Array.from({ length: slots - products.length }).map((_, i) => (
-                        <td key={`pad-${i}`} className="px-4 py-3 text-center text-muted/20 text-xs">
-                          —
-                        </td>
-                      ))}
                   </tr>
                 )
               })}
@@ -401,10 +412,10 @@ export function CompareClient({ products, diffRows, allProductOptions, shareUrl 
       {products.length >= 2 && (
         <div className="flex flex-wrap items-center gap-4 text-xs text-muted">
           <span className="flex items-center gap-1.5">
-            <Crown size={12} className="text-accent" /> Best value in this spec
+            <Crown size={12} className="text-accent" aria-hidden /> Better on this spec (lighter, bigger or longer — whichever is better)
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-accent" /> Values differ
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden /> Values differ
           </span>
         </div>
       )}
@@ -413,10 +424,10 @@ export function CompareClient({ products, diffRows, allProductOptions, shareUrl 
       {products.length < 2 && (
         <div className="flex flex-col items-center gap-5 py-16 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-alt text-muted">
-            <ArrowUpDown size={28} />
+            <ArrowUpDown size={28} aria-hidden />
           </div>
           <div>
-            <p className="text-base font-semibold text-primary">Add products to compare</p>
+            <h2 className="text-base font-semibold text-primary">Add products to compare</h2>
             <p className="text-sm text-muted max-w-xs mt-1">
               Pick up to 4 products and compare specs side by side — or jump into a popular matchup below.
             </p>
