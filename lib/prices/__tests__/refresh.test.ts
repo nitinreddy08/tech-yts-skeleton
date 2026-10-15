@@ -122,6 +122,31 @@ describe('refreshPrices', () => {
     expect(snapshot.entries.a).toMatchObject({ price_inr: 79999, stock_status: 'out_of_stock' })
   })
 
+  it('retries a transient failure once and recovers', async () => {
+    let calls = 0
+    const d = deps({})
+    d.fetchPage = async () => {
+      calls++
+      if (calls === 1) throw new Error('ECONNRESET')
+      return { status: 200, html: fx('amazon-css-only.html') }
+    }
+    const { results, health } = await refreshPrices({ ...base, links: [link('a', url)], deps: d, retryDelayMs: 0 })
+    expect(calls).toBe(2)
+    expect(results.at(-1)).toMatchObject({ status: 'ok', price: 79999 })
+    expect(health.stores.amazon.status).toBe('ok')
+  })
+
+  it('does not retry a changed layout (only transient failures)', async () => {
+    let calls = 0
+    const d = deps({})
+    d.fetchPage = async () => {
+      calls++
+      return { status: 200, html: fx('amazon-layout-changed.html') }
+    }
+    await refreshPrices({ ...base, links: [link('a', url)], deps: d, retryDelayMs: 0 })
+    expect(calls).toBe(1)
+  })
+
   it('limits a run to one store', async () => {
     const { results } = await refreshPrices({
       ...base, onlyStore: 'flipkart', links: [link('a', url)], deps: deps({ [url]: { html: fx('amazon-css-only.html') } }),

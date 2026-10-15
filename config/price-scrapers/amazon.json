@@ -38,7 +38,7 @@
   "blockedTexts": [
     "to discuss automated access to amazon data"
   ],
-  "notes": "Selectors are from memory of Amazon's layout and UNVERIFIED against live pages. Run `npm run prices:check -- --store amazon` and, if it reports broken, `/update-scraper amazon`. Amazon's Product Advertising API / Creators API is the stable route once you have credentials.",
+  "notes": "Selectors are from memory of Amazon's layout and UNVERIFIED against live pages. Run `npm run prices:check -- --store amazon` and, if it reports broken, `npm run prices:heal -- --store amazon` (CI runs this automatically). Amazon's Product Advertising API / Creators API is the stable route once you have credentials.",
   "samples": [
     {
       "fixture": "lib/prices/__tests__/fixtures/amazon-css-only.html",

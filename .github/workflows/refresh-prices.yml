@@ -75,15 +75,13 @@ jobs:
                 console.log('::warning title=Price scraper: ' + s + ' is ' + v.status + '::' + JSON.stringify(v.failed) + ' - a layout fix will not help if the store is blocking us; consider its official API.');
           "
 
-      # 2. A store's layout changed -> repair it unattended. Needs the ANTHROPIC_API_KEY repository secret.
-      #    The agent may only edit that store's config + a trimmed sample page; a guard, the offline tests and
-      #    a live re-check must all pass before anything is committed and pushed. Otherwise an issue is opened.
-      - name: Auto-repair broken stores
+      # 2. A store's layout changed -> heal it automatically (plain code, no AI): `prices:heal` looks for where
+      #    the last known price lives on the saved pages and adds a new selector. A guard, the offline tests and a
+      #    live re-check must all pass before anything is committed and pushed; otherwise an issue is opened.
+      - name: Auto-heal broken stores
         if: steps.refresh.outcome == 'failure'
         run: ./scripts/prices/ci-repair.sh
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
           STORE_API_TOKEN: ${{ secrets.STORE_API_TOKEN }}
 
       - name: Keep pages that stopped parsing

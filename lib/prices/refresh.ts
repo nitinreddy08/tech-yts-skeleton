@@ -29,6 +29,8 @@ export interface RefreshOptions {
   deps: RefreshDeps
   /** Pause between requests to the same host. */
   delayMs?: number
+  /** Links that failed for a transient reason (network / HTTP error / blocked) get one more try after this pause. */
+  retryDelayMs?: number
   onlyStore?: string
   /** Accept prices that jump outside the believable range (use after a real repricing). */
   acceptOutliers?: boolean
@@ -147,21 +149,38 @@ export async function refreshPrices(opts: RefreshOptions): Promise<{
     groups.set(host, [...(groups.get(host) ?? []), link])
   }
 
+  const record = (link: LinkInput, result: LinkResult, stock?: StockStatus) => {
+    results.push(result)
+    if (result.status === 'ok' && result.price != null) {
+      entries[link.id] = {
+        price_inr: result.price,
+        ...(stock ? { stock_status: stock } : {}),
+        last_updated: nowIso,
+        via: result.via ?? '',
+      }
+    }
+    opts.onProgress?.(result)
+  }
+  const transient = (r: LinkResult) =>
+    r.status === 'failed' && (r.reason === 'network' || r.reason === 'http_error' || r.reason === 'blocked')
+
   await Promise.all(
     [...groups.values()].map(async (links) => {
+      const retryLater: LinkInput[] = []
       for (const [i, link] of links.entries()) {
         const { result, stock } = await refreshOne(link, opts)
-        results.push(result)
-        if (result.status === 'ok' && result.price != null) {
-          entries[link.id] = {
-            price_inr: result.price,
-            ...(stock ? { stock_status: stock } : {}),
-            last_updated: nowIso,
-            via: result.via ?? '',
-          }
-        }
-        opts.onProgress?.(result)
+        if (transient(result) && opts.retryDelayMs != null) retryLater.push(link)
+        else record(link, result, stock)
         if (i < links.length - 1 && result.status !== 'skipped') await opts.deps.sleep(opts.delayMs ?? 2500)
+      }
+      // Second chance for blips (a reset connection, a 503, a one-off bot check): wait, then try once more.
+      if (retryLater.length > 0) {
+        await opts.deps.sleep(opts.retryDelayMs ?? 0)
+        for (const [i, link] of retryLater.entries()) {
+          const { result, stock } = await refreshOne(link, opts)
+          record(link, result, stock)
+          if (i < retryLater.length - 1) await opts.deps.sleep(opts.delayMs ?? 2500)
+        }
       }
     })
   )

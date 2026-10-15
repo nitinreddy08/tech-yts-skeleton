@@ -2,7 +2,7 @@ import type { FailureReason, HealthReport, LinkResult, StoreHealth } from './typ
 
 /**
  * Decides what a store's run means:
- *  - broken   — pages load but we can't read a price from them (the layout changed → run /update-scraper)
+ *  - broken   — pages load but we can't read a price from them (the layout changed → `npm run prices:heal`)
  *  - blocked  — the store is refusing or unreachable (a layout fix won't help)
  *  - degraded — some links fail, most work
  *  - ok / idle

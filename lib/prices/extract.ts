@@ -34,7 +34,7 @@ function splitSelector(sel: string, defaultAttr?: string): [string, string | und
   return [sel, defaultAttr]
 }
 
-function readSelector($: cheerio.CheerioAPI, sel: string, defaultAttr?: string): string | null {
+export function readSelector($: cheerio.CheerioAPI, sel: string, defaultAttr?: string): string | null {
   const [css, attr] = splitSelector(sel, defaultAttr)
   let el
   try {

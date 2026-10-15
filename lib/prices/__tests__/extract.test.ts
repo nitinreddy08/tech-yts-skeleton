@@ -71,7 +71,7 @@ describe('live configs', () => {
   })
 })
 
-// Every config's own regression samples: this is what `/update-scraper` must keep green.
+// Every config's own regression samples: this is what `prices:heal` must keep green.
 describe('config samples', () => {
   for (const c of configs) {
     for (const s of c.samples ?? []) {

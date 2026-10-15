@@ -3,7 +3,7 @@ import type { ScraperConfig } from '../types'
 /**
  * Frozen copies of store rules, used to test the extraction ENGINE's behaviour (fallbacks, failure
  * classification, health). They deliberately do not follow config/price-scrapers/*.json: when
- * /update-scraper repairs a live config, these tests must keep passing untouched. The live configs
+ * prices:heal changes a live config, these tests must keep passing untouched. The live configs
  * are guarded by their own `samples` instead (see extract.test.ts).
  */
 export const PINNED_AMAZON: ScraperConfig = {

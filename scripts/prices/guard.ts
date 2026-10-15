@@ -1,5 +1,5 @@
 /**
- * Checks what the repair agent changed in the working tree against lib/prices/guard.ts.
+ * Checks what the automatic healer changed in the working tree against lib/prices/guard.ts.
  * Exit 0 = acceptable, 1 = rejected (reasons on stderr).
  */
 import { execFileSync } from 'node:child_process'
@@ -20,7 +20,7 @@ const changes: RepairChange[] = []
 for (const line of git('status', '--porcelain', '-uall').split('\n').filter(Boolean)) {
   const status = line.slice(0, 2)
   const path = line.slice(3).replace(/^"|"$/g, '')
-  // Files the verification steps write themselves, and ignored scratch space, are not the agent's.
+  // Files the verification steps write themselves, and ignored scratch space, are not the healer's.
   if (path === 'data/prices.json' || path === 'data/price-health.json' || path.startsWith('data/price-fixtures/')) continue
   const deleted = status.includes('D')
   const c: RepairChange = { path, deleted }

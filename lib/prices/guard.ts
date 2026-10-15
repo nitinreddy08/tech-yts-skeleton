@@ -1,10 +1,10 @@
 import type { ScraperConfig } from './types'
 
 /**
- * Safety gate for the unattended repair agent. The page HTML it reads is untrusted
- * (it could contain text meant to steer an AI), so the agent may only change a
- * store's extraction rules and add a trimmed sample page — and never loosen the
- * protections. Anything else rejects the whole repair and a human is asked instead.
+ * Safety gate for the automatic healer (and anyone editing a store config by hand). A heal may only change
+ * a store's extraction rules and add a trimmed sample page — and never loosen the protections (hosts, API
+ * settings, headers, price bounds, existing samples). Anything else rejects the whole change and a human is
+ * asked instead. It is a cheap backstop against bugs in the healer itself.
  */
 const CONFIG_RE = /^config\/price-scrapers\/[a-z0-9-]+\.json$/
 const FIXTURE_RE = /^lib\/prices\/__tests__\/fixtures\/[A-Za-z0-9._-]+\.html$/
@@ -26,7 +26,7 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stri
 
 export function validateRepair(changes: RepairChange[]): string[] {
   const problems: string[] = []
-  if (changes.length === 0) problems.push('the agent changed nothing')
+  if (changes.length === 0) problems.push('nothing changed')
 
   for (const c of changes) {
     if (c.deleted) {

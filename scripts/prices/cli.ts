@@ -1,9 +1,9 @@
 /**
  * Price scraper CLI.
  *
- *   npm run prices:refresh [-- --store amazon] [--dry-run] [--accept-outliers] [--delay 2500]
+ *   npm run prices:refresh [-- --store amazon] [--dry-run] [--accept-outliers] [--delay 2500] [--retry 45000]
  *       Reads every affiliate link with a real URL, writes data/prices.json + data/price-health.json.
- *       Exits 1 when a store is "broken" (its pages load but no price can be read) → run /update-scraper <store>.
+ *       Exits 1 when a store is "broken" (its pages load but no price can be read) → `npm run prices:heal -- --store <store>` (CI does this automatically).
  *   npm run prices:check   [-- --store amazon]
  *       Same as refresh --dry-run: reports health, writes nothing except fixtures of pages that failed to parse.
  *   npm run prices:inspect -- <linkId | url>
@@ -34,7 +34,7 @@ function parseArgs(argv: string[]) {
     const a = argv[i]
     if (a.startsWith('--')) {
       const next = argv[i + 1]
-      if (next && !next.startsWith('--') && ['store', 'delay'].includes(a.slice(2))) {
+      if (next && !next.startsWith('--') && ['store', 'delay', 'retry'].includes(a.slice(2))) {
         flags[a.slice(2)] = next
         i++
       } else flags[a.slice(2)] = true
@@ -82,6 +82,7 @@ async function refresh(flags: Record<string, string | boolean>, dryRun: boolean)
       sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
     },
     delayMs: typeof flags.delay === 'string' ? Number(flags.delay) : 2500,
+    retryDelayMs: typeof flags.retry === 'string' ? Number(flags.retry) : 45000,
     onlyStore: only,
     acceptOutliers: flags['accept-outliers'] === true,
     onProgress: (r) => console.log(fmt(r)),
@@ -106,7 +107,7 @@ async function refresh(flags: Record<string, string | boolean>, dryRun: boolean)
   if (broken.length) {
     console.error(
       `\n✗ Layout changed for: ${broken.map(([s]) => s).join(', ')}.\n` +
-        `  Fix it with:  /update-scraper ${broken[0][0]}   (in Claude Code)\n`
+        `  Try the automatic healer:  npm run prices:heal -- --store ${broken[0][0]}\n`
     )
     process.exit(1)
   }
