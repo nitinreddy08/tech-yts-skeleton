@@ -22,6 +22,9 @@ import type {
   NewsletterSubscriber,
 } from '@/types'
 import { isDealLive } from '@/lib/schemas'
+import priceSnapshot from '@/data/prices.json'
+import { applyPriceSnapshot, syncCurrentPrices } from '@/lib/prices/apply'
+import type { PriceSnapshot } from '@/lib/prices/types'
 
 // ─── Categories ──────────────────────────────────────────────────────────────
 
@@ -233,6 +236,10 @@ export const affiliateLinks: AffiliateLink[] = [
     stock_status: 'in_stock',
   },
 ]
+
+// Live prices: the scheduled scraper job (npm run prices:refresh) writes
+// data/prices.json; overlaying it here updates the links the products below share.
+applyPriceSnapshot(affiliateLinks, priceSnapshot as PriceSnapshot)
 
 // ─── FAQs (keyed by product id) ───────────────────────────────────────────────
 
@@ -806,6 +813,9 @@ export const newsletterSubscribers: NewsletterSubscriber[] = [
   { id: 'sub-seed-2', email: 'priya@outlook.com', subscribed_at: '2026-08-15T14:30:00Z' },
   { id: 'sub-seed-3', email: 'techdeals@yahoo.in', subscribed_at: '2026-08-20T09:15:00Z' },
 ]
+
+// Headline prices + best-price flags follow whatever the store prices are now.
+syncCurrentPrices(products)
 
 // ─── Mutable store & helpers ──────────────────────────────────────────────────
 

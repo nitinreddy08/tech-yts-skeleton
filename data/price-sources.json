@@ -1,0 +1,4 @@
+{
+  "_readme": "Optional per-link overrides, keyed by affiliate link id. `url` = the real product page to read (defaults to the link's affiliate_url); `apiId` = the id to send to a store API configured in config/price-scrapers/<store>.json. Links whose URL still contains 'mock' are skipped.",
+  "al-s25-amazon": { "url": null, "apiId": null }
+}

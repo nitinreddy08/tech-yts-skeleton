@@ -1,0 +1,49 @@
+{
+  "store": "amazon",
+  "hosts": [
+    "amazon.in"
+  ],
+  "strategies": [
+    {
+      "type": "jsonld"
+    },
+    {
+      "type": "css",
+      "selectors": [
+        "#corePrice_feature_div .a-price:not(.a-text-price) .a-offscreen",
+        "#corePriceDisplay_desktop_feature_div .a-price:not(.a-text-price) .a-offscreen",
+        "#apex_desktop .a-price:not(.a-text-price) .a-offscreen",
+        "#priceblock_ourprice",
+        "#priceblock_dealprice"
+      ]
+    }
+  ],
+  "availability": {
+    "selectors": [
+      "#availability",
+      "#outOfStock"
+    ],
+    "outOfStockTexts": [
+      "currently unavailable",
+      "out of stock"
+    ],
+    "lowStockTexts": [
+      "only 1 left",
+      "only 2 left",
+      "only 3 left",
+      "only 4 left",
+      "only 5 left"
+    ]
+  },
+  "blockedTexts": [
+    "to discuss automated access to amazon data"
+  ],
+  "notes": "Selectors are from memory of Amazon's layout and UNVERIFIED against live pages. Run `npm run prices:check -- --store amazon` and, if it reports broken, `/update-scraper amazon`. Amazon's Product Advertising API / Creators API is the stable route once you have credentials.",
+  "samples": [
+    {
+      "fixture": "lib/prices/__tests__/fixtures/amazon-css-only.html",
+      "expectedPrice": 79999,
+      "expectedStock": "in_stock"
+    }
+  ]
+}

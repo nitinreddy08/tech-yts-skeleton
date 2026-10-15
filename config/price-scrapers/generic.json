@@ -1,0 +1,26 @@
+{
+  "store": "generic",
+  "hosts": [],
+  "strategies": [
+    {
+      "type": "jsonld"
+    },
+    {
+      "type": "meta",
+      "selectors": [
+        "meta[property=\"product:price:amount\"]",
+        "meta[property=\"og:price:amount\"]",
+        "meta[itemprop=\"price\"]",
+        "[itemprop=\"price\"]@content"
+      ]
+    }
+  ],
+  "notes": "Fallback for any store without its own file (Apple Store, Samsung, Croma, ...). Uses only layout-independent signals, so it rarely needs repair.",
+  "samples": [
+    {
+      "fixture": "lib/prices/__tests__/fixtures/jsonld-product.html",
+      "expectedPrice": 79999,
+      "expectedStock": "in_stock"
+    }
+  ]
+}

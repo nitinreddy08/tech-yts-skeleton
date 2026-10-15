@@ -1,0 +1,43 @@
+{
+  "store": "flipkart",
+  "hosts": [
+    "flipkart.com",
+    "fkrt.it",
+    "fkrt.cc"
+  ],
+  "strategies": [
+    {
+      "type": "jsonld"
+    },
+    {
+      "type": "meta",
+      "selectors": [
+        "meta[property=\"product:price:amount\"]",
+        "meta[property=\"og:price:amount\"]"
+      ]
+    },
+    {
+      "type": "regex",
+      "patterns": [
+        "\"finalPrice\":\\{[^}]*?\"value\":(\\d+)",
+        "\"sellingPrice\":\\{[^}]*?\"value\":(\\d+)"
+      ]
+    }
+  ],
+  "availability": {
+    "selectors": [
+      "body"
+    ],
+    "outOfStockTexts": [
+      "currently unavailable",
+      "sold out"
+    ]
+  },
+  "notes": "UNVERIFIED against live pages (written without network access). Flipkart serves JSON-LD on most product pages; the regex patterns target its embedded page state and are the first thing to re-derive if the JSON-LD disappears. To use Flipkart's affiliate API, add an `api` block here and set `apiId` per link in data/price-sources.json.",
+  "samples": [
+    {
+      "fixture": "lib/prices/__tests__/fixtures/flipkart-state.html",
+      "expectedPrice": 69999
+    }
+  ]
+}

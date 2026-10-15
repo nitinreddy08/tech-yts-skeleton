@@ -7,13 +7,18 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest --run"
+    "test": "vitest --run",
+    "prices:refresh": "tsx scripts/prices/cli.ts refresh",
+    "prices:check": "tsx scripts/prices/cli.ts check",
+    "prices:inspect": "tsx scripts/prices/cli.ts inspect",
+    "prices:test": "vitest --run lib/prices"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-slider": "^1.3.6",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.100.0",
+    "cheerio": "^1.2.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.7.0",
@@ -40,6 +45,7 @@
     "jsdom": "^29.0.1",
     "msw": "^2.15.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.1"
