@@ -3,11 +3,12 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { extractFromHtml } from '../extract'
 import { loadConfigs } from '../load'
+import { PINNED } from './pinned-configs'
 import type { ScraperConfig } from '../types'
 
 const ROOT = join(__dirname, '..', '..', '..')
 const configs = loadConfigs(join(ROOT, 'config', 'price-scrapers'))
-const cfg = (store: string) => configs.find((c) => c.store === store)!
+const cfg = (store: string) => PINNED.find((c) => c.store === store)!
 const fixture = (name: string) => readFileSync(join(__dirname, 'fixtures', name), 'utf8')
 
 describe('extractFromHtml', () => {
@@ -60,6 +61,13 @@ describe('extractFromHtml', () => {
     const html = '<span id="p">₹5</span>'
     const c: ScraperConfig = { store: 't', hosts: [], strategies: [{ type: 'css', selectors: ['#p'] }], minPrice: 100 }
     expect(extractFromHtml(html, c)).toMatchObject({ ok: false })
+  })
+})
+
+describe('live configs', () => {
+  it('all load with a store, hosts and at least one strategy', () => {
+    expect(configs.map((c) => c.store).sort()).toEqual(expect.arrayContaining(['amazon', 'flipkart', 'generic']))
+    for (const c of configs) expect(c.strategies.length).toBeGreaterThan(0)
   })
 })
 

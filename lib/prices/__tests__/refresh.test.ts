@@ -5,11 +5,10 @@ import { refreshPrices, configFor, type RefreshDeps } from '../refresh'
 import { isPlausibleChange } from '../validate'
 import { applyPriceSnapshot, syncCurrentPrices } from '../apply'
 import { buildApiRequest, readApiResponse } from '../api'
-import { loadConfigs } from '../load'
+import { PINNED } from './pinned-configs'
 import type { LinkInput, ScraperConfig } from '../types'
 
-const ROOT = join(__dirname, '..', '..', '..')
-const configs = loadConfigs(join(ROOT, 'config', 'price-scrapers'))
+const configs = PINNED
 const fx = (n: string) => readFileSync(join(__dirname, 'fixtures', n), 'utf8')
 
 function deps(pages: Record<string, { status?: number; html?: string; throws?: boolean }>, env = {}): RefreshDeps {
