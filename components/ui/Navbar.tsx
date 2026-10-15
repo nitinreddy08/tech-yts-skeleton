@@ -288,6 +288,8 @@ function BottomNavItem({
 
 export default function Navbar({ categories, bestOfLists, activeDealCount }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
+  const [hideRow2, setHideRow2] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
   const pathname = usePathname()
@@ -301,10 +303,21 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
   const isProductPage = pathSegments.length === 2 && categories.some((c) => c.slug === pathSegments[0])
   const closeDrawer = () => setDrawerOpen(false)
   const drawerRef = useDialog<HTMLDivElement>(drawerOpen, closeDrawer)
+  const searchRef = useDialog<HTMLDivElement>(searchOpen, () => setSearchOpen(false))
   const tabbarRef = useBottomLayer<HTMLElement>('tabbar', !isProductPage)
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 8)
+    // The category row tucks away while reading down the page and returns on
+    // the way back up, so the sticky header costs less screen.
+    let last = window.scrollY
+    const handler = () => {
+      const y = window.scrollY
+      setScrolled(y > 8)
+      if (Math.abs(y - last) > 6) {
+        setHideRow2(y > 120 && y > last)
+        last = y
+      }
+    }
     window.addEventListener('scroll', handler, { passive: true })
     return () => window.removeEventListener('scroll', handler)
   }, [])
@@ -322,69 +335,90 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
 
   useEffect(() => {
     setDrawerOpen(false)
+    setSearchOpen(false)
     setExpandedSection(null)
   }, [pathname])
 
   return (
     <header ref={headerRef} className="sticky top-0 z-50 bg-surface">
-      {/* Top row: logo + search + menu */}
-      <div
-        className={`border-b border-border transition-all duration-200 ${
-          scrolled ? 'shadow-sm' : ''
-        }`}
-      >
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 h-14">
+      {/* Row 1 — logo, search, the three things people come back for. One 56px row on phones. */}
+      <div className={`border-b border-border transition-shadow duration-200 ${scrolled ? 'shadow-sm' : ''}`}>
+        <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6 md:h-16">
           <Link
             href="/"
-            className="flex items-center gap-2 font-heading text-lg font-bold text-primary shrink-0 hover:text-accent transition-colors"
+            className="flex shrink-0 items-center gap-2 font-heading text-lg font-bold text-primary transition-colors hover:text-accent"
           >
             <SiteLogoMark className="h-7 w-7 shrink-0" />
             <span className="truncate">{siteConfig.site_name}</span>
           </Link>
 
-          <div className="flex-1 max-w-2xl hidden md:block">
+          <div className="ml-4 hidden max-w-xl flex-1 md:block">
             <SearchBar />
           </div>
 
-          <Link
-            href="/deals"
-            className="hidden sm:inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-primary hover:border-accent hover:text-accent transition-colors shrink-0"
-          >
-            <Zap size={12} className="text-accent" />
-            Deals
-            {activeDealCount > 0 && (
-              <span className="rounded-full bg-accent text-white px-1.5 py-0.5 text-[11px] font-bold">
-                {activeDealCount}
-              </span>
+          <div className="ml-auto hidden items-center gap-1 md:flex">
+            <Link
+              href="/deals"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold text-primary transition-colors hover:bg-surface-alt hover:text-accent"
+            >
+              <Zap size={16} className="text-accent" aria-hidden />
+              Deals
+              {activeDealCount > 0 && (
+                <span className="min-w-[20px] rounded-full bg-accent px-1.5 py-0.5 text-center text-[11px] font-bold text-white">
+                  {activeDealCount}
+                </span>
+              )}
+            </Link>
+            <CompareDropdown />
+            <MyStuffNavLink className="min-h-11 rounded-lg px-3 text-sm font-semibold whitespace-nowrap hover:bg-surface-alt" />
+          </div>
+
+          {/* Phones: search icon only where the tab bar (which carries Search) is hidden, i.e. product pages. */}
+          <div className="ml-auto flex items-center md:hidden">
+            {isProductPage && (
+              <button
+                type="button"
+                className="flex h-11 w-11 items-center justify-center rounded-lg text-primary hover:bg-surface-alt"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Search"
+              >
+                <Search size={22} />
+              </button>
             )}
-          </Link>
-
-          <button
-            type="button"
-            className="md:hidden ml-auto flex items-center justify-center w-11 h-11 rounded-lg text-primary hover:bg-surface-alt"
-            onClick={() => setDrawerOpen(true)}
-            aria-label="Open menu"
-          >
-            <Menu size={22} />
-          </button>
-        </div>
-
-        {/* Mobile search — always visible */}
-        <div className="md:hidden px-4 pb-3">
-          <SearchBar />
+            <button
+              type="button"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-primary hover:bg-surface-alt"
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu size={22} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Desktop nav row */}
-      <nav className="hidden md:block border-b border-border bg-surface" aria-label="Main">
-        <div className="mx-auto flex max-w-7xl items-center px-4">
-          <Top10Dropdown lists={bestOfLists} />
-          <CompareDropdown />
-          <MyStuffNavLink className="min-h-11 px-3 py-3 text-sm font-medium whitespace-nowrap -mb-px" />
-          <div className="ml-auto flex items-center">
+      {/* Row 2 (desktop) — browse by category + guides. Collapses while scrolling down. */}
+      <nav
+        className={`hidden border-b border-border bg-surface md:grid md:transition-[grid-template-rows] md:duration-200 ${
+          hideRow2 ? 'md:grid-rows-[0fr] md:border-b-0' : 'md:grid-rows-[1fr]'
+        }`}
+        aria-label="Main"
+        aria-hidden={hideRow2}
+      >
+        <div className="overflow-hidden">
+          <div className="mx-auto flex max-w-7xl items-center px-4 sm:px-6">
             {categories.map((cat) => (
               <CategoryLink key={cat.slug} category={cat} />
             ))}
+            <div className="ml-auto flex items-center">
+              <Top10Dropdown lists={bestOfLists} />
+              <Link
+                href="/brands"
+                className="flex min-h-11 items-center px-3 text-sm font-medium text-muted transition-colors hover:text-primary"
+              >
+                Brands
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
@@ -553,8 +587,8 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
         document.body
       )}
 
-      {/* Mobile bottom tab bar — thumb-reachable primary actions.
-          Hidden on product pages, which have their own sticky buy bar. */}
+      {/* Mobile bottom tab bar — the five places people actually go. Hidden on product
+          pages, which have their own sticky buy bar. */}
       {!isProductPage && (
         <nav
           ref={tabbarRef}
@@ -563,10 +597,17 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
         >
           <BottomNavItem href="/" icon={<Home size={20} />} label="Home" active={pathname === '/'} />
           <BottomNavItem
-            href="/search"
             icon={<Search size={20} />}
             label="Search"
-            active={pathname === '/search'}
+            active={searchOpen || pathname === '/search'}
+            onClick={() => setSearchOpen(true)}
+          />
+          <BottomNavItem
+            href="/deals"
+            icon={<Zap size={20} />}
+            label="Deals"
+            active={pathname === '/deals'}
+            badge={activeDealCount}
           />
           <BottomNavItem
             href={compareHref}
@@ -578,18 +619,43 @@ export default function Navbar({ categories, bestOfLists, activeDealCount }: Nav
           <BottomNavItem
             href="/my?tab=saved"
             icon={<Bookmark size={20} />}
-            label="Saved"
+            label="My Stuff"
             active={pathname === '/my'}
             badge={savedCount}
           />
-          <BottomNavItem
-            icon={<Menu size={20} />}
-            label="Menu"
-            active={drawerOpen}
-            onClick={() => setDrawerOpen(true)}
-          />
         </nav>
       )}
+
+      {/* Phone search: a full-screen sheet so the field is one tap away without a
+          permanent 52px search row in the header. */}
+      {searchOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[70] md:hidden">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setSearchOpen(false)} aria-hidden />
+            <div
+              ref={searchRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Search"
+              tabIndex={-1}
+              className="absolute inset-x-0 top-0 flex max-h-full flex-col gap-3 bg-surface p-4 shadow-xl outline-none"
+            >
+              <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <SearchBar autoFocus />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(false)}
+                  className="flex h-11 shrink-0 items-center px-2 text-sm font-semibold text-accent"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </header>
   )
 }

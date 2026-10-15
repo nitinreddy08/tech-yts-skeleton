@@ -7,21 +7,6 @@ import { ArrowUp } from 'lucide-react'
 import { NewsletterSignup } from '@/components/ui/NewsletterSignup'
 import { SiteLogoMark } from '@/components/ui/SiteLogo'
 
-interface FooterCategory {
-  slug: string
-  name: string
-}
-
-interface FooterBestOf {
-  slug: string
-  title: string
-}
-
-interface FooterProps {
-  categories: FooterCategory[]
-  bestOfLists: FooterBestOf[]
-}
-
 function YoutubeIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor" width="20" height="20" aria-hidden="true">
@@ -53,23 +38,26 @@ const SOCIAL_ICON_MAP: Record<string, React.ComponentType<{ className?: string }
   instagram: InstagramIcon,
 }
 
-const QUICK_LINKS = [
-  { href: '/deals', label: 'Deals & Offers' },
-  { href: '/compare', label: 'Compare Products' },
-  { href: '/brands', label: 'All Brands' },
-  { href: '/tags', label: 'Browse Tags' },
+const EXPLORE_LINKS = [
+  { href: '/deals', label: 'Deals & offers' },
+  { href: '/best-of', label: 'Editor’s guides' },
+  { href: '/compare', label: 'Compare products' },
+  { href: '/brands', label: 'All brands' },
   { href: '/my', label: 'My Stuff' },
 ]
 
-const LEGAL_LINKS = [
-  { href: '/about', label: 'About Us' },
-  { href: '/how-we-test', label: 'How We Test' },
-  { href: '/affiliate-disclosure', label: 'Affiliate Disclosure' },
-  { href: '/privacy', label: 'Privacy Policy' },
-  { href: '/terms', label: 'Terms of Use' },
+const ABOUT_LINKS = [
+  { href: '/about', label: 'About us' },
+  { href: '/how-we-test', label: 'How we test' },
+  { href: '/affiliate-disclosure', label: 'Affiliate disclosure' },
+  { href: '/privacy', label: 'Privacy' },
+  { href: '/terms', label: 'Terms' },
 ]
 
-export default function Footer({ categories, bestOfLists }: FooterProps) {
+const linkClass =
+  'flex min-h-8 items-center pointer-coarse:min-h-11 text-sm text-muted transition-colors hover:text-accent'
+
+export default function Footer() {
   const [showBackToTop, setShowBackToTop] = useState(false)
 
   useEffect(() => {
@@ -81,116 +69,69 @@ export default function Footer({ categories, bestOfLists }: FooterProps) {
   const hasSocial = Object.values(siteConfig.social_links).some(Boolean)
 
   return (
-    <footer className="mt-auto bg-surface-alt border-t border-border">
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+    <footer className="mt-auto border-t border-border bg-surface-alt">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-10">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-8 lg:grid-cols-[2fr_1fr_1fr]">
           {/* Brand + newsletter */}
-          <div className="sm:col-span-2 lg:col-span-1">
+          <div className="col-span-2 lg:col-span-1">
             <p className="flex items-center gap-2 font-heading text-lg font-bold text-primary">
               <SiteLogoMark className="h-6 w-6 shrink-0" />
               {siteConfig.site_name}
             </p>
-            <p className="mt-2 text-sm text-muted leading-relaxed">{siteConfig.tagline}</p>
-            <p className="mt-3 text-xs text-muted">
-              Honest tech reviews and best prices for the Indian market.
-            </p>
-
+            <p className="mt-2 text-sm leading-relaxed text-muted">{siteConfig.tagline}</p>
             <NewsletterSignup />
-          </div>
-
-          {/* Browse */}
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-4">Browse</h2>
-            <nav aria-label="Browse categories" className="flex flex-col">
-              {categories.map((cat) => (
-                <Link
-                  key={cat.slug}
-                  href={`/${cat.slug}`}
-                  className="flex min-h-8 items-center pointer-coarse:min-h-11 text-sm text-muted hover:text-accent transition-colors"
-                >
-                  {cat.name}
-                </Link>
-              ))}
-            </nav>
-          </div>
-
-          {/* Guides */}
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-4">Editor&apos;s Guides</h2>
-            <nav aria-label="Editor's guides" className="flex flex-col">
-              {bestOfLists.map((list) => (
-                <Link
-                  key={list.slug}
-                  href={`/best-of/${list.slug}`}
-                  className="flex min-h-8 items-center pointer-coarse:min-h-11 text-sm text-muted hover:text-accent transition-colors line-clamp-1"
-                >
-                  {list.title}
-                </Link>
-              ))}
-              <Link href="/best-of" className="flex min-h-8 items-center pointer-coarse:min-h-11 text-sm font-semibold text-accent hover:underline mt-1">
-                All guides →
-              </Link>
-            </nav>
-          </div>
-
-          {/* Quick links + social */}
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-4">Quick Links</h2>
-            <nav aria-label="Quick links" className="flex flex-col mb-6">
-              {QUICK_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="flex min-h-8 items-center pointer-coarse:min-h-11 text-sm text-muted hover:text-accent transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-3">Legal</h2>
-            <nav aria-label="Legal" className="flex flex-col mb-6">
-              {LEGAL_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="flex min-h-8 items-center pointer-coarse:min-h-11 text-sm text-muted hover:text-accent transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-
             {hasSocial && (
-              <>
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-3">Follow</h2>
-                <div className="flex gap-3">
-                  {Object.entries(siteConfig.social_links).map(([platform, url]) => {
-                    const Icon = SOCIAL_ICON_MAP[platform.toLowerCase()]
-                    if (!Icon || !url) return null
-                    return (
-                      <a
-                        key={platform}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`Follow on ${platform}`}
-                        className="flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface text-muted hover:text-accent hover:border-accent transition-colors"
-                      >
-                        <Icon className="w-5 h-5" />
-                      </a>
-                    )
-                  })}
-                </div>
-              </>
+              <div className="mt-3 flex gap-2">
+                {Object.entries(siteConfig.social_links).map(([platform, url]) => {
+                  const Icon = SOCIAL_ICON_MAP[platform.toLowerCase()]
+                  if (!Icon || !url) return null
+                  return (
+                    <a
+                      key={platform}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Follow on ${platform}`}
+                      className="flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface text-muted transition-colors hover:border-accent hover:text-accent"
+                    >
+                      <Icon className="h-5 w-5" />
+                    </a>
+                  )
+                })}
+              </div>
             )}
           </div>
+
+          {/* Explore */}
+          <div>
+            <h2 className="mb-2 text-sm font-semibold text-primary">Explore</h2>
+            <nav aria-label="Explore" className="flex flex-col">
+              {EXPLORE_LINKS.map((link) => (
+                <Link key={link.href} href={link.href} className={linkClass}>
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          {/* About + legal */}
+          <div>
+            <h2 className="mb-2 text-sm font-semibold text-primary">About</h2>
+            <nav aria-label="About and legal" className="flex flex-col">
+              {ABOUT_LINKS.map((link) => (
+                <Link key={link.href} href={link.href} className={linkClass}>
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
         </div>
       </div>
 
       {/* Bottom strip */}
       <div className="border-t border-border">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-1 px-4 py-3 text-xs text-muted sm:flex-row sm:items-center sm:px-6">
           <p>{siteConfig.footer_text}</p>
           <p>We may earn a commission from qualifying purchases.</p>
         </div>

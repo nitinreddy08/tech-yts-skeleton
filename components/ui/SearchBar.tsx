@@ -37,7 +37,7 @@ function highlightMatch(text: string, query: string): React.ReactNode {
   )
 }
 
-export function SearchBar() {
+export function SearchBar({ autoFocus = false }: { autoFocus?: boolean } = {}) {
   // The navbar mounts two instances (desktop + mobile), so ids must be unique.
   const uid = useId()
   const inputId = `${uid}-input`
@@ -197,6 +197,7 @@ export function SearchBar() {
             placeholder="Search phones, laptops, earbuds..."
             className="w-full rounded-full border border-border bg-surface px-4 py-2 pl-10 text-sm text-primary placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent outline-none"
             autoComplete="off"
+            autoFocus={autoFocus}
           />
           {query.length > 0 && (
             <button
