@@ -7,6 +7,8 @@ import { Clock, ChevronRight, Package } from 'lucide-react'
 import { loadRecentlyViewed } from '@/lib/utils/recently-viewed'
 import { formatIndianPrice } from '@/lib/utils/format'
 import { Eyebrow } from '@/components/ui/Eyebrow'
+import { Price } from '@/components/ui/Price'
+import { Section, SectionHeader, Rail } from '@/components/ui/Section'
 import type { ProductSummary } from '@/types'
 
 interface RecentlyViewedStripProps {
@@ -80,48 +82,35 @@ export function RecentlyViewedStrip({
   }
 
   return (
-    <section className={`py-12 px-4 bg-surface ${className}`}>
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2 className="font-heading text-xl font-bold text-primary flex items-center gap-2">
-              <Clock size={20} className="text-accent" /> Continue Browsing
-            </h2>
-            <p className="text-sm text-muted mt-0.5">Pick up where you left off</p>
-          </div>
-        </div>
-        <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory">
-          {items.map((p) => (
-            <Link
-              key={p.id}
-              href={`/${p.category_slug}/${p.slug}`}
-              className="snap-start shrink-0 w-36 sm:w-40 rounded-xl border border-border bg-surface-alt p-3 hover:border-accent hover:shadow-sm transition-all group"
-            >
-              <div className="relative aspect-square rounded-lg bg-surface border border-border overflow-hidden mb-2">
-                {p.thumbnail_url ? (
-                  <Image
-                    src={p.thumbnail_url}
-                    alt={p.name}
-                    fill
-                    sizes="160px"
-                    className="object-contain p-2 group-hover:scale-105 transition-transform"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <Package size={28} className="text-muted/30" />
-                  </div>
-                )}
-              </div>
-              <p className="text-xs font-semibold text-primary line-clamp-2 leading-snug group-hover:text-accent transition-colors">
-                {p.name}
-              </p>
-              {p.current_price_inr != null && (
-                <p className="text-xs font-bold text-accent mt-1">{formatIndianPrice(p.current_price_inr)}</p>
+    <Section compact className={className}>
+      <SectionHeader title="Continue browsing" className="mb-3 md:mb-4" />
+      <Rail className="md:grid-cols-6 [&>*]:w-36 sm:[&>*]:w-40 md:[&>*]:w-auto">
+        {items.slice(0, 6).map((p) => (
+          <Link
+            key={p.id}
+            href={`/${p.category_slug}/${p.slug}`}
+            className="group rounded-xl border border-border bg-surface p-3 transition-shadow hover:shadow-md"
+          >
+            <div className="relative mb-2 aspect-[4/3] overflow-hidden rounded-lg bg-surface-alt">
+              {p.thumbnail_url ? (
+                <Image
+                  src={p.thumbnail_url}
+                  alt=""
+                  fill
+                  sizes="160px"
+                  className="object-contain p-2 transition-transform group-hover:scale-105"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <Package size={28} className="text-muted/30" />
+                </div>
               )}
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
+            </div>
+            <p className="line-clamp-2 text-xs font-semibold leading-snug text-primary group-hover:text-accent">{p.name}</p>
+            <Price value={p.current_price_inr} size="sm" className="mt-1 !text-sm" />
+          </Link>
+        ))}
+      </Rail>
+    </Section>
   )
 }
