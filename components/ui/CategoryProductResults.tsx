@@ -16,9 +16,13 @@ type ViewMode = 'grid' | 'list'
 interface CategoryProductResultsProps {
   products: ProductSummary[]
   dealMap: Record<string, ProductDealBadge>
+  /** Quick filters etc. shown on the same row as the grid/list toggle. */
+  toolbar?: React.ReactNode
+  /** No sidebar next to the grid, so it can fit an extra column. */
+  wide?: boolean
 }
 
-export function CategoryProductResults({ products, dealMap }: CategoryProductResultsProps) {
+export function CategoryProductResults({ products, dealMap, toolbar, wide = false }: CategoryProductResultsProps) {
   const [view, setView] = useState<ViewMode>('grid')
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
@@ -41,34 +45,36 @@ export function CategoryProductResults({ products, dealMap }: CategoryProductRes
 
   return (
     <>
-      <div role="group" aria-label="Layout" className="flex items-center justify-end gap-1 mb-4">
-        <span className="text-xs text-muted mr-2 hidden sm:inline">View</span>
-        <button
-          type="button"
-          onClick={() => switchView('grid')}
-          aria-pressed={view === 'grid'}
-          className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${
-            view === 'grid' ? 'bg-accent text-white' : 'border border-border text-muted hover:text-primary'
-          }`}
-          aria-label="Grid view"
-        >
-          <LayoutGrid size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={() => switchView('list')}
-          aria-pressed={view === 'list'}
-          className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${
-            view === 'list' ? 'bg-accent text-white' : 'border border-border text-muted hover:text-primary'
-          }`}
-          aria-label="List view"
-        >
-          <List size={16} />
-        </button>
+      <div className="mb-3 flex items-center gap-3 md:mb-4">
+        {toolbar ?? <div className="flex-1" />}
+        <div role="group" aria-label="Layout" className="flex shrink-0 items-center gap-1">
+          <button
+            type="button"
+            onClick={() => switchView('grid')}
+            aria-pressed={view === 'grid'}
+            className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${
+              view === 'grid' ? 'bg-accent text-white' : 'border border-border text-muted hover:text-primary'
+            }`}
+            aria-label="Grid view"
+          >
+            <LayoutGrid size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={() => switchView('list')}
+            aria-pressed={view === 'list'}
+            className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${
+              view === 'list' ? 'bg-accent text-white' : 'border border-border text-muted hover:text-primary'
+            }`}
+            aria-label="List view"
+          >
+            <List size={16} />
+          </button>
+        </div>
       </div>
 
       {view === 'grid' ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className={`grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 ${wide ? 'lg:grid-cols-4 xl:grid-cols-5' : 'xl:grid-cols-4'}`}>
           {visible.map((p) => (
             <ProductCard key={p.id} product={p} activeDeal={dealMap[p.id]} />
           ))}

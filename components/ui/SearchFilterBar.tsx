@@ -102,10 +102,10 @@ export function SearchFilterBar({ categories, resultCount, query }: SearchFilter
   const panelId = `${uid}-filters`
 
   return (
-    <div className="flex flex-col gap-3" aria-busy={pending}>
+    <div className="flex flex-col gap-3 md:flex-row-reverse md:items-start md:justify-between md:gap-4" aria-busy={pending}>
       {/* Top row: result count, filters toggle (mobile), sort */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-muted" aria-live="polite">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end md:shrink-0">
+        <p className="text-sm text-muted sm:hidden" aria-live="polite">
           <span className="font-semibold text-primary">{resultCount}</span>{' '}
           {resultCount === 1 ? 'result' : 'results'}
           {pending && <span className="ml-2 text-xs">Updating…</span>}
@@ -140,7 +140,7 @@ export function SearchFilterBar({ categories, resultCount, query }: SearchFilter
       </div>
 
       {/* Filter chip rows: always visible from md up, behind the Filters button on phones */}
-      <div id={panelId} className={`${open ? 'flex' : 'hidden'} flex-col gap-2 md:flex`}>
+      <div id={panelId} className={`${open ? 'flex' : 'hidden'} min-w-0 flex-col gap-2 md:flex md:flex-1`}>
         <div role="group" aria-label="Category" className="flex flex-wrap gap-1.5">
           {categories.map((cat) => (
             <Chip

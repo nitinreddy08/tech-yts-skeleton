@@ -9,10 +9,10 @@ import { getPopularTagsForCategory } from '@/lib/data/category-tags'
 import { generateCategoryMetadata, generateBreadcrumbJsonLd, generateCategoryItemListJsonLd } from '@/lib/utils/seo'
 import { productRepository } from '@/lib/repositories'
 import { CategoryProductResults } from '@/components/ui/CategoryProductResults'
-import { CategoryPopularTags } from '@/components/ui/CategoryPopularTags'
+import { CategoryQuickFilters } from '@/components/ui/CategoryQuickFilters'
+import { ListingHeader } from '@/components/ui/ListingHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { CategoryFilterClient } from '@/components/ui/CategoryFilterClient'
-import { CategoryBudgetChips } from '@/components/ui/CategoryBudgetChips'
+import { CategoryFilterClient, CategorySortSelect } from '@/components/ui/CategoryFilterClient'
 import { FilterBarSkeleton } from '@/components/ui/LoadingSkeleton'
 import { SearchX } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
@@ -20,13 +20,6 @@ import type { Metadata } from 'next'
 import type { SortOption, ProductFilters, ProductSummary } from '@/types'
 
 export const revalidate = 60
-
-const CATEGORY_EMOJI: Record<string, string> = {
-  smartphones: '📱',
-  laptops: '💻',
-  headphones: '🎧',
-  tablets: '📟',
-}
 
 export async function generateStaticParams() {
   const categories = await fetchAllCategories()
@@ -120,7 +113,6 @@ export default async function CategoryPage({
   const availableBrands = [...new Set(allProducts.map((p) => p.brand_name))].sort()
   const specFilterDefs = getSpecFiltersForCategory(cat)
   const dealMap = getActiveDealMap()
-  const emoji = CATEGORY_EMOJI[cat.slug] ?? cat.icon
   const categoryItemListLd = generateCategoryItemListJsonLd(cat.name, cat.slug, allProducts)
 
   return (
@@ -140,23 +132,21 @@ export default async function CategoryPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(categoryItemListLd) }}
       />
-    <main className="mx-auto max-w-7xl px-4 py-8">
-      <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: cat.name }]} />
+    <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-8">
+      <Breadcrumb className="mb-3 md:mb-4" items={[{ label: 'Home', href: '/' }, { label: cat.name }]} />
 
-      {/* Page header */}
-      <div className="mb-6 flex items-center gap-4 rounded-xl bg-surface-alt p-6 border border-border">
-        <span className="text-4xl" role="img" aria-hidden>{emoji}</span>
-        <div className="flex-1 min-w-0">
-          <h1 className="font-heading text-2xl font-bold text-primary">{cat.name}</h1>
-          {cat.description && <p className="text-sm text-muted mt-0.5">{cat.description}</p>}
-        </div>
-        <p className="hidden sm:block text-sm text-muted shrink-0">
-          <span className="font-semibold text-primary">{products.length}</span> of{' '}
-          {allProducts.length} products
-        </p>
-      </div>
+      <ListingHeader
+        title={cat.name}
+        subtitle={cat.description ?? undefined}
+        count={products.length}
+        actions={
+          <Suspense fallback={null}>
+            <CategorySortSelect categorySlug={cat.slug} />
+          </Suspense>
+        }
+      />
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-8">
         <Suspense fallback={<FilterBarSkeleton />}>
           <CategoryFilterClient
             categorySlug={cat.slug}
@@ -167,11 +157,7 @@ export default async function CategoryPage({
           />
         </Suspense>
 
-        <div className="flex-1 min-w-0">
-          <CategoryPopularTags categoryName={cat.name} tags={popularTags} />
-          <Suspense fallback={<div className="mb-6 h-9 max-w-md shimmer rounded-full" aria-hidden />}>
-            <CategoryBudgetChips categorySlug={cat.slug} />
-          </Suspense>
+        <div className="min-w-0 flex-1">
           {products.length === 0 ? (
             <EmptyState
               icon={SearchX}
@@ -180,7 +166,15 @@ export default async function CategoryPage({
               action={{ label: 'Clear Filters', href: `/${cat.slug}` }}
             />
           ) : (
-            <CategoryProductResults products={products} dealMap={dealMap} />
+            <CategoryProductResults
+              products={products}
+              dealMap={dealMap}
+              toolbar={
+                <Suspense fallback={<div className="h-9 flex-1" aria-hidden />}>
+                  <CategoryQuickFilters categorySlug={cat.slug} tags={popularTags} />
+                </Suspense>
+              }
+            />
           )}
         </div>
       </div>

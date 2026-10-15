@@ -27,35 +27,29 @@ export function BrandProductResults({ products, dealMap, brandName }: BrandProdu
     return slug.charAt(0).toUpperCase() + slug.slice(1)
   }
 
-  return (
-    <div>
-      {categories.length > 1 && (
-        <div role="group" aria-label="Category" className="mb-6 flex flex-wrap items-center gap-2">
-          <span className="mr-1 text-xs font-semibold uppercase tracking-wider text-muted">Category</span>
-          <Chip active={category === 'all'} aria-pressed={category === 'all'} onClick={() => setCategory('all')}>
-            All {brandName}
+  const chips =
+    categories.length > 1 ? (
+      <div role="group" aria-label="Category" className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-1 no-scrollbar">
+        <Chip active={category === 'all'} aria-pressed={category === 'all'} onClick={() => setCategory('all')} className="shrink-0">
+          All {brandName}
+        </Chip>
+        {categories.map((slug) => (
+          <Chip
+            key={slug}
+            className="shrink-0 capitalize"
+            active={category === slug}
+            aria-pressed={category === slug}
+            onClick={() => setCategory(slug)}
+          >
+            {categoryLabel(slug)}
           </Chip>
-          {categories.map((slug) => (
-            <Chip
-              key={slug}
-              className="capitalize"
-              active={category === slug}
-              aria-pressed={category === slug}
-              onClick={() => setCategory(slug)}
-            >
-              {categoryLabel(slug)}
-            </Chip>
-          ))}
-        </div>
-      )}
+        ))}
+      </div>
+    ) : undefined
 
-      {filtered.length === 0 ? (
-        <p className="text-sm text-muted text-center py-12">
-          No {brandName} products in this category.
-        </p>
-      ) : (
-        <CategoryProductResults products={filtered} dealMap={dealMap} />
-      )}
-    </div>
+  return filtered.length === 0 ? (
+    <p className="py-12 text-center text-sm text-muted">No {brandName} products in this category.</p>
+  ) : (
+    <CategoryProductResults products={filtered} dealMap={dealMap} toolbar={chips} wide />
   )
 }

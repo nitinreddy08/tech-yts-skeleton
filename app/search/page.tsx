@@ -1,6 +1,5 @@
 import { Suspense } from 'react'
-import Link from 'next/link'
-import { Search, SearchX, Sparkles } from 'lucide-react'
+import { SearchX } from 'lucide-react'
 import { searchProductsFull } from '@/lib/data/search'
 import { getSearchSuggestions } from '@/lib/data/search-suggestions'
 import { fetchAllCategories } from '@/lib/data/categories'
@@ -14,6 +13,8 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Chip } from '@/components/ui/Chip'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Rail } from '@/components/ui/Section'
+import { ListingHeader } from '@/components/ui/ListingHeader'
 import { getActiveDealMap } from '@/lib/data/product-deals'
 import { priceRangeLabel } from '@/lib/constants/price-bands'
 import { POPULAR_SEARCHES } from '@/lib/constants/popular-searches'
@@ -107,68 +108,61 @@ export default async function SearchPage({
     .join(' · ')
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
-      {/* ── Page header: heading + an editable search box ───────────── */}
-      <div className="mb-6">
-        <h1 className="font-heading text-2xl font-bold text-primary">
-          {hasQuery ? (
-            <>Results for &ldquo;{trimmedQ}&rdquo;</>
-          ) : showCatalog ? (
-            catalogTitle
-          ) : (
-            <span className="flex items-center gap-2">
-              <Search size={22} className="text-accent" aria-hidden />
-              Search
-            </span>
-          )}
-        </h1>
+    <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-8">
+      {/* ── Page header: title + an editable search box ───────────── */}
+      <ListingHeader
+        className="!mb-3"
+        title={hasQuery ? <>Results for &ldquo;{trimmedQ}&rdquo;</> : showCatalog ? catalogTitle : 'Search'}
+        count={hasQuery || showCatalog ? results.length : undefined}
+        countLabel="results"
+      />
 
-        {/* Plain GET form: works without JS and keeps any active filters. */}
-        <form action="/search" method="get" role="search" className="mt-4 flex max-w-2xl gap-2">
-          {category && <input type="hidden" name="category" value={category} />}
-          {minPrice != null && <input type="hidden" name="minPrice" value={minPrice} />}
-          {maxPrice != null && <input type="hidden" name="maxPrice" value={maxPrice} />}
-          {minRating != null && <input type="hidden" name="minRating" value={minRating} />}
-          {sort && sort !== 'relevance' && <input type="hidden" name="sort" value={sort} />}
-          <label htmlFor="page-search" className="sr-only">Search products</label>
-          <Input
-            id="page-search"
-            name="q"
-            type="search"
-            defaultValue={q}
-            placeholder="Search phones, laptops, earbuds…"
-            className="flex-1 text-base sm:text-sm"
-            autoComplete="off"
-            aria-describedby={tooShort ? 'search-hint' : undefined}
-          />
-          <Button type="submit" size="auto" className="h-11 px-5 text-sm">Search</Button>
-        </form>
-        {tooShort && (
-          <p id="search-hint" role="status" className="mt-2 text-sm text-muted">
-            Type at least 2 characters to search.
-          </p>
-        )}
-      </div>
+      {/* Plain GET form: works without JS and keeps any active filters. */}
+      <form action="/search" method="get" role="search" className="mb-4 flex max-w-2xl gap-2">
+        {category && <input type="hidden" name="category" value={category} />}
+        {minPrice != null && <input type="hidden" name="minPrice" value={minPrice} />}
+        {maxPrice != null && <input type="hidden" name="maxPrice" value={maxPrice} />}
+        {minRating != null && <input type="hidden" name="minRating" value={minRating} />}
+        {sort && sort !== 'relevance' && <input type="hidden" name="sort" value={sort} />}
+        <label htmlFor="page-search" className="sr-only">Search products</label>
+        <Input
+          id="page-search"
+          name="q"
+          type="search"
+          defaultValue={q}
+          placeholder="Search phones, laptops, earbuds…"
+          className="flex-1 text-base sm:text-sm"
+          autoComplete="off"
+          aria-describedby={tooShort ? 'search-hint' : undefined}
+        />
+        <Button type="submit" size="auto" className="h-11 px-5 text-sm">Search</Button>
+      </form>
+      {tooShort && (
+        <p id="search-hint" role="status" className="-mt-2 mb-4 text-sm text-muted">
+          Type at least 2 characters to search.
+        </p>
+      )}
 
-      {/* ── Filter bar — client island ────────────────────────────── */}
-      <div className="mb-6 space-y-4">
-        <Suspense fallback={<FilterBarSkeleton />}>
-          <SearchFilterBar
-            categories={categories.map((c) => ({
-              slug: c.slug,
-              name: c.name,
-              icon: c.icon,
-            }))}
-            resultCount={results.length}
-            query={q}
-          />
-        </Suspense>
-        <RecentSearchesStrip currentQuery={q} />
-      </div>
+      {/* ── Filter bar — client island (only when there is something to filter) ── */}
+      {(hasQuery || showCatalog) && (
+        <div className="mb-5">
+          <Suspense fallback={<FilterBarSkeleton />}>
+            <SearchFilterBar
+              categories={categories.map((c) => ({
+                slug: c.slug,
+                name: c.name,
+                icon: c.icon,
+              }))}
+              resultCount={results.length}
+              query={q}
+            />
+          </Suspense>
+        </div>
+      )}
 
       {/* ── Results grid ────────────────────────────────────────────── */}
       {showResults && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
           {results.map((r) => (
             <SearchResultCard key={r.id} result={r} query={q} />
           ))}
@@ -208,7 +202,7 @@ export default async function SearchPage({
           )}
 
           <div>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Browse a category</h2>
+            <h2 className="mb-2 text-sm font-semibold text-primary">Browse a category</h2>
             <div className="flex flex-wrap justify-center gap-2">
               {categories.map((c) => (
                 <Chip key={c.slug} size="md" href={`/${c.slug}`}>
@@ -231,49 +225,44 @@ export default async function SearchPage({
         </div>
       )}
 
-      {/* ── Empty query — landing state ──────────────────────────────── */}
+      {/* ── Empty query — landing state: recent + popular searches, then what's popular ── */}
       {!hasQuery && !showCatalog && (
-        <div className="flex flex-col gap-10">
-          <section>
-            <h2 className="mb-4 font-heading text-base font-semibold text-primary">Browse by category</h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {categories.map((c) => (
-                <Link
-                  key={c.slug}
-                  href={`/${c.slug}`}
-                  className="flex min-h-11 flex-col items-center gap-2 rounded-xl border border-border bg-surface p-5 text-center transition-all hover:border-accent hover:shadow-sm"
-                >
-                  <span className="text-3xl" aria-hidden>{c.icon}</span>
-                  <span className="text-sm font-medium text-primary">{c.name}</span>
-                </Link>
-              ))}
-            </div>
-          </section>
+        <div className="flex flex-col gap-6">
+          <RecentSearchesStrip currentQuery={q} />
 
-          {featured.length > 0 && (
-            <section>
-              <h2 className="mb-4 flex items-center gap-2 font-heading text-base font-semibold text-primary">
-                <Sparkles size={16} className="text-accent" aria-hidden />
-                Popular right now
-              </h2>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                {featured.map((p) => (
-                  <ProductCard key={p.id} product={p} activeDeal={dealMap[p.id]} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          <section>
-            <h2 className="mb-3 font-heading text-base font-semibold text-primary">Popular searches</h2>
+          <section aria-labelledby="popular-searches">
+            <h2 id="popular-searches" className="mb-2 text-h3 text-primary">Popular searches</h2>
             <div className="flex flex-wrap gap-2">
               {POPULAR_SEARCHES.map((term) => (
-                <Chip key={term} href={`/search?q=${encodeURIComponent(term)}`}>
+                <Chip key={term} size="md" href={`/search?q=${encodeURIComponent(term)}`}>
                   {term}
                 </Chip>
               ))}
             </div>
           </section>
+
+          {/* Phones have no category row in the header; desktop does, so this is phone-only. */}
+          <section aria-labelledby="browse-categories" className="md:hidden">
+            <h2 id="browse-categories" className="mb-2 text-h3 text-primary">Browse by category</h2>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((c) => (
+                <Chip key={c.slug} size="md" href={`/${c.slug}`}>
+                  <span aria-hidden>{c.icon}</span> {c.name}
+                </Chip>
+              ))}
+            </div>
+          </section>
+
+          {featured.length > 0 && (
+            <section aria-labelledby="popular-now">
+              <h2 id="popular-now" className="mb-3 text-h3 text-primary">Popular right now</h2>
+              <Rail>
+                {featured.slice(0, 4).map((p) => (
+                  <ProductCard key={p.id} product={p} activeDeal={dealMap[p.id]} />
+                ))}
+              </Rail>
+            </section>
+          )}
         </div>
       )}
     </main>

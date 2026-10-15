@@ -41,14 +41,13 @@ export function TagProductResults({ products, dealMap }: TagProductResultsProps)
   const sorted = useMemo(() => sortProducts(products, sort), [products, sort])
 
   return (
-    <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted">
-          <span className="font-semibold text-primary">{sorted.length}</span> product
-          {sorted.length !== 1 ? 's' : ''}
-        </p>
-        <div className="flex items-center gap-2">
-          <label htmlFor="tag-sort" className="text-xs font-semibold uppercase tracking-wider text-muted">Sort</label>
+    <CategoryProductResults
+      products={sorted}
+      dealMap={dealMap}
+      wide
+      toolbar={
+        <div className="flex flex-1 items-center gap-2">
+          <label htmlFor="tag-sort" className="text-sm text-muted">Sort</label>
           <select
             id="tag-sort"
             value={sort}
@@ -62,8 +61,7 @@ export function TagProductResults({ products, dealMap }: TagProductResultsProps)
             ))}
           </select>
         </div>
-      </div>
-      <CategoryProductResults products={sorted} dealMap={dealMap} />
-    </div>
+      }
+    />
   )
 }

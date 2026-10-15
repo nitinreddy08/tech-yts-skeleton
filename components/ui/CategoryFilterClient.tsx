@@ -3,13 +3,12 @@
 import { useCallback, useId, useState, useTransition } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { SlidersHorizontal, X, Search } from 'lucide-react'
+import { SlidersHorizontal, X, ChevronDown } from 'lucide-react'
 import type { SpecFilterDef } from '@/lib/utils/spec-filters'
 import { specFilterParamKey } from '@/lib/utils/spec-filters'
 import { Chip } from '@/components/ui/Chip'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { priceBandsFor, priceRangeLabel } from '@/lib/constants/price-bands'
 import { useDialog } from '@/lib/hooks/useDialog'
 
@@ -35,6 +34,45 @@ interface CategoryFilterClientProps {
   totalCount: number
 }
 
+/** Sort control for the desktop title row (phones have it in the sticky toolbar). */
+export function CategorySortSelect({ categorySlug }: { categorySlug: string }) {
+  const router = useRouter()
+  const sp = useSearchParams()
+  const active = sp.get('sort') ?? 'rating_desc'
+  return (
+    <label className="hidden items-center gap-2 text-sm text-muted lg:flex">
+      Sort
+      <select
+        value={active}
+        onChange={(e) => {
+          const params = new URLSearchParams(sp.toString())
+          if (e.target.value === 'rating_desc') params.delete('sort')
+          else params.set('sort', e.target.value)
+          router.replace(`/${categorySlug}?${params.toString()}`, { scroll: false })
+        }}
+        className="h-11 cursor-pointer rounded-md border border-neutral-500 bg-surface px-3 text-sm text-primary"
+      >
+        {SORT_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
+/** A collapsible filter group (native <details>: keyboard + screen-reader friendly, no state to manage). */
+function FilterGroup({ title, defaultOpen = false, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
+  return (
+    <details open={defaultOpen} className="group border-b border-border pb-3 last:border-b-0 last:pb-0">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-semibold text-primary [&::-webkit-details-marker]:hidden">
+        {title}
+        <ChevronDown size={16} className="text-muted transition-transform group-open:rotate-180" aria-hidden />
+      </summary>
+      <div className="pt-1">{children}</div>
+    </details>
+  )
+}
+
 export function CategoryFilterClient({
   categorySlug,
   availableBrands,
@@ -49,7 +87,6 @@ export function CategoryFilterClient({
   const uid = useId()
   const drawerRef = useDialog<HTMLDivElement>(drawerOpen, () => setDrawerOpen(false))
   const priceBands = priceBandsFor(categorySlug)
-  const [searchInput, setSearchInput] = useState(sp.get('q') ?? '')
 
   const activeBrands = sp.get('brands')?.split(',').filter(Boolean) ?? []
   const activeMinPrice = sp.get('minPrice') ? Number(sp.get('minPrice')) : null
@@ -107,16 +144,9 @@ export function CategoryFilterClient({
   }
 
   function clearAll() {
-    setSearchInput('')
     startTransition(() => {
       router.replace(`/${categorySlug}`, { scroll: false })
     })
-  }
-
-  function submitSearch(e: React.FormEvent) {
-    e.preventDefault()
-    push({ q: searchInput.trim() || null })
-    setDrawerOpen(false)
   }
 
   const activeChips: { label: string; onRemove: () => void }[] = []
@@ -139,10 +169,7 @@ export function CategoryFilterClient({
   if (activeQuery) {
     activeChips.push({
       label: `"${activeQuery}"`,
-      onRemove: () => {
-        setSearchInput('')
-        push({ q: null })
-      },
+      onRemove: () => push({ q: null }),
     })
   }
   specFilters.forEach((def) => {
@@ -158,64 +185,8 @@ export function CategoryFilterClient({
   const hasFilters = activeChips.length > 0 || activeSort !== 'rating_desc'
 
   const filterPanel = (
-    <div className="flex flex-col gap-5">
-      {/* In-category search */}
-      <form onSubmit={submitSearch}>
-        <label htmlFor={`${uid}-search`} className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">
-          Search in category
-        </label>
-        <div className="relative">
-          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden />
-          <Input
-            id={`${uid}-search`}
-            type="search"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Name or keyword…"
-            className="pl-9 text-base sm:text-sm"
-          />
-        </div>
-      </form>
-
-      {/* Sort */}
-      <div>
-        <label htmlFor={`${uid}-sort`} className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">
-          Sort
-        </label>
-        <select
-          id={`${uid}-sort`}
-          value={activeSort}
-          onChange={(e) => push({ sort: e.target.value === 'rating_desc' ? null : e.target.value })}
-          className="h-11 w-full rounded-md border border-neutral-500 bg-surface px-3 text-sm text-primary"
-        >
-          {SORT_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Spec filters — 91Mobiles / GSMArena pattern */}
-      {specFilters.map((def) => (
-        <div key={def.key}>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">{def.label}</p>
-          <div className="flex flex-wrap gap-1.5">
-            {def.options.map((opt) => (
-              <Chip
-                key={`${def.key}-${opt.value}`}
-                onClick={() => toggleSpec(def.key, opt.value)}
-                active={activeSpecs[def.key] === opt.value}
-                aria-pressed={activeSpecs[def.key] === opt.value}
-              >
-                {opt.label}
-              </Chip>
-            ))}
-          </div>
-        </div>
-      ))}
-
-      {/* Price range chips */}
-      <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Price Range</p>
+    <div className="flex flex-col gap-3">
+      <FilterGroup title="Price" defaultOpen>
         <div className="flex flex-wrap gap-1.5">
           {priceBands.map((r) => (
             <Chip
@@ -228,31 +199,27 @@ export function CategoryFilterClient({
             </Chip>
           ))}
         </div>
-      </div>
+      </FilterGroup>
 
-      {/* Brands */}
       {availableBrands.length > 0 && (
-        <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Brand</p>
-          <div className="flex flex-col max-h-48 overflow-y-auto">
+        <FilterGroup title="Brand" defaultOpen>
+          <div className="flex max-h-64 flex-col overflow-y-auto">
             {availableBrands.map((brand) => (
               <label key={brand} className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-primary">
                 <input
                   type="checkbox"
                   checked={activeBrands.includes(brand)}
                   onChange={() => toggleBrand(brand)}
-                  className="h-5 w-5 accent-accent rounded"
+                  className="h-5 w-5 rounded accent-accent"
                 />
                 {brand}
               </label>
             ))}
           </div>
-        </div>
+        </FilterGroup>
       )}
 
-      {/* Rating */}
-      <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Min Rating</p>
+      <FilterGroup title="Rating" defaultOpen={activeRating != null}>
         <div className="flex flex-wrap gap-1.5">
           {RATINGS.map((r) => (
             <Chip key={r.value} onClick={() => toggleRating(r.value)} active={activeRating === r.value} aria-pressed={activeRating === r.value}>
@@ -260,7 +227,24 @@ export function CategoryFilterClient({
             </Chip>
           ))}
         </div>
-      </div>
+      </FilterGroup>
+
+      {specFilters.map((def) => (
+        <FilterGroup key={def.key} title={def.label} defaultOpen={!!activeSpecs[def.key]}>
+          <div className="flex flex-wrap gap-1.5">
+            {def.options.map((opt) => (
+              <Chip
+                key={`${def.key}-${opt.value}`}
+                onClick={() => toggleSpec(def.key, opt.value)}
+                active={activeSpecs[def.key] === opt.value}
+                aria-pressed={activeSpecs[def.key] === opt.value}
+              >
+                {opt.label}
+              </Chip>
+            ))}
+          </div>
+        </FilterGroup>
+      ))}
 
       {hasFilters && (
         <Button variant="secondary" size="auto" onClick={clearAll} className="h-11 w-full text-sm">
@@ -284,6 +268,30 @@ export function CategoryFilterClient({
     </select>
   )
 
+  const chipsRow = (
+    <div className="flex flex-wrap items-center gap-2">
+      {activeChips.map((chip) => (
+        <button
+          key={chip.label}
+          type="button"
+          onClick={chip.onRemove}
+          aria-label={`Remove filter: ${chip.label}`}
+          className="relative inline-flex h-9 items-center gap-1.5 rounded-full bg-accent/10 px-3.5 text-sm font-medium text-accent transition-colors hover:bg-accent/20 after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']"
+        >
+          {chip.label}
+          <X size={12} aria-hidden />
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={clearAll}
+        className="inline-flex min-h-11 items-center px-2 text-sm text-muted underline hover:text-primary"
+      >
+        Clear all
+      </button>
+    </div>
+  )
+
   return (
     <>
       {/* Subtle progress bar while a filter change is loading */}
@@ -294,7 +302,7 @@ export function CategoryFilterClient({
       )}
 
       {/* Sticky mobile toolbar: filters + sort are both one tap away */}
-      <div className="sticky top-[var(--navbar-height)] z-20 -mx-4 px-4 py-2 bg-surface/95 backdrop-blur border-b border-border lg:hidden">
+      <div className="sticky top-[var(--navbar-height)] z-20 -mx-4 border-b border-border bg-surface/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 lg:hidden">
         <div className="flex items-center gap-2">
           <Button variant="secondary" size="auto" onClick={() => setDrawerOpen(true)} className="h-11 shrink-0 px-3 text-sm">
             <SlidersHorizontal size={14} aria-hidden />
@@ -310,40 +318,13 @@ export function CategoryFilterClient({
         </div>
       </div>
 
-      {/* Active filter chips */}
-      {activeChips.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          {activeChips.map((chip) => (
-            <button
-              key={chip.label}
-              type="button"
-              onClick={chip.onRemove}
-              aria-label={`Remove filter: ${chip.label}`}
-              className="relative inline-flex h-9 items-center gap-1.5 rounded-full bg-accent/10 px-3.5 text-sm font-medium text-accent hover:bg-accent/20 transition-colors after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']"
-            >
-              {chip.label}
-              <X size={12} aria-hidden />
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={clearAll}
-            className="inline-flex min-h-11 items-center px-2 text-sm text-muted underline hover:text-primary"
-          >
-            Clear all
-          </button>
-        </div>
-      )}
+      {activeChips.length > 0 && <div className="lg:hidden">{chipsRow}</div>}
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:block w-56 shrink-0" aria-label="Filters">
+      <aside className="hidden w-60 shrink-0 lg:block" aria-label="Filters">
         <div className="sticky top-[calc(var(--navbar-height)_+_1rem)] max-h-[calc(100vh-var(--navbar-height)-2rem)] overflow-y-auto rounded-xl border border-border bg-surface p-4">
-          <p className="text-sm font-semibold text-primary mb-4">
-            Filters
-            <span className="ml-2 text-xs font-normal text-muted" aria-live="polite">
-              {resultCount} of {totalCount}
-            </span>
-          </p>
+          <p className="mb-2 text-sm font-semibold text-primary">Filters</p>
+          {activeChips.length > 0 && <div className="mb-3 border-b border-border pb-3">{chipsRow}</div>}
           {filterPanel}
         </div>
       </aside>

@@ -5,6 +5,7 @@ import { fetchProductsByTag } from '@/lib/data/tags'
 import { getActiveDealMap } from '@/lib/data/product-deals'
 import { TagProductResults } from '@/components/ui/TagProductResults'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
+import { ListingHeader } from '@/components/ui/ListingHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SITE_URL } from '@/lib/utils/seo'
 import { siteConfig } from '@/lib/config'
@@ -45,18 +46,14 @@ export default async function TagPage({
   const dealMap = getActiveDealMap()
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
-      <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Tags', href: '/tags' }, { label: data.tag }]} />
+    <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-8">
+      <Breadcrumb className="mb-3 md:mb-4" items={[{ label: 'Home', href: '/' }, { label: 'Tags', href: '/tags' }, { label: data.tag }]} />
 
-      <div className="mb-8 rounded-xl border border-border bg-surface-alt p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Tag size={20} className="text-accent" aria-hidden />
-          <h1 className="font-heading text-2xl font-bold text-primary capitalize">{data.tag}</h1>
-        </div>
-        <p className="text-sm text-muted">
-          {data.products.length} reviewed product{data.products.length !== 1 ? 's' : ''} tagged &ldquo;{data.tag}&rdquo;
-        </p>
-      </div>
+      <ListingHeader
+        lead={<Tag size={22} className="shrink-0 text-accent" aria-hidden />}
+        title={<span className="capitalize">{data.tag}</span>}
+        subtitle={`${data.products.length} reviewed product${data.products.length !== 1 ? 's' : ''} tagged “${data.tag}”`}
+      />
 
       {data.products.length === 0 ? (
         <EmptyState
