@@ -9,9 +9,11 @@ interface SaveButtonProps {
   product: ProductSummary
   className?: string
   size?: number
+  /** `overlay`: small round button for sitting on top of a card image. */
+  variant?: 'outline' | 'overlay'
 }
 
-export function SaveButton({ product, className = '', size = 18 }: SaveButtonProps) {
+export function SaveButton({ product, className = '', size = 18, variant = 'outline' }: SaveButtonProps) {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
@@ -34,9 +36,15 @@ export function SaveButton({ product, className = '', size = 18 }: SaveButtonPro
       }}
       aria-pressed={saved}
       aria-label={saved ? 'Remove from saved' : 'Save product'}
-      className={`inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border transition-colors hover:border-accent ${
-        saved ? 'bg-accent/10 text-accent' : 'bg-surface text-muted hover:text-primary'
-      } ${className}`}
+      className={
+        variant === 'overlay'
+          ? `relative inline-flex h-9 w-9 items-center justify-center rounded-full shadow-sm backdrop-blur transition-colors after:absolute after:-inset-1 after:content-[''] ${
+              saved ? 'bg-accent text-white' : 'bg-surface/90 text-primary hover:text-accent'
+            } ${className}`
+          : `inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border transition-colors hover:border-accent ${
+              saved ? 'bg-accent/10 text-accent' : 'bg-surface text-muted hover:text-primary'
+            } ${className}`
+      }
     >
       <Bookmark size={size} className={saved ? 'fill-current' : ''} />
     </button>

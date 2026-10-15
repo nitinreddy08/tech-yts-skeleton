@@ -1,16 +1,14 @@
 'use client'
 
-import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Package, GitCompare, Check, Eye } from 'lucide-react'
-import { formatIndianPrice } from '@/lib/utils/format'
+import { Package, Square, CheckSquare } from 'lucide-react'
 import { useCompareOptional } from '@/components/providers/CompareProvider'
-import { ProductQuickView } from '@/components/ui/ProductQuickView'
 import { DealRibbon } from '@/components/ui/ActiveDealBanner'
 import { SaveButton } from '@/components/ui/SaveButton'
 import { RatingBadge } from '@/components/ui/RatingBadge'
 import { Badge } from '@/components/ui/Badge'
+import { Price } from '@/components/ui/Price'
 import type { ProductDealBadge } from '@/lib/data/product-deals'
 import type { ProductSummary } from '@/types'
 
@@ -43,7 +41,6 @@ function Highlight({ text, query }: { text: string; query?: string }) {
 export function ProductCard({ product, showDealBadge = true, activeDeal, rank, pickReason, highlight, showCategory = false }: ProductCardProps) {
   const compare = useCompareOptional()
   const inCompare = compare?.isInCompare(product.id) ?? false
-  const [quickView, setQuickView] = useState(false)
 
   const showBadge = showDealBadge && (product.is_deal_of_the_day || !!product.deal_badge_text)
   const badgeText = product.deal_badge_text ?? 'Deal'
@@ -59,43 +56,43 @@ export function ProductCard({ product, showDealBadge = true, activeDeal, rank, p
   }
 
   return (
-    <>
-    <div className="group relative flex flex-col rounded-[var(--radius-card)] border border-border bg-surface shadow-[var(--shadow-sm)] hover:scale-[1.01] transition-transform duration-200 ease-out overflow-hidden">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface transition-shadow duration-200 hover:shadow-md">
       {rank !== undefined && (
-        <div className="absolute top-2 left-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
+        <div className="absolute left-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
           {rank}
         </div>
       )}
 
       {showLiveDeal && activeDeal && <DealRibbon deal={activeDeal} />}
 
-      <div className={`absolute top-1 z-10 ${rank !== undefined ? 'right-1' : 'left-1'}`}>
-        <SaveButton product={product} />
+      <div className={`absolute top-2 z-10 ${rank !== undefined ? 'right-2' : 'left-2'}`}>
+        <SaveButton product={product} variant="overlay" size={16} />
       </div>
 
       {showBadge && !showLiveDeal && (
-        <div className="absolute top-2 right-2 z-10 rounded-full bg-secondary text-primary text-xs font-semibold px-2 py-0.5">
+        <div className="absolute right-2 top-2 z-10 rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-primary">
           {badgeText}
         </div>
       )}
 
-      <Link href={href} className="block aspect-square relative overflow-hidden bg-surface-alt" tabIndex={-1} aria-hidden>
+      {/* 4:3 image well — shorter than the old square, so a row of cards doesn't become a wall. */}
+      <Link href={href} className="relative block aspect-[4/3] overflow-hidden bg-surface-alt" tabIndex={-1} aria-hidden>
         {product.thumbnail_url ? (
           <Image
             src={product.thumbnail_url}
             alt=""
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-contain p-4 transition-transform group-hover:scale-105"
+            className="object-contain p-3 transition-transform duration-200 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <Package size={40} className="text-muted/30" />
+            <Package size={36} className="text-muted/30" />
           </div>
         )}
       </Link>
 
-      <div className="flex flex-1 flex-col gap-2 p-4 sm:p-5">
+      <div className="flex flex-1 flex-col gap-1.5 p-3 sm:p-4">
         <div className="flex items-center justify-between gap-2">
           <p className="truncate text-xs text-muted">{product.brand_name}</p>
           {showCategory && (
@@ -104,59 +101,38 @@ export function ProductCard({ product, showDealBadge = true, activeDeal, rank, p
             </Badge>
           )}
         </div>
-        {/* The one real link into the product: image and title share it. */}
-        <Link href={href} className="after:absolute after:inset-0 after:content-[''] focus-visible:after:outline-2">
-          <h3 className="line-clamp-2 text-sm font-semibold text-primary leading-snug group-hover:text-accent transition-colors">
+
+        {/* The one link into the product: the stretched title covers the whole card. */}
+        <Link href={href} className="after:absolute after:inset-0 after:content-['']">
+          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-primary transition-colors group-hover:text-accent">
             <Highlight text={product.name} query={highlight} />
           </h3>
         </Link>
 
-        {pickReason && (
-          <p className="text-xs text-muted">{pickReason}</p>
-        )}
+        {pickReason && <p className="text-xs text-muted">{pickReason}</p>}
 
-        <RatingBadge score={product.creator_rating} showVerdict />
+        <RatingBadge score={product.creator_rating} />
 
-        {product.current_price_inr !== null && (
-          <p className="text-base font-bold text-accent">
-            {formatIndianPrice(product.current_price_inr)}
-          </p>
-        )}
+        <div className="mt-auto flex items-end justify-between gap-2 pt-1">
+          <Price value={product.current_price_inr} size="sm" />
 
-        {/* Sits above the stretched title link so the two actions stay tappable. */}
-        <div className="relative z-10 mt-auto flex items-center gap-2 pt-2">
-          <button
-            type="button"
-            onClick={(e) => { e.preventDefault(); setQuickView(true) }}
-            aria-label={`Quick view ${product.name}`}
-            title="Quick view"
-            className="flex h-11 min-w-0 flex-1 items-center justify-center rounded-lg border border-border text-muted hover:border-accent hover:text-accent transition-colors sm:w-11 sm:flex-none"
-          >
-            <Eye size={18} aria-hidden />
-          </button>
+          {/* Compare: a small checkbox-style toggle, above the stretched link. */}
           <button
             type="button"
             onClick={handleCompare}
             disabled={!compare}
             aria-pressed={inCompare}
             aria-label={`${inCompare ? 'Remove from' : 'Add to'} compare: ${product.name}`}
-            title={inCompare ? 'Added to compare' : 'Compare'}
-            className={`flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-              inCompare
-                ? 'border-accent bg-accent/5 text-accent'
-                : 'border-border text-muted hover:border-accent hover:text-accent'
+            title={inCompare ? 'In your comparison' : 'Add to compare'}
+            className={`relative z-10 -mb-1 -mr-1 inline-flex h-9 shrink-0 items-center gap-1 rounded-md px-1.5 text-xs font-medium transition-colors after:absolute after:-inset-1 after:content-[''] disabled:cursor-not-allowed disabled:opacity-50 ${
+              inCompare ? 'text-accent' : 'text-muted hover:text-accent'
             }`}
           >
-            {inCompare ? <Check size={16} aria-hidden /> : <GitCompare size={16} aria-hidden />}
-            {/* Label from sm up; below that the 2-column cards only have room for the icon. */}
-            <span className="hidden truncate sm:inline">{inCompare ? 'Added' : 'Compare'}</span>
+            {inCompare ? <CheckSquare size={16} aria-hidden /> : <Square size={16} aria-hidden />}
+            <span className="hidden min-[420px]:inline">Compare</span>
           </button>
         </div>
       </div>
-    </div>
-    {quickView && (
-      <ProductQuickView product={product} activeDeal={activeDeal} onClose={() => setQuickView(false)} />
-    )}
-    </>
+    </article>
   )
 }

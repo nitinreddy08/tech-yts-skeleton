@@ -187,6 +187,35 @@ html {
   scroll-padding-top: calc(var(--navbar-height) + 4.5rem);
 }
 
+/* Type scale (one place). Pages use these instead of ad-hoc text-2xl/3xl combos. */
+@utility text-h1 {
+  font-family: var(--font-heading), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  @media (min-width: 768px) {
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+}
+@utility text-h2 {
+  font-family: var(--font-heading), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  @media (min-width: 768px) {
+    font-size: 1.375rem;
+  }
+}
+@utility text-h3 {
+  font-family: var(--font-heading), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1.0625rem;
+  line-height: 1.35;
+}
+
 body {
   background-color: var(--color-surface);
   color: var(--color-primary);

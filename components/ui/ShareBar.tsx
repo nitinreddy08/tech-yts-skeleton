@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Share2, Link2, Check, MessageCircle } from 'lucide-react'
+import { Share2, Check, MessageCircle } from 'lucide-react'
 
 interface ShareBarProps {
   url: string
@@ -50,51 +50,28 @@ export function ShareBar({ url, title, text, className = '' }: ShareBarProps) {
   }, [title, shareText, url, copyLink])
 
   return (
-    <div className={`flex flex-wrap items-center gap-2 ${className}`}>
-      <span className="text-xs font-medium text-muted mr-1 flex items-center gap-1">
-        <Share2 size={14} /> Share
-      </span>
+    <div className={`flex items-center gap-2 ${className}`}>
+      {/* One Share control: native share sheet where available, otherwise copies the link. */}
+      <button
+        type="button"
+        onClick={nativeShare}
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-sm font-medium text-primary transition-colors hover:border-accent hover:text-accent"
+      >
+        {copied ? <Check size={16} className="text-success-700" aria-hidden /> : <Share2 size={16} aria-hidden />}
+        {copied ? 'Link copied' : 'Share'}
+      </button>
 
-      {/* WhatsApp — primary for Indian market */}
+      {/* WhatsApp — the dominant share channel in India, so it gets its own button. */}
       <a
         href={buildWhatsAppUrl(shareText, url)}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-primary hover:border-success-500 hover:text-success-700 hover:bg-success-50 transition-colors"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface text-success-700 transition-colors hover:border-success-500 hover:bg-success-50"
         aria-label="Share on WhatsApp"
+        title="Share on WhatsApp"
       >
-        <MessageCircle size={14} className="text-success-700" aria-hidden />
-        WhatsApp
+        <MessageCircle size={18} aria-hidden />
       </a>
-
-      {/* Native share (mobile) or copy fallback */}
-      <button
-        type="button"
-        onClick={nativeShare}
-        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-primary hover:border-accent transition-colors"
-      >
-        <Share2 size={14} />
-        Share
-      </button>
-
-      <button
-        type="button"
-        onClick={copyLink}
-        className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-primary hover:border-accent transition-colors"
-        aria-label="Copy link"
-      >
-        {copied ? (
-          <>
-            <Check size={14} className="text-success-700" aria-hidden />
-            Copied!
-          </>
-        ) : (
-          <>
-            <Link2 size={14} />
-            Copy link
-          </>
-        )}
-      </button>
     </div>
   )
 }
