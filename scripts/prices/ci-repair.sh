@@ -36,9 +36,11 @@ Run: ${GITHUB_SERVER_URL:-}/${GITHUB_REPOSITORY:-}/actions/runs/${GITHUB_RUN_ID:
   fi
 }
 
+# Throw away everything the agent (or the verification steps) changed. Safe because we refuse to
+# start on a dirty tree; ignored scratch space (data/price-fixtures) is left for the next store.
 revert() {
-  git restore --source=HEAD --staged --worktree -- config lib/prices/__tests__/fixtures data/prices.json data/price-health.json 2>/dev/null || true
-  git clean -fdq -- config lib/prices/__tests__/fixtures || true
+  git reset -q --hard HEAD
+  git clean -fdq
 }
 
 publish() { # <store>
@@ -56,6 +58,12 @@ publish() { # <store>
       --title "scraper($1): auto-repair after layout change" \
       --body "Automatic repair of the \`$1\` scraper. It passed the guard, the offline sample tests and a live refresh. Review and merge."
 }
+
+if [ -n "$(git status --porcelain)" ]; then
+  echo "::error::Working tree has uncommitted changes; refusing to run the repair (it resets the tree on failure)."
+  git status --short
+  exit 2
+fi
 
 stores="$(npm run -s prices:broken)"
 if [ -z "$stores" ]; then
