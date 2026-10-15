@@ -2,44 +2,38 @@ import { notFound } from 'next/navigation'
 import { fetchProductDetail, fetchProductsByCategory } from '@/lib/data/products'
 import { generateProductMetadata, generateProductJsonLd, generateBreadcrumbJsonLd, generateFaqJsonLd, generateVideoObjectJsonLd, SITE_URL } from '@/lib/utils/seo'
 import { PriceAlertButton } from '@/components/ui/PriceAlertButton'
-import { ProductSectionNav } from '@/components/ui/ProductSectionNav'
-import { SaveButton } from '@/components/ui/SaveButton'
-import { ShareBar } from '@/components/ui/ShareBar'
+import { ProductActions } from '@/components/ui/ProductActions'
+import { Breadcrumb } from '@/components/ui/Breadcrumb'
+import { RatingBadge } from '@/components/ui/RatingBadge'
+import { VideoEmbed } from '@/components/ui/VideoEmbed'
 import { extractYouTubeId } from '@/lib/utils/format'
 import { getBestOffer } from '@/lib/utils/best-offer'
 import { ProductGallery } from '@/components/ui/ProductGallery'
 import { BuySection } from '@/components/ui/BuySection'
 import { SpecsTable } from '@/components/ui/SpecsTable'
 import { FAQAccordion } from '@/components/ui/FAQAccordion'
-import { ScoreRing } from '@/components/ui/ScoreRing'
 import { StickyBuyBar } from '@/components/ui/StickyBuyBar'
 import { UseCaseBadges } from '@/components/ui/UseCaseBadges'
 import Link from 'next/link'
-import { ProductComparePanel } from '@/components/ui/ProductComparePanel'
 import { KeySpecStrip } from '@/components/ui/KeySpecStrip'
 import { RecentlyViewedTracker } from '@/components/ui/RecentlyViewedTracker'
-import { RecentlyViewedStrip } from '@/components/ui/RecentlyViewedStrip'
 import { getAllActiveDealsForProduct } from '@/lib/data/product-deals'
 import { getSpecHighlights } from '@/lib/utils/spec-highlights'
 import { generatePriceHistory } from '@/lib/utils/price-history'
 import { getRelatedGuidesForProduct } from '@/lib/data/related-guides'
 import { getCheaperAlternatives } from '@/lib/data/alternatives'
-import { getFrequentComparesForProduct } from '@/lib/data/frequent-compares'
 import { tagSlug } from '@/lib/data/tags'
-import { RelatedGuidesStrip } from '@/components/ui/RelatedGuidesStrip'
 import { fetchProductsByBrand } from '@/lib/data/brands'
 import { SpecsCopyButton } from '@/components/ui/SpecsCopyButton'
 import { ReviewUpdatedBadge } from '@/components/ui/ReviewUpdatedBadge'
 import { BottomLineVerdict } from '@/components/ui/BottomLineVerdict'
-import { FrequentComparesStrip } from '@/components/ui/FrequentComparesStrip'
 import { ProductOffersPanel } from '@/components/ui/ProductOffersPanel'
 import { YouTubeShortEmbed } from '@/components/ui/YouTubeShortEmbed'
 import { BenchmarkScores } from '@/components/ui/BenchmarkScores'
 import { PriceHistoryChart } from '@/components/ui/PriceHistoryChart'
 import { ProductDetailTabs, type DetailTab } from '@/components/ui/ProductDetailTabs'
-import { Eyebrow } from '@/components/ui/Eyebrow'
 import { ProductRecommendationTabs } from '@/components/ui/ProductRecommendationTabs'
-import { ChevronRight } from 'lucide-react'
+import { Trophy } from 'lucide-react'
 import { Chip } from '@/components/ui/Chip'
 import type { Metadata } from 'next'
 
@@ -102,20 +96,11 @@ export default async function ProductPage({
       : null
   const relatedGuides = await getRelatedGuidesForProduct(p.id)
   const cheaperAlternatives = await getCheaperAlternatives(p.id, p.category_slug, bestPrice)
-  const frequentComparePairs = await getFrequentComparesForProduct(p.slug)
   const priceHistory = generatePriceHistory({
     launchPrice: p.launch_price_inr,
     currentPrice: bestPrice,
     createdAt: p.created_at,
   })
-
-  const navSections: { id: string; label: string }[] = []
-  if (p.affiliate_links.length > 0) navSections.push({ id: 'buy-box', label: 'Prices' })
-  if (p.pros.length > 0 || p.cons.length > 0) navSections.push({ id: 'verdict', label: 'Verdict' })
-  navSections.push({ id: 'details', label: 'Details' })
-  if (similarProducts.length > 0 || moreFromBrand.length > 0 || cheaperAlternatives.length > 0) {
-    navSections.push({ id: 'similar', label: 'You Might Like' })
-  }
 
   const detailTabs: DetailTab[] = []
   if (p.description || youtubeId || p.youtube_short_url) {
@@ -123,23 +108,12 @@ export default async function ProductPage({
       id: 'review',
       label: 'Review',
       content: (
-        <div className="flex flex-col gap-4">
-          {youtubeId && (
-            <div className="aspect-video rounded-xl overflow-hidden border border-border">
-              <iframe
-                src={`https://www.youtube-nocookie.com/embed/${youtubeId}`}
-                title={`${p.name} Review`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                loading="lazy"
-                className="h-full w-full"
-              />
-            </div>
-          )}
-          {p.description && (
-            <p className="text-sm text-muted leading-relaxed">{p.description}</p>
-          )}
-          {p.youtube_short_url && <YouTubeShortEmbed url={p.youtube_short_url} title={p.name} />}
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+          {youtubeId && <VideoEmbed youtubeId={youtubeId} title={`${p.name} review`} />}
+          <div className={`flex flex-col gap-4 ${youtubeId ? '' : 'lg:col-span-2 lg:max-w-3xl'}`}>
+            {p.description && <p className="leading-relaxed text-primary/90">{p.description}</p>}
+            {p.youtube_short_url && <YouTubeShortEmbed url={p.youtube_short_url} title={p.name} />}
+          </div>
         </div>
       ),
     })
@@ -225,134 +199,94 @@ export default async function ProductPage({
 
       <RecentlyViewedTracker product={productSummary} />
 
-      <main className="mx-auto max-w-7xl px-4 py-6">
-        {/* ── Breadcrumb + save ─────────────────────────────────────────── */}
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <nav aria-label="Breadcrumb" className="min-w-0">
-            <ol className="flex items-center gap-1.5 text-xs text-muted">
-              <li className="shrink-0">
-                <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-              </li>
-              <li aria-hidden className="shrink-0"><ChevronRight size={12} /></li>
-              <li className="shrink-0">
-                <Link href={`/${p.category_slug}`} className="hover:text-primary transition-colors capitalize">
-                  {p.category.name}
-                </Link>
-              </li>
-              <li aria-hidden className="shrink-0"><ChevronRight size={12} /></li>
-              <li aria-current="page" className="min-w-0 truncate font-medium text-primary">{p.name}</li>
-            </ol>
-          </nav>
-          <SaveButton product={productSummary} className="shrink-0" />
-        </div>
+      <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-6">
+        <Breadcrumb
+          className="mb-3 md:mb-4"
+          items={[
+            { label: 'Home', href: '/' },
+            { label: p.category.name, href: `/${p.category_slug}` },
+            { label: p.name },
+          ]}
+        />
 
-        {/* ── Title block: name on the left, the creator's score on the right ── */}
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <Eyebrow>
-              <Link href={`/brand/${p.brand.slug}`} className="hover:text-accent transition-colors">
+        {/* Hero. Phones, top to bottom: title → gallery → buy box → key specs.
+            Desktop: left column = gallery + key specs, right column = title + the one buy box + side actions. */}
+        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-start lg:gap-x-8">
+          <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-5">
+            <div className="order-2 min-w-0 lg:order-1">
+              <ProductGallery images={allImages} productName={p.name} />
+            </div>
+            <KeySpecStrip highlights={specHighlights} className="order-4 lg:order-2" />
+          </div>
+
+          <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-3">
+            <header className="order-1 min-w-0 lg:mb-1">
+              <Link href={`/brand/${p.brand.slug}`} className="text-sm font-medium text-muted transition-colors hover:text-accent">
                 {p.brand_name}
               </Link>
-            </Eyebrow>
-            <h1 className="font-heading text-2xl font-bold text-primary mt-0.5 leading-tight sm:text-3xl">
-              {p.name}
-            </h1>
-            {p.tagline && <p className="mt-1 text-sm text-muted">{p.tagline}</p>}
-            <ReviewUpdatedBadge updatedAt={p.updated_at} className="mt-2" />
-            <div className="mt-3">
+              <h1 className="text-h1 mt-0.5 text-primary">{p.name}</h1>
+              {p.tagline && <p className="mt-1 text-muted">{p.tagline}</p>}
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <RatingBadge score={p.creator_rating} showVerdict className="text-sm" />
+                <ReviewUpdatedBadge updatedAt={p.updated_at} />
+              </div>
+              {relatedGuides[0] && (
+                <Link
+                  href={`/best-of/${relatedGuides[0].slug}`}
+                  className="mt-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-accent hover:underline"
+                >
+                  <Trophy size={14} aria-hidden />
+                  #{relatedGuides[0].rank} pick in {relatedGuides[0].title} →
+                </Link>
+              )}
               <UseCaseBadges tags={p.tags} specifications={p.specifications} />
+            </header>
+
+            <div className="order-3 flex min-w-0 flex-col gap-3">
+              <BuySection links={p.affiliate_links} productName={p.name} launchPrice={p.launch_price_inr} />
+              {allDeals.length > 0 && <ProductOffersPanel deals={allDeals} productName={p.name} />}
+              <PriceAlertButton
+                productId={p.id}
+                productName={p.name}
+                slug={p.slug}
+                categorySlug={p.category_slug}
+                currentPrice={bestPrice}
+              />
+              <ProductActions product={productSummary} shareUrl={shareUrl} shareText={shareText} />
             </div>
           </div>
-
-          {/* The one score on the page: ring + verdict word + "Creator Rating". */}
-          {p.pros.length > 0 || p.cons.length > 0 ? (
-            <a href="#verdict" className="shrink-0 rounded-xl p-1" aria-label={`Creator rating ${p.creator_rating.toFixed(1)} out of 10 — jump to the verdict`}>
-              <ScoreRing score={p.creator_rating} size={80} label="Creator Rating" />
-            </a>
-          ) : (
-            <div className="shrink-0 p-1">
-              <ScoreRing score={p.creator_rating} size={80} label="Creator Rating" />
-            </div>
-          )}
         </div>
-
-        {/* ── Hero: gallery + the single buy box, above the fold ─────────── */}
-        <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1fr_380px] lg:items-start mb-6">
-          <ProductGallery images={allImages} productName={p.name} />
-
-          <div className="flex flex-col gap-4">
-            <BuySection links={p.affiliate_links} productName={p.name} launchPrice={p.launch_price_inr} />
-
-            {allDeals.length > 0 && (
-              <ProductOffersPanel deals={allDeals} productName={p.name} />
-            )}
-
-            <PriceAlertButton
-              productId={p.id}
-              productName={p.name}
-              slug={p.slug}
-              categorySlug={p.category_slug}
-              currentPrice={bestPrice}
-            />
-          </div>
-        </div>
-
-        <KeySpecStrip highlights={specHighlights} className="mb-6" />
-
-        <FrequentComparesStrip productName={p.name} pairs={frequentComparePairs} />
 
         {(p.pros.length > 0 || p.cons.length > 0) && (
-          <div className="mb-6" id="verdict">
-            <BottomLineVerdict
-              rating={p.creator_rating}
-              pros={p.pros}
-              cons={p.cons}
-              productName={p.name}
-            />
+          <div id="verdict" className="mt-8 scroll-mt-28 md:mt-10">
+            <BottomLineVerdict rating={p.creator_rating} pros={p.pros} cons={p.cons} />
           </div>
         )}
 
-        <ProductSectionNav sections={navSections} />
+        <div className="mt-8 md:mt-10">
+          <ProductDetailTabs tabs={detailTabs} />
+        </div>
 
-        {relatedGuides.length > 0 && (
-          <RelatedGuidesStrip guides={relatedGuides} productName={p.name} />
+        {p.tags.length > 0 && (
+          <div className="mt-6 flex flex-wrap gap-1.5">
+            {p.tags.map((tag) => (
+              <Chip key={tag} href={`/tag/${tagSlug(tag)}`}>
+                #{tag}
+              </Chip>
+            ))}
+          </div>
         )}
 
-        {/* ── Two-column layout: deep content + secondary sidebar ─────────── */}
-        <div className="grid gap-8 lg:grid-cols-[1fr_340px] lg:items-start">
-          {/* ── LEFT COLUMN ─────────────────────────────────────────────── */}
-          <div className="flex flex-col gap-10">
-            <ProductDetailTabs tabs={detailTabs} />
-
-            <ProductRecommendationTabs
-              current={p}
-              similar={similarProducts}
-              moreFromBrand={moreFromBrand}
-              brandName={p.brand_name}
-              cheaperAlternatives={cheaperAlternatives}
-              currentPrice={bestPrice}
-              categoryName={p.category.name}
-            />
-          </div>
-
-          {/* ── RIGHT COLUMN — secondary, sticky ──────────────────────── */}
-          <div className="lg:sticky lg:top-[calc(var(--navbar-height)_+_4.5rem)] flex flex-col gap-4 h-fit">
-            <ShareBar url={shareUrl} title={p.name} text={shareText} />
-
-            <ProductComparePanel product={p} />
-
-            <RecentlyViewedStrip excludeId={p.id} variant="compact" />
-
-            {p.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {p.tags.map((tag) => (
-                  <Chip key={tag} href={`/tag/${tagSlug(tag)}`}>
-                    #{tag}
-                  </Chip>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="mt-8 md:mt-10">
+          <ProductRecommendationTabs
+            current={p}
+            similar={similarProducts}
+            moreFromBrand={moreFromBrand}
+            brandName={p.brand_name}
+            cheaperAlternatives={cheaperAlternatives}
+            currentPrice={bestPrice}
+            categoryName={p.category.name}
+          />
         </div>
       </main>
 

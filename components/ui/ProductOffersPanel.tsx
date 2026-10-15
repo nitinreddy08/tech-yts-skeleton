@@ -1,9 +1,7 @@
-import Link from 'next/link'
 import { Tag, Percent, CreditCard, Ticket } from 'lucide-react'
 import { AffiliateOutboundLink } from '@/components/ui/AffiliateOutboundLink'
-import { formatIndianPrice } from '@/lib/utils/format'
+import { Price } from '@/components/ui/Price'
 import { dealTypeLabel } from '@/lib/data/product-deals'
-import { Eyebrow } from '@/components/ui/Eyebrow'
 import { buttonVariants } from '@/components/ui/Button'
 import type { Deal } from '@/types'
 
@@ -25,37 +23,26 @@ export function ProductOffersPanel({ deals, productName }: ProductOffersPanelPro
   if (deals.length === 0) return null
 
   return (
-    <section className="rounded-xl border border-border bg-surface overflow-hidden">
-      <div className="px-5 py-3 border-b border-border bg-surface-alt/50">
-        <h2 className="text-sm font-semibold text-primary">
-          Offers & bank deals ({deals.length})
-        </h2>
-      </div>
+    <section aria-labelledby="offers-title" className="rounded-xl border border-border bg-surface">
+      <h2 id="offers-title" className="border-b border-border px-4 py-2.5 text-sm font-semibold text-primary">
+        Offers &amp; bank deals ({deals.length})
+      </h2>
       <ul className="divide-y divide-border">
         {deals.map((deal) => {
           const Icon = TYPE_ICONS[deal.deal_type] ?? Tag
           return (
-            <li key={deal.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
-              <div className="flex items-start gap-3 flex-1 min-w-0">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                  <Icon size={16} />
-                </span>
-                <div className="min-w-0">
-                  <Eyebrow>
-                    {dealTypeLabel(deal.deal_type)} · {deal.store_name}
-                  </Eyebrow>
-                  <p className="text-sm font-medium text-primary">{deal.headline}</p>
+            <li key={deal.id} className="flex items-center gap-3 px-4 py-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary-50 text-secondary-700">
+                <Icon size={16} aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="line-clamp-2 text-sm font-medium text-primary">{deal.headline}</p>
+                <p className="flex flex-wrap items-baseline gap-x-2 text-xs text-muted">
+                  {dealTypeLabel(deal.deal_type)} · {deal.store_name}
                   {deal.deal_price_inr != null && (
-                    <p className="mt-0.5 text-sm font-semibold text-accent">
-                      {formatIndianPrice(deal.deal_price_inr)}
-                      {deal.original_price_inr != null && (
-                        <span className="text-muted line-through ml-2 font-normal">
-                          {formatIndianPrice(deal.original_price_inr)}
-                        </span>
-                      )}
-                    </p>
+                    <Price value={deal.deal_price_inr} original={deal.original_price_inr} size="sm" className="!text-sm" />
                   )}
-                </div>
+                </p>
               </div>
               <AffiliateOutboundLink
                 href={`/go/${deal.id}`}
@@ -63,7 +50,7 @@ export function ProductOffersPanel({ deals, productName }: ProductOffersPanelPro
                 storeName={deal.store_name}
                 productName={productName}
                 priceInr={deal.deal_price_inr}
-                className={buttonVariants({ variant: 'secondary', size: 'sm', className: 'shrink-0 w-full sm:w-auto' })}
+                className={buttonVariants({ variant: 'secondary', size: 'sm', className: 'shrink-0' })}
               >
                 Get offer<span className="sr-only"> at {deal.store_name}</span>
               </AffiliateOutboundLink>
@@ -71,9 +58,6 @@ export function ProductOffersPanel({ deals, productName }: ProductOffersPanelPro
           )
         })}
       </ul>
-      <p className="border-t border-border px-5 text-xs text-muted">
-        <Link href="/deals" className="inline-flex min-h-11 items-center text-accent hover:underline">Browse all deals →</Link>
-      </p>
     </section>
   )
 }

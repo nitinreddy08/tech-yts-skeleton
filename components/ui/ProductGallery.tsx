@@ -151,7 +151,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
           <div ref={emblaRef} className="overflow-hidden rounded-xl border border-border bg-surface-alt">
             <div className="flex">
               {images.map((src, i) => (
-                <div key={i} className="relative min-w-0 flex-[0_0_100%] aspect-square">
+                <div key={i} className="relative min-w-0 flex-[0_0_100%] aspect-[4/3]">
                   <button
                     type="button"
                     onClick={() => {
@@ -165,8 +165,8 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                       src={src}
                       alt={`${productName} - image ${i + 1}`}
                       fill
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      className="object-contain p-6"
+                      sizes="(max-width: 1024px) 100vw, 55vw"
+                      className="object-contain p-4"
                       preload={i === 0}
                     />
                   </button>

@@ -33,7 +33,7 @@ export function ProductDetailTabs({ tabs }: { tabs: DetailTab[] }) {
         idPrefix={prefix}
         active={active}
         onChange={setActive}
-        className="mb-6"
+        className="mb-4"
         tabs={tabs.map((t) => {
           const Icon = TAB_ICONS[t.id]
           return { id: t.id, label: t.label, icon: Icon ? <Icon size={15} aria-hidden /> : undefined }

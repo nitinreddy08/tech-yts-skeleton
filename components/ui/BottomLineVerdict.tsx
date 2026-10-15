@@ -1,11 +1,10 @@
-import { CheckCircle, XCircle, ArrowDown } from 'lucide-react'
-import { siteConfig } from '@/lib/config'
+import { CheckCircle, XCircle } from 'lucide-react'
 
 interface BottomLineVerdictProps {
   rating: number
   pros: string[]
   cons: string[]
-  productName: string
+  productName?: string
 }
 
 function verdictMeta(rating: number): {
@@ -48,45 +47,26 @@ const TONE_STYLES = {
   skip: 'border-border bg-surface-alt text-primary',
 }
 
-const BADGE_STYLES = {
-  great: 'bg-success-700 text-white',
-  good: 'bg-accent text-white',
-  mixed: 'bg-secondary-800 text-white',
-  skip: 'bg-neutral-800 text-white',
-}
-
-/** Wirecutter "The Bottom Line" — scan before you scroll */
-export function BottomLineVerdict({ rating, pros, cons, productName }: BottomLineVerdictProps) {
+/** Wirecutter "The Bottom Line" — the verdict word, a one-line summary, then pros and cons.
+ *  The numeric score lives in the product header (once), not here. */
+export function BottomLineVerdict({ pros, cons, rating }: BottomLineVerdictProps) {
   const meta = verdictMeta(rating)
 
   return (
-    <section className={`rounded-xl border p-5 ${TONE_STYLES[meta.tone]}`}>
-      <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wider opacity-70 mb-1">
-            The Bottom Line
-          </p>
-          <h2 className="font-heading text-lg font-bold">{meta.label}</h2>
-        </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-bold ${BADGE_STYLES[meta.tone]}`}>
-          {rating.toFixed(1)}/10
-        </span>
+    <section className={`rounded-xl border p-4 md:p-5 ${TONE_STYLES[meta.tone]}`}>
+      <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <h2 className="text-h3 font-heading">{meta.label}</h2>
+        <p className="text-sm opacity-80">{meta.summary}</p>
       </div>
 
-      <p className="text-sm leading-relaxed opacity-90 mb-4">
-        {meta.summary} {siteConfig.creator_name ? `${siteConfig.creator_name} rated ${productName} ${rating.toFixed(1)}/10.` : ''}
-      </p>
-
-      <div className="grid sm:grid-cols-2 gap-4 mb-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         {pros.length > 0 && (
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">
-              What we loved
-            </p>
+            <h3 className="mb-2 text-sm font-semibold">What we loved</h3>
             <ul className="flex flex-col gap-2">
               {pros.map((pro, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
-                  <CheckCircle size={15} className="shrink-0 mt-0.5 text-success-700" aria-hidden />
+                  <CheckCircle size={15} className="mt-0.5 shrink-0 text-success-700" aria-hidden />
                   <span>{pro}</span>
                 </li>
               ))}
@@ -95,13 +75,11 @@ export function BottomLineVerdict({ rating, pros, cons, productName }: BottomLin
         )}
         {cons.length > 0 && (
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">
-              Watch out for
-            </p>
+            <h3 className="mb-2 text-sm font-semibold">Watch out for</h3>
             <ul className="flex flex-col gap-2">
               {cons.map((con, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
-                  <XCircle size={15} className="shrink-0 mt-0.5 text-error-700" aria-hidden />
+                  <XCircle size={15} className="mt-0.5 shrink-0 text-error-700" aria-hidden />
                   <span>{con}</span>
                 </li>
               ))}
@@ -109,13 +87,6 @@ export function BottomLineVerdict({ rating, pros, cons, productName }: BottomLin
           </div>
         )}
       </div>
-
-      <a
-        href="#buy-box"
-        className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
-      >
-        See best prices <ArrowDown size={14} aria-hidden />
-      </a>
     </section>
   )
 }

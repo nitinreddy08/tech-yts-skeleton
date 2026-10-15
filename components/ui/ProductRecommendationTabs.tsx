@@ -6,6 +6,7 @@ import { ProductCard } from '@/components/ui/ProductCard'
 import { TabList, TabPanel } from '@/components/ui/Tabs'
 import { SimilarCompareStrip } from '@/components/ui/ProductComparePanel'
 import { formatIndianPrice } from '@/lib/utils/format'
+import { Rail } from '@/components/ui/Section'
 import type { ProductSummary } from '@/types'
 
 interface ProductRecommendationTabsProps {
@@ -28,10 +29,10 @@ export function ProductRecommendationTabs({
   categoryName,
 }: ProductRecommendationTabsProps) {
   const tabs = [
-    { key: 'similar', label: 'Similar Products', icon: Sparkles, products: similar },
+    { key: 'similar', label: 'Similar', icon: Sparkles, products: similar },
     { key: 'brand', label: `More from ${brandName}`, icon: Building2, products: moreFromBrand },
     ...(currentPrice != null
-      ? [{ key: 'cheaper', label: 'Cheaper Picks', icon: TrendingDown, products: cheaperAlternatives }]
+      ? [{ key: 'cheaper', label: 'Cheaper', icon: TrendingDown, products: cheaperAlternatives }]
       : []),
   ].filter((t) => t.products.length > 0)
 
@@ -44,8 +45,8 @@ export function ProductRecommendationTabs({
 
   return (
     <section id="similar" className="scroll-mt-32">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <h2 className="font-heading text-lg font-bold text-primary">You Might Also Like</h2>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <h2 className="text-h2 text-primary">You might also like</h2>
         <TabList
           label="Recommendations"
           idPrefix={prefix}
@@ -69,11 +70,11 @@ export function ProductRecommendationTabs({
       )}
 
       <TabPanel idPrefix={prefix} id={activeTab.key} active>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {activeTab.products.slice(0, 8).map((s) => (
+        <Rail>
+          {activeTab.products.slice(0, 4).map((s) => (
             <ProductCard key={s.id} product={s} />
           ))}
-        </div>
+        </Rail>
       </TabPanel>
     </section>
   )
