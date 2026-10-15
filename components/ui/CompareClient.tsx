@@ -334,7 +334,7 @@ export function CompareClient({ products, diffRows, allProductOptions, shareUrl,
 
       {/* ── Spec table ─────────────────────────────────────────────────── */}
       {products.length >= 2 && rows.length > 0 && (
-        <div className="overflow-x-auto rounded-xl border border-border">
+        <div className="relative overflow-x-auto rounded-xl border border-border">
           <table className="w-full text-sm" style={{ minWidth: `${products.length * 130 + 96}px` }}>
             <caption className="sr-only">Specification comparison</caption>
             <thead className="bg-surface-alt border-b border-border">

@@ -188,59 +188,40 @@ The single most-used component in the app — every grid on the site is
 built from it. Not present in Autopay's set at all; specified here from
 scratch to the same rigor as Button.
 
-### Variant axes
-
-| Axis | Values |
-|------|--------|
-| `density` | `default` (grid) · `compact` (strip/carousel) · `row` (list view) |
-| `state` | `default` · `hover` · `saved` |
-
-### Anatomy (top to bottom, `default` density)
+### Anatomy (top to bottom)
 
 ```
-[ Save button — top-right overlay, 32×32px circle ]
-[ Discount badge — top-left overlay, if on sale ]
-[ Thumbnail image — 1:1 aspect ]
-[ Brand name — 12px, text-muted ]
-[ Product name — 14px, Medium, 2-line clamp ]
-[ Rating badge (Score Ring, sm) + rating count ]
-[ Price — Bold, 16px, primary text  |  strikethrough launch price, 12px, text-muted ]
-[ Quick view · Compare — 12px links, gap-16 ]
+[ Save — round overlay, top-left ]            [ Deal badge / ribbon — top-right ]
+[ Image well — 4:3, object-contain on neutral-50 ]
+[ Brand — 12px, text-muted ]
+[ Product name — 14px Semibold, 2-line clamp; the title link is stretched over the whole card ]
+[ RatingBadge (score + "/10") ]
+[ Price (ink, Bold 16px)                    ☐ Compare — checkbox-style toggle ]
 ```
 
-### Dimensions
+Nothing else. There is **no Quick view** (it only repeated what the card
+already shows) and no strike-through price on the card (it made the price row
+wrap). The whole card is one link; Save and Compare sit above it.
 
 | Element | Spec |
 |---------|------|
-| Card padding | `12px` (density default), `8px` (compact) |
-| Card radius | `16px` (`radius-lg`) |
-| Card border | `1px solid neutral-300`, → `primary-300` on hover |
-| Card shadow | none default → `shadow-md` on hover |
-| Thumbnail radius | `12px` (one step under card radius) |
-| Save button | 32×32px circle, `neutral-0` @ 90% opacity background, `shadow-sm` |
-| Gap between elements | `8px` |
-
-### Colors
-
-| Element | Default | Hover |
-|---------|---------|-------|
-| Card border | `neutral-300` `#E7E4EC` | `primary-300` `#AF93F0` |
-| Card background | `neutral-0` | `neutral-0` |
-| Product name | `text-primary` | `text-primary` |
-| Price | `text-primary`, **Bold** | `text-primary` |
-| Discount badge | `error-500` bg, white text | — |
-| Save icon (unsaved) | `neutral-600` | `neutral-800` |
-| Save icon (saved) | `secondary-500` filled | — |
-
-### Implementation pattern
+| Card | `rounded-xl`, `border`, no shadow → `shadow-md` on hover |
+| Image | `aspect-[4/3]`, `object-contain p-3` (about 35% shorter than the old square) |
+| Padding | `12px` phones, `16px` from `sm` |
+| Save | `SaveButton variant="overlay"` — 36px circle with 44px hit-slop |
+| Compare | 36px-high toggle with hit-slop; label shown from 420px up |
 
 ```tsx
 type ProductCardProps = {
   product: ProductSummary
-  density?: 'default' | 'compact' | 'row'
-  activeDeal?: Deal
+  activeDeal?: ProductDealBadge | null
+  rank?: number; pickReason?: string
+  highlight?: string      // wraps the match in <mark> (search)
+  showCategory?: boolean
 }
 ```
+
+`ProductListRow` is the list-view sibling: same facts, one row.
 
 ---
 
@@ -290,35 +271,21 @@ type ScoreRingProps = {
 
 ---
 
-## Price Block
+## Price
 
-The price + discount + launch-price composition, used identically on
-product cards, the PDP buy box, and the sticky buy bar. Specified once here
-so every instance stays visually consistent.
+`components/ui/Price.tsx` is the one way a price is drawn
+(cards, buy box, deals, compare, best-of).
 
-### Composition
-
-```
-[ Best price — Bold, primary text ]  [ Discount badge, if any ]
-[ Launch price — strikethrough, text-muted, if discounted ]
-[ EMI hint — text-muted, 12px, optional ]
+```tsx
+<Price value={79999} original={84999} showDiscount size="sm" | "md" | "lg" />
 ```
 
-### Sizes
-
-| Context | Best price size | Launch price size |
-|---------|-------------------|----------------------|
-| Product card | 16px Bold | 12px |
-| PDP buy box | 24px Bold | 14px |
-| Sticky buy bar | 14px Bold | — (omitted, space-constrained) |
-
-### Colors
-
-- Best price: `text-primary`, **Bold**.
-- Discount badge: `variant="discount"` Badge (see above).
-- Launch price strikethrough: `text-muted`, regular weight,
-  `text-decoration: line-through`.
-- "You save X%": `success-700` on `success-100` background pill.
+- The current price is **ink** (`text-primary`, Bold, tabular numerals) — not
+  brand violet, so the violet buy button stays the loudest thing on screen.
+- `original` (only when higher) renders struck through in `text-muted`;
+  `showDiscount` adds a success "N% off" badge.
+- Savings are `success-700`; time-limited deals use the amber `deal` button.
+- Sizes: `sm` 16px (cards, rows) · `md` 18px · `lg` 30px (PDP buy box).
 
 ---
 
@@ -432,7 +399,8 @@ layers beneath it (`bottom-[calc(var(--layer-tabbar)_+_…)]`). Never hard-code
 
 ### Dialogs and drawers
 Anything modal uses `useDialog` (`lib/hooks/useDialog.ts`): focus moves in, Tab
-is trapped, Escape closes, body scroll locks, focus returns to the opener. The
+is trapped, Escape closes, body scroll locks, focus returns to the opener (even
+when the dialog contains an `autoFocus` field, e.g. the phone search sheet). The
 panel gets `role="dialog"`, `aria-modal`, `aria-label` and `tabIndex={-1}`, and
 is portaled above the fixed bars (`z-[70]`).
 
@@ -442,9 +410,11 @@ tabindex, Arrow/Home/End keys. Variants: `underline` (page sections), `pill`
 (content switchers), `segmented` (compact picker).
 
 ### Ratings, empty states, breadcrumbs
-- `RatingBadge` is the compact creator-score treatment (cards, rows, results);
-  `ScoreRing` is reserved for the product page and compare headers. Both use the
-  same score bands (`lib/utils/score.ts`).
+- `RatingBadge` is the creator-score treatment everywhere (cards, rows, results,
+  product header, compare, best-of). The score appears **once** per page region
+  — the product page shows it under the title only. `ScoreRing` remains
+  available but is no longer used on the main pages. Same bands everywhere
+  (`lib/utils/score.ts`).
 - `EmptyState` takes `headingLevel`; pages whose only content is the empty state
   pass `1`. Its action is a `Button`.
 - `Breadcrumb` renders the labelled `<nav>` + ordered list with `aria-current`.
@@ -456,3 +426,40 @@ tabindex, Arrow/Home/End keys. Variants: `underline` (page sections), `pill`
 - Never present modelled data as measured: the price-trend chart is labelled
   "Illustrative", and price watches say they live on this device.
 - Time-limited CTAs use `DealBuyLink` so an expired deal can't be clicked.
+
+### Page rhythm, width and density (Round 2)
+All gaps are decided in `components/ui/Section.tsx`, not per page.
+- `Container` — `max-w-7xl`, `px-4 sm:px-6`. Every page `<main>` uses the same
+  gutters so headers, content and footer align (legal pages: `max-w-3xl`).
+- `Section` — vertical padding `32px` phones / `48px` desktop (`compact` 24/32);
+  `tone="alt"` adds the soft full-bleed background. Never stack `py-12` + `mb-*`.
+- `SectionHeader` — `h2` (`text-h2`) + optional one-line description + action link.
+- `Rail` — swipe rail on phones (children ~68% wide), 4-column grid from `md`.
+  Use it instead of a four-row phone grid.
+- Type scale utilities: `text-h1` (24→28px), `text-h2` (20→22px), `text-h3` (17px).
+- `ListingHeader` — the slim title row (title, one-line subtitle, count, controls)
+  shared by category / brand / tag / search / deals / guides / My Stuff. No grey box.
+- Page-height budgets we hold the layout to (1440px / 390px): home ≤ 2700 / 3600,
+  product ≤ 3100 / 4000, category ≤ 1700 / 2400, search ≤ 1800 / 2400,
+  deals ≤ 1400 / 2400.
+
+### Header, tab bar, footer
+- Header: one 56px row on phones (logo, menu; a search icon only on product
+  pages, where the tab bar is hidden). Desktop: row 1 (64px) logo, search, Deals,
+  Compare, My Stuff; row 2 (44px) categories, Top 10, Brands — row 2 collapses
+  while scrolling down and returns on scroll up.
+- Phone tab bar: Home · Search · Deals · Compare · My Stuff. Search opens a
+  full-screen sheet (`SearchBar autoFocus` in a dialog) instead of a permanent
+  search row.
+- Footer: brand + newsletter, Explore, About (+ social). No repeated category list.
+
+### Don't repeat yourself (audit rules)
+- A product, number or action appears once per page. Examples enforced above:
+  the home Deal of the Day is the first row of Today's deals (no separate band);
+  the product page has one buy box, one rating, one share control, one
+  "compare with" line; the deals page has no "ending soon" strip repeating the grid.
+- Filters appear only when there is something to filter (deals ≥ 6; search
+  filters only with a query or active filter). Budget bands live in the sidebar
+  on desktop and in the quick-filter row on phones, never both.
+- Click-to-load media (`VideoEmbed`): poster + play button, iframe only on click
+  (`youtube-nocookie`); a failed poster still reads as a "Watch the video" tile.

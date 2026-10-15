@@ -46,7 +46,7 @@ export function CategoryProductResults({ products, dealMap, toolbar, wide = fals
   return (
     <>
       <div className="mb-3 flex items-center gap-3 md:mb-4">
-        {toolbar ?? <div className="flex-1" />}
+        <div className="min-w-0 flex-1">{toolbar}</div>
         <div role="group" aria-label="Layout" className="flex shrink-0 items-center gap-1">
           <button
             type="button"
