@@ -11,7 +11,9 @@
     "prices:refresh": "tsx scripts/prices/cli.ts refresh",
     "prices:check": "tsx scripts/prices/cli.ts check",
     "prices:inspect": "tsx scripts/prices/cli.ts inspect",
-    "prices:test": "vitest --run lib/prices"
+    "prices:test": "vitest --run lib/prices",
+    "prices:guard": "tsx scripts/prices/guard.ts",
+    "prices:broken": "tsx scripts/prices/broken-stores.ts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
