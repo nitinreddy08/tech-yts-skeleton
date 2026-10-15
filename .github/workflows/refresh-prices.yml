@@ -1,12 +1,21 @@
 name: Refresh prices
 
+# Daily at 04:00 India time (IST = UTC+5:30, i.e. 22:30 UTC the day before). GitHub cron is always UTC:
+# change the line below for another hour. Scheduled workflows only run from the default branch.
 on:
   schedule:
-    - cron: '17 */6 * * *' # every 6 hours
+    - cron: '30 22 * * *'
   workflow_dispatch:
+    inputs:
+      store:
+        description: 'Only this store (amazon, flipkart, generic) - leave empty for all'
+        required: false
+        default: ''
 
 permissions:
-  contents: write
+  contents: write # commit refreshed prices / repairs
+  issues: write # open an issue when a repair can't be done automatically
+  pull-requests: write # fall back to a PR when the branch is protected
 
 concurrency:
   group: refresh-prices
@@ -15,8 +24,13 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -25,20 +39,23 @@ jobs:
 
       - run: npm ci
 
-      # Exits 1 only when a store is "broken" (pages load, price unreadable). Prices that
-      # did refresh are still written, so we keep going to commit them.
+      - name: Git identity
+        run: |
+          git config user.name "price-bot"
+          git config user.email "price-bot@users.noreply.github.com"
+
+      # 1. Refresh. Exits 1 only when a store is "broken" (pages load, price unreadable). Prices that did
+      #    refresh are still written, so we carry on to commit them before trying a repair.
       - name: Refresh prices
         id: refresh
-        run: npm run prices:refresh
         continue-on-error: true
+        run: npm run prices:refresh -- ${{ inputs.store && format('--store {0}', inputs.store) || '' }}
         env:
-          # Optional official-API credentials (see config/price-scrapers/*.json `api` blocks):
+          # Optional official-API credentials (see the `api` blocks in config/price-scrapers/*.json):
           STORE_API_TOKEN: ${{ secrets.STORE_API_TOKEN }}
 
       - name: Commit refreshed prices
         run: |
-          git config user.name "price-bot"
-          git config user.email "price-bot@users.noreply.github.com"
           git add data/prices.json data/price-health.json
           if git diff --staged --quiet; then
             echo "No price changes."
@@ -48,6 +65,27 @@ jobs:
             git push origin "HEAD:$GITHUB_REF_NAME"
           fi
 
+      - name: Warn about stores we could not reach
+        if: always()
+        run: |
+          node -e "
+            const h = require('./data/price-health.json').stores || {};
+            for (const [s, v] of Object.entries(h))
+              if (v.status === 'blocked' || v.status === 'degraded')
+                console.log('::warning title=Price scraper: ' + s + ' is ' + v.status + '::' + JSON.stringify(v.failed) + ' - a layout fix will not help if the store is blocking us; consider its official API.');
+          "
+
+      # 2. A store's layout changed -> repair it unattended. Needs the ANTHROPIC_API_KEY repository secret.
+      #    The agent may only edit that store's config + a trimmed sample page; a guard, the offline tests and
+      #    a live re-check must all pass before anything is committed and pushed. Otherwise an issue is opened.
+      - name: Auto-repair broken stores
+        if: steps.refresh.outcome == 'failure'
+        run: ./scripts/prices/ci-repair.sh
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+          STORE_API_TOKEN: ${{ secrets.STORE_API_TOKEN }}
+
       - name: Keep pages that stopped parsing
         if: always()
         uses: actions/upload-artifact@v4
@@ -55,9 +93,3 @@ jobs:
           name: price-fixtures
           path: data/price-fixtures/
           if-no-files-found: ignore
-
-      - name: Alert when a store layout changed
-        if: steps.refresh.outcome == 'failure'
-        run: |
-          echo "::error::A store's page layout changed and its prices could not be read. Open data/price-health.json, then run '/update-scraper <store>' in Claude Code (download the 'price-fixtures' artifact if you need the saved pages)."
-          exit 1

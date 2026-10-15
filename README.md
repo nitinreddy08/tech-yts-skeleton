@@ -53,10 +53,20 @@ npm run prices:test                          # offline tests, incl. every store'
   JSON-LD/meta survive most redesigns. Stores without a file use `generic.json`.
 - **Safety:** a price outside 0.5×–1.6× of the last known one is rejected (wrong element, e.g. an EMI figure);
   a failed link keeps its previous price; out-of-stock pages with no price are recorded as out of stock.
-- **Schedule:** `.github/workflows/refresh-prices.yml` runs every 6 hours and commits changed prices.
-- **When a store changes its layout:** the run exits non-zero with status `broken` for that store (CI fails and
-  says so). In Claude Code run **`/update-scraper <store>`** — it reads the saved page, rewrites that store's
-  rules, adds a regression sample, and verifies with `npm run prices:test`.
+- **Schedule:** `.github/workflows/refresh-prices.yml` runs **every day at 04:00 IST** (cron `30 22 * * *`, UTC)
+  and can be started by hand (Actions → Refresh prices → Run workflow, optionally for one store). Changed prices are
+  committed automatically. Scheduled workflows only run from the default branch, so the workflow must be on `main`.
+- **When a store changes its layout — automatic repair:** the run finds the store "broken", then
+  `scripts/prices/ci-repair.sh` starts a headless Claude Code agent that follows the `update-scraper` skill. Its
+  change is only published if **all** gates pass: `prices:guard` (it may only edit that store's config + add a
+  trimmed sample page; hosts, `api`, headers, price bounds and existing samples must be unchanged), `prices:test`,
+  and a live refresh that reads real prices again. Then it commits and pushes (or opens a PR if the branch is
+  protected). If anything fails, the change is discarded and a **GitHub issue** is opened; the run fails so you get
+  the usual email. To repair by hand instead: **`/update-scraper <store>`** in Claude Code.
+- **One-time setup for auto-repair:** add the repository secret `ANTHROPIC_API_KEY` (Settings → Secrets and variables →
+  Actions). Optional: variable `CLAUDE_MODEL`; secret `STORE_API_TOKEN` for a store API. Allow Actions to create pull
+  requests (Settings → Actions → General) if you want the protected-branch fallback. Without the key, a broken store
+  still raises an issue — it just isn't repaired automatically.
 - **Blocked ≠ broken:** HTTP 403/429, CAPTCHAs and network errors are reported as `blocked`; selectors can't fix
   those. Prefer the store's official affiliate API for stores that block scraping (`api` block in the config,
   credentials as environment variables / GitHub secrets).
