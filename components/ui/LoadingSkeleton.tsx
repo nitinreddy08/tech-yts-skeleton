@@ -24,7 +24,7 @@ export function TableRowSkeleton() {
 
 export function ProductPageSkeleton() {
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 animate-pulse" aria-busy="true" aria-label="Loading product">
+    <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-8 animate-pulse" aria-busy="true" aria-label="Loading product">
       <div className="flex gap-1.5 mb-5">
         <div className="h-3 w-12 shimmer rounded" />
         <div className="h-3 w-20 shimmer rounded" />
@@ -65,7 +65,7 @@ export function ProductPageSkeleton() {
 
 export function CategoryPageSkeleton() {
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 animate-pulse" aria-busy="true" aria-label="Loading category">
+    <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-8 animate-pulse" aria-busy="true" aria-label="Loading category">
       <div className="mb-6 flex items-center gap-4 rounded-xl bg-surface-alt p-6 border border-border">
         <div className="h-12 w-12 shimmer rounded" />
         <div className="flex-1 space-y-2">
@@ -87,7 +87,7 @@ export function CategoryPageSkeleton() {
 
 export function SearchPageSkeleton() {
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 animate-pulse" aria-busy="true" aria-label="Loading search">
+    <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-8 animate-pulse" aria-busy="true" aria-label="Loading search">
       <div className="h-9 w-64 shimmer rounded mb-2" />
       <div className="h-4 w-40 shimmer rounded mb-6" />
       <div className="flex flex-wrap gap-2 mb-6">
@@ -106,7 +106,7 @@ export function SearchPageSkeleton() {
 
 export function DealsPageSkeleton() {
   return (
-    <main className="max-w-7xl mx-auto px-4 py-8 animate-pulse" aria-busy="true" aria-label="Loading deals">
+    <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-8 animate-pulse" aria-busy="true" aria-label="Loading deals">
       <div className="h-9 w-48 shimmer rounded mb-2" />
       <div className="h-4 w-96 shimmer rounded mb-8" />
       <div className="h-64 shimmer rounded-2xl mb-10" />
@@ -126,7 +126,7 @@ export function DealsPageSkeleton() {
 
 export function BestOfPageSkeleton() {
   return (
-    <main className="max-w-7xl mx-auto px-4 py-10 animate-pulse" aria-busy="true" aria-label="Loading guide">
+    <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-8 animate-pulse" aria-busy="true" aria-label="Loading guide">
       <div className="flex gap-2 mb-4">
         <div className="h-6 w-28 shimmer rounded-full" />
         <div className="h-6 w-32 shimmer rounded-full" />
@@ -150,7 +150,7 @@ export function BestOfPageSkeleton() {
 /** Generic "title + intro + grid of tiles" skeleton for index-style pages (brands, tags, guides). */
 export function IndexPageSkeleton({ label = 'Loading' }: { label?: string }) {
   return (
-    <main className="max-w-7xl mx-auto px-4 py-10 animate-pulse" aria-busy="true" aria-label={label}>
+    <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-8 animate-pulse" aria-busy="true" aria-label={label}>
       <div className="mx-auto mb-8 flex max-w-xl flex-col items-center gap-3">
         <div className="h-9 w-56 shimmer rounded" />
         <div className="h-4 w-full shimmer rounded" />
@@ -167,7 +167,7 @@ export function IndexPageSkeleton({ label = 'Loading' }: { label?: string }) {
 
 export function ComparePageSkeleton() {
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 animate-pulse" aria-busy="true" aria-label="Loading comparison">
+    <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-8 animate-pulse" aria-busy="true" aria-label="Loading comparison">
       <div className="mb-6 h-8 w-80 max-w-full shimmer rounded" />
       <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (

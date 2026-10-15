@@ -3,11 +3,12 @@
 import { useEffect, useId, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Bookmark, Bell, GitCompare, LayoutGrid } from 'lucide-react'
+import { Bookmark, Bell, GitCompare } from 'lucide-react'
 import { SavedProductsClient } from '@/components/ui/SavedProductsClient'
 import { PriceAlertsClient } from '@/components/ui/PriceAlertsClient'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { TabList, TabPanel } from '@/components/ui/Tabs'
+import { ListingHeader } from '@/components/ui/ListingHeader'
 import { loadRecentCompares, type RecentCompare } from '@/lib/utils/recent-compares'
 import { buildCompareUrl } from '@/lib/utils/compare-url'
 
@@ -84,15 +85,10 @@ export function MyStuffClient() {
 
   return (
     <>
-      <div className="mb-8">
-        <h1 className="font-heading text-3xl font-bold text-primary flex items-center gap-2">
-          <LayoutGrid size={28} className="text-accent" aria-hidden />
-          My Stuff
-        </h1>
-        <p className="text-muted mt-2 text-sm">
-          Saved products, price watches and recent comparisons — all stored on this device.
-        </p>
-      </div>
+      <ListingHeader
+        title="My Stuff"
+        subtitle="Saved products, price watches and recent comparisons — stored on this device."
+      />
 
       <TabList
         label="My Stuff sections"
@@ -100,7 +96,7 @@ export function MyStuffClient() {
         variant="pill"
         active={tab}
         onChange={setTab}
-        className="mb-6"
+        className="mb-4"
         tabs={[
           { id: 'saved', label: 'Saved', icon: <Bookmark size={16} aria-hidden /> },
           { id: 'alerts', label: 'Watches', icon: <Bell size={16} aria-hidden /> },

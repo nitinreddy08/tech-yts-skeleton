@@ -65,7 +65,7 @@ export default async function ComparePage({
       : undefined
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
+    <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-8">
       <CompareClient
         products={products}
         diffRows={diffRows}
@@ -74,11 +74,11 @@ export default async function ComparePage({
         missingSlugs={missingSlugs}
       />
       {products.length >= 2 && (
-        <div className="mt-10 pt-8 border-t border-border">
+        <div className="mt-8 border-t border-border pt-6">
           <CompareSuggestions className="max-w-3xl mx-auto" />
         </div>
       )}
-      <div className="mt-12">
+      <div className="mt-8">
         <RecentComparesStrip />
       </div>
     </main>

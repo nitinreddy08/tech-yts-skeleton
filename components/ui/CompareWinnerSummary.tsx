@@ -16,29 +16,24 @@ export function CompareWinnerSummary({ products, diffRows }: CompareWinnerSummar
   if (scores[0].total === 0) return null
 
   return (
-    <section
-      className="rounded-xl border border-border bg-surface p-5"
-      aria-label="Spec comparison summary"
-    >
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <div>
-          <h2 className="text-sm font-semibold text-primary flex items-center gap-2">
-            <Trophy size={16} className="text-accent" aria-hidden />
-            Spec win tally
-          </h2>
-          <p className="text-xs text-muted mt-0.5">
-            Based on {scores[0].total} differing specs — the better value on each, on paper
-          </p>
-        </div>
-        {winnerIdx != null && (
-          <p className="text-xs font-semibold text-accent flex items-center gap-1.5 shrink-0">
-            <Crown size={14} />
-            {products[winnerIdx].name} leads on specs
-          </p>
-        )}
+    <section className="rounded-xl border border-border bg-surface p-4" aria-label="Spec comparison summary">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="flex items-center gap-2 text-h3 text-primary">
+          <Trophy size={16} className="text-accent" aria-hidden />
+          Spec wins
+        </h2>
+        <p className="text-sm text-muted">
+          {winnerIdx != null ? (
+            <>
+              <span className="font-semibold text-primary">{products[winnerIdx].name}</span> leads, across {scores[0].total} differing specs
+            </>
+          ) : (
+            <>Across {scores[0].total} differing specs</>
+          )}
+        </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="flex flex-wrap gap-3">
         {products.map((p, i) => {
           const { wins, total, pct } = scores[i]
           const isLeader = winnerIdx === i
@@ -46,22 +41,22 @@ export function CompareWinnerSummary({ products, diffRows }: CompareWinnerSummar
           return (
             <div
               key={p.id}
-              className={`rounded-lg border p-3 ${
+              className={`min-w-[8rem] flex-1 rounded-lg border p-3 ${
                 isLeader ? 'border-accent/40 bg-accent/5' : 'border-border bg-surface-alt/50'
               }`}
             >
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <p className="text-xs font-medium text-primary line-clamp-2 leading-tight">{p.name}</p>
-                {isLeader && <Crown size={14} className="text-accent shrink-0 mt-0.5" />}
+              <p className="mb-1 flex items-center gap-1.5 text-xs font-medium leading-tight text-primary">
+                {isLeader && <Crown size={12} className="shrink-0 text-accent" aria-hidden />}
+                <span className="line-clamp-1">{p.name}</span>
+              </p>
+              <div className="mb-2 flex items-baseline gap-1.5">
+                <span className="text-xl font-bold text-primary">{wins}</span>
+                <span className="text-xs text-muted">of {total}</span>
+                <span className="ml-auto text-xs font-semibold text-primary">{pct}%</span>
               </div>
-              <div className="flex items-baseline gap-1.5 mb-2">
-                <span className="text-2xl font-bold text-primary">{wins}</span>
-                <span className="text-xs text-muted">/ {total} specs</span>
-                <span className="text-xs font-semibold text-accent ml-auto">{pct}%</span>
-              </div>
-              <div className="h-2 rounded-full bg-border overflow-hidden">
+              <div className="h-1.5 overflow-hidden rounded-full bg-border">
                 <div
-                  className={`h-full rounded-full transition-all ${isLeader ? 'bg-accent' : 'bg-primary/30'}`}
+                  className={`h-full rounded-full ${isLeader ? 'bg-accent' : 'bg-primary/30'}`}
                   style={{ width: `${pct}%` }}
                 />
               </div>

@@ -62,7 +62,7 @@ export default async function DirectComparePage({
   const shareUrl = `${SITE_URL}/compare/${productSlugs.slice(0, 4).join('-vs-')}`
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
+    <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-8">
       <CompareClient
         products={products}
         diffRows={diffRows}

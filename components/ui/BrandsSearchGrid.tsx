@@ -24,7 +24,7 @@ export function BrandsSearchGrid({ brands }: { brands: BrandItem[] }) {
 
   return (
     <>
-      <div className="relative max-w-md mx-auto mb-10">
+      <div className="relative mb-6 max-w-md">
         <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden />
         <Input
           type="search"

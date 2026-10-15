@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function MyStuffPage() {
   return (
-    <main className="max-w-7xl mx-auto px-4 py-8">
+    <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-8">
       {/* MyStuffClient reads ?tab= via useSearchParams, which needs a Suspense boundary. */}
       <Suspense fallback={<div className="h-64 shimmer rounded-xl" aria-hidden />}>
         <MyStuffClient />

@@ -7,15 +7,14 @@ import {
   Trophy,
   GitCompare,
   ArrowRight,
-  Star,
   ChevronRight,
   ShieldCheck,
   FlaskConical,
 } from 'lucide-react'
-import { formatIndianPrice } from '@/lib/utils/format'
+import { RatingBadge } from '@/components/ui/RatingBadge'
+import { Price } from '@/components/ui/Price'
 import { siteConfig } from '@/lib/config'
 import { ShareBar } from '@/components/ui/ShareBar'
-import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Badge } from '@/components/ui/Badge'
 import { Breadcrumb } from '@/components/ui/Breadcrumb'
 import { Button, buttonVariants } from '@/components/ui/Button'
@@ -55,88 +54,66 @@ function BestOfItemCard({
 }) {
   const product = item.product
   if (!product) return null
+  const href = `/${product.category_slug}/${product.slug}`
 
   return (
     <article
       id={`item-${item.rank}`}
-      className={`scroll-mt-28 rounded-2xl border bg-surface overflow-hidden transition-shadow ${
-        isActive ? 'border-accent shadow-md' : 'border-border shadow-sm'
+      className={`scroll-mt-28 overflow-hidden rounded-xl border bg-surface transition-shadow ${
+        isActive ? 'border-accent shadow-md' : 'border-border'
       }`}
     >
       {item.rank === 1 && (
-        <div className="bg-gradient-to-r from-accent/15 to-accent/5 px-5 py-2 border-b border-accent/10">
-          <p className="text-xs font-semibold text-accent flex items-center gap-1.5">
-            <Trophy size={14} /> Our top recommendation — start here
+        <div className="border-b border-accent/10 bg-gradient-to-r from-accent/15 to-accent/5 px-4 py-1.5 md:px-5">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-accent">
+            <Trophy size={14} aria-hidden /> Our top recommendation — start here
           </p>
         </div>
       )}
 
-      <div className="p-5 md:p-6">
-        <div className="flex flex-col md:flex-row gap-5">
-          <div className="flex items-start gap-4 md:w-48 shrink-0">
-            <span className="font-heading text-4xl font-bold text-accent/30 leading-none w-10">
-              {item.rank}
-            </span>
-            <div className="relative h-28 w-28 rounded-xl bg-surface-alt border border-border overflow-hidden">
-              {product.thumbnail_url ? (
-                <Image
-                  src={product.thumbnail_url}
-                  alt={product.name}
-                  fill
-                  sizes="112px"
-                  className="object-contain p-2"
-                />
-              ) : null}
-            </div>
+      <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-3 p-4 md:grid-cols-[auto_1fr_auto] md:gap-x-5 md:p-5">
+        <div className="flex items-center gap-2 md:gap-3">
+          <span className="w-6 font-heading text-2xl font-bold leading-none text-accent/40 md:w-8 md:text-3xl">{item.rank}</span>
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-surface-alt md:h-24 md:w-24">
+            {product.thumbnail_url ? (
+              <Image src={product.thumbnail_url} alt="" fill sizes="96px" className="object-contain p-2" />
+            ) : null}
           </div>
+        </div>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              {badge && (
-                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${badge.className}`}>
-                  {badge.label}
-                </span>
-              )}
-              <span className="text-xs text-muted">{product.brand_name}</span>
-            </div>
-
-            <h2 className="text-lg md:text-xl font-bold text-primary mb-2">
-              <Link href={`/${product.category_slug}/${product.slug}`} className="hover:text-accent transition-colors">
-                {product.name}
-              </Link>
-            </h2>
-
-            {item.pick_reason && (
-              <p className="text-sm text-muted leading-relaxed mb-4">{item.pick_reason}</p>
+        <div className="min-w-0">
+          <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+            {badge && (
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badge.className}`}>{badge.label}</span>
             )}
+            <span className="text-xs text-muted">{product.brand_name}</span>
+          </div>
+          <h2 className="text-h3 text-primary">
+            <Link href={href} className="transition-colors hover:text-accent">
+              {product.name}
+            </Link>
+          </h2>
+          {item.pick_reason && <p className="mt-1 line-clamp-2 text-sm text-muted">{item.pick_reason}</p>}
+          <div className="mt-2">
+            <RatingBadge score={product.creator_rating} showVerdict />
+          </div>
+        </div>
 
-            <div className="flex flex-wrap items-center gap-4 mb-4">
-              <div className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-2.5 py-1 text-xs font-bold text-white">
-                <Star size={12} className="fill-white" />
-                {product.creator_rating.toFixed(1)}/10
-              </div>
-              {product.current_price_inr != null && (
-                <span className="text-lg font-bold text-accent">
-                  {formatIndianPrice(product.current_price_inr)}
-                </span>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href={`/${product.category_slug}/${product.slug}`}
-                className={buttonVariants({ variant: 'primary', size: 'sm' })}
-              >
-                Read full review <ArrowRight size={14} aria-hidden />
-              </Link>
-              <Link
-                href={`/compare?products=${product.slug}`}
-                className={buttonVariants({ variant: 'secondary', size: 'sm' })}
-                title="Start a comparison with this product"
-              >
-                <GitCompare size={14} aria-hidden /> Compare with…
-              </Link>
-            </div>
+        <div className="col-span-2 flex items-center justify-between gap-3 border-t border-border pt-3 md:col-span-1 md:flex-col md:items-end md:border-t-0 md:pt-0">
+          <Price value={product.current_price_inr} size="md" />
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/compare?products=${product.slug}`}
+              className={buttonVariants({ variant: 'secondary', size: 'sm' })}
+              title="Start a comparison with this product"
+            >
+              <GitCompare size={14} aria-hidden /> <span className="hidden sm:inline">Compare</span>
+              <span className="sr-only sm:hidden">Compare {product.name}</span>
+            </Link>
+            <Link href={href} className={buttonVariants({ variant: 'primary', size: 'sm' })}>
+              Review <ArrowRight size={14} aria-hidden />
+              <span className="sr-only"> of {product.name}</span>
+            </Link>
           </div>
         </div>
       </div>
@@ -183,63 +160,56 @@ export function BestOfListClient({ list, shareUrl }: BestOfListClientProps) {
   }, [list.items])
 
   return (
-    <main className="max-w-7xl mx-auto px-4 py-10">
+    <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:py-8">
       {/* Editorial header */}
-      <header className="mb-10">
+      <header className="mb-5 md:mb-8">
         <Breadcrumb
-          className="mb-4"
+          className="mb-3 md:mb-4"
           items={[{ label: 'Home', href: '/' }, { label: "Editor's Guides", href: '/best-of' }, { label: list.title }]}
         />
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <Badge variant="accent">
-            <Trophy size={12} aria-hidden /> Editor&apos;s Guide
+        <h1 className="text-h1 text-primary">{list.title}</h1>
+        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+          <Badge variant="accent" size="sm">
+            <Trophy size={10} aria-hidden /> Editor&apos;s guide
           </Badge>
-          <span className="text-xs text-muted">{list.items.length} products tested</span>
-        </div>
-        <h1 className="font-heading text-3xl md:text-4xl font-bold text-primary leading-tight">
-          {list.title}
-        </h1>
-        {list.description && (
-          <p className="text-muted leading-relaxed mt-4 max-w-3xl text-base">{list.description}</p>
-        )}
+          {list.items.length} products tested · Updated{' '}
+          {new Date(list.updated_at).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
+        </p>
+        {list.description && <p className="mt-3 max-w-3xl leading-relaxed text-primary/90">{list.description}</p>}
 
-        <ShareBar
-          url={shareUrl}
-          title={list.title}
-          text={`${list.title} — our top picks tested and ranked for India.`}
-          className="mt-5"
-        />
-
-        {/* Methodology strip — Wirecutter "How we picked" */}
-        <div className="mt-6 rounded-xl border border-border bg-surface-alt p-5">
-          <div className="flex items-start gap-3">
-            <FlaskConical size={20} className="text-accent shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-primary mb-1">How we picked these</p>
-              <p className="text-sm text-muted leading-relaxed">
-                Every product on this list was hands-on tested by {siteConfig.creator_name || 'our team'}.
-                We compare specs, real-world performance, and value at current Indian retail prices.
-                Rankings reflect our honest creator rating — no brand pays for placement. Some links on this
-                page are affiliate links; any commission never changes a ranking.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {compareSlugList.length >= 2 && (
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Button href={buildCompareUrl(compareSlugList)} variant="secondary">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {compareSlugList.length >= 2 && (
+            <Button href={buildCompareUrl(compareSlugList)} variant="secondary" size="auto" className="h-11 px-4 text-sm">
               <GitCompare size={16} aria-hidden />
-              Compare top {compareSlugList.length} side-by-side
+              Compare top {compareSlugList.length}
             </Button>
-          </div>
-        )}
+          )}
+          <ShareBar
+            url={shareUrl}
+            title={list.title}
+            text={`${list.title} — our top picks tested and ranked for India.`}
+          />
+        </div>
 
+        {/* "How we picked" stays one tap away without taking a screen of space. */}
+        <details className="group mt-4 rounded-lg border border-border bg-surface-alt px-4">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-semibold text-primary [&::-webkit-details-marker]:hidden">
+            <FlaskConical size={16} className="text-accent" aria-hidden />
+            How we picked these
+            <ChevronRight size={14} className="ml-auto text-muted transition-transform group-open:rotate-90" aria-hidden />
+          </summary>
+          <p className="pb-3 text-sm leading-relaxed text-muted">
+            Every product on this list was hands-on tested by {siteConfig.creator_name || 'our team'}. We compare
+            specs, real-world performance, and value at current Indian retail prices. Rankings reflect our honest
+            creator rating — no brand pays for placement. Some links on this page are affiliate links; any commission
+            never changes a ranking.
+          </p>
+        </details>
       </header>
 
       {/* Mobile ToC chips */}
       {list.items.length > 0 && (
-        <div className="lg:hidden mb-6 -mx-4 px-4 overflow-x-auto">
+        <div className="-mx-4 mb-4 overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:hidden">
           <div className="flex gap-2 pb-2">
             {list.items.map((item) => (
               <a
@@ -259,12 +229,12 @@ export function BestOfListClient({ list, shareUrl }: BestOfListClientProps) {
         </div>
       )}
 
-      <div className="flex gap-8">
+      <div className="flex gap-6 lg:gap-8">
         {/* Desktop sticky ToC with scroll spy */}
         {list.items.length > 0 && (
           <aside className="hidden lg:block w-56 shrink-0">
             <div className="sticky top-24 rounded-xl border border-border bg-surface p-4">
-              <Eyebrow className="mb-3">In this guide</Eyebrow>
+              <p className="mb-2 text-sm font-semibold text-primary">In this guide</p>
               <nav className="flex flex-col gap-0.5">
                 {list.items.map((item) => {
                   const badge = getPickBadge(item.rank, list.items)
@@ -299,7 +269,7 @@ export function BestOfListClient({ list, shareUrl }: BestOfListClientProps) {
         )}
 
         {/* Ranked items */}
-        <div className="flex-1 flex flex-col gap-6 min-w-0">
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
           {list.items.map((item) => (
             <BestOfItemCard
               key={item.id}
