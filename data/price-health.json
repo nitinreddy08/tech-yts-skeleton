@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-06T02:40:59.379Z",
+  "generated_at": "2026-11-07T02:08:44.756Z",
   "stores": {
     "amazon": {
       "status": "idle",
@@ -7,7 +7,7 @@
       "ok": 0,
       "failed": {},
       "last_ok_at": null,
-      "checked_at": "2026-11-06T02:40:59.379Z",
+      "checked_at": "2026-11-07T02:08:44.756Z",
       "failures": []
     },
     "flipkart": {
@@ -16,7 +16,7 @@
       "ok": 0,
       "failed": {},
       "last_ok_at": null,
-      "checked_at": "2026-11-06T02:40:59.379Z",
+      "checked_at": "2026-11-07T02:08:44.756Z",
       "failures": []
     },
     "generic": {
@@ -25,7 +25,7 @@
       "ok": 0,
       "failed": {},
       "last_ok_at": null,
-      "checked_at": "2026-11-06T02:40:59.379Z",
+      "checked_at": "2026-11-07T02:08:44.756Z",
       "failures": []
     }
   }
